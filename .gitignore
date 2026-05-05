@@ -1,0 +1,5 @@
+/.idea
+/target/checkstyle-cachefile
+/target/checkstyle-checker.xml
+/target/checkstyle-result.xml
+/Jym.iml
