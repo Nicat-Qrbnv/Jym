@@ -7,14 +7,14 @@
     <groupId>com.epam.jym</groupId>
     <artifactId>jym</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath> <!-- lookup parent from repository -->
+    <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>crm</artifactId>
+  <artifactId>eureka</artifactId>
 
   <dependencies>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+      <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -9,7 +9,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath> <!-- lookup parent from repository -->
   </parent>
-  <artifactId>crm</artifactId>
+  <artifactId>user</artifactId>
 
   <dependencies>
     <dependency>

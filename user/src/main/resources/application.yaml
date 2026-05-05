@@ -1,9 +1,9 @@
 server:
-  port: 8010
+  port: 8000
 
 spring:
   application:
-    name: crm
+    name: user
 
 eureka:
   client:
