@@ -1,13 +1,14 @@
-package com.epam.jym.crm;
+package com.epam.jym.user;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CrmApplication {
+public class UserApplication {
 
   static void main(String[] args) {
-    SpringApplication.run(CrmApplication.class, args);
+    SpringApplication.run(UserApplication.class, args);
   }
 
 }
+
