@@ -10,11 +10,4 @@
     <relativePath>../pom.xml</relativePath> <!-- lookup parent from repository -->
   </parent>
   <artifactId>crm</artifactId>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-    </dependency>
-  </dependencies>
 </project>

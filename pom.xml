@@ -157,9 +157,6 @@
 
   <modules>
     <module>crm</module>
-    <module>eureka</module>
-    <module>gateway</module>
-    <module>user</module>
   </modules>
 
 </project>
