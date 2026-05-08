@@ -5,10 +5,18 @@ import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Getter
 @Component
@@ -18,299 +26,164 @@ public class Initiator {
   private final Table<Trainer> trainerTable;
   private final Table<Training> trainingTable;
   private final Table<TrainingType> trainingTypeTable;
+  private final ObjectMapper objectMapper;
+  private final Resource seedDataResource;
 
   public Initiator(
       Table<Trainee> traineeTable,
       Table<Trainer> trainerTable,
       Table<Training> trainingTable,
-      Table<TrainingType> trainingTypeTable) {
+      Table<TrainingType> trainingTypeTable,
+      ObjectMapper objectMapper,
+      @Value("classpath:data/seed-data.json") Resource seedDataResource) {
     this.traineeTable = traineeTable;
     this.trainerTable = trainerTable;
     this.trainingTable = trainingTable;
     this.trainingTypeTable = trainingTypeTable;
+    this.objectMapper = objectMapper;
+    this.seedDataResource = seedDataResource;
   }
 
   @PostConstruct
   public void init() {
-    TrainingType technicalTrainingType = TrainingType.builder().id(1L).name("TECHNICAL").build();
-    TrainingType nonTechnicalTrainingType =
-        TrainingType.builder().id(2L).name("NON_TECHNICAL").build();
-    TrainingType advancedTechnicalTrainingType =
-        TrainingType.builder().id(3L).name("TECHNICAL").build();
+    SeedData seedData = readSeedData();
 
-    List<TrainingType> trainingTypes =
-        List.of(technicalTrainingType, nonTechnicalTrainingType, advancedTechnicalTrainingType);
-    trainingTypes.forEach(trainingTypeTable::write);
+    Map<Long, TrainingType> trainingTypes = createTrainingTypes(seedData.trainingTypes());
+    Map<Long, Trainee> trainees = createTrainees(seedData.trainees());
+    Map<Long, Trainer> trainers = createTrainers(seedData.trainers(), trainingTypes);
 
-    Trainer trainer1 =
-        Trainer.builder()
-            .id(101L)
-            .firstName("John")
-            .lastName("Smith")
-            .username("john.smith")
-            .password("password1")
-            .isActive(true)
-            .specialization(technicalTrainingType)
-            .build();
-    Trainer trainer2 =
-        Trainer.builder()
-            .id(102L)
-            .firstName("Emma")
-            .lastName("Brown")
-            .username("emma.brown")
-            .password("password2")
-            .isActive(true)
-            .specialization(nonTechnicalTrainingType)
-            .build();
-    Trainer trainer3 =
-        Trainer.builder()
-            .id(103L)
-            .firstName("Michael")
-            .lastName("Johnson")
-            .username("michael.johnson")
-            .password("password3")
-            .isActive(true)
-            .specialization(advancedTechnicalTrainingType)
-            .build();
-    Trainer trainer4 =
-        Trainer.builder()
-            .id(104L)
-            .firstName("Sophia")
-            .lastName("Davis")
-            .username("sophia.davis")
-            .password("password4")
-            .isActive(true)
-            .specialization(technicalTrainingType)
-            .build();
-    Trainer trainer5 =
-        Trainer.builder()
-            .id(105L)
-            .firstName("David")
-            .lastName("Wilson")
-            .username("david.wilson")
-            .password("password5")
-            .isActive(true)
-            .specialization(nonTechnicalTrainingType)
-            .build();
-
-    List<Trainer> trainers = List.of(trainer1, trainer2, trainer3, trainer4, trainer5);
-    trainers.forEach(trainerTable::write);
-
-    Trainee trainee1 =
-        Trainee.builder()
-            .id(201L)
-            .firstName("Alice")
-            .lastName("Green")
-            .username("alice.green")
-            .password("password6")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1998, 3, 14))
-            .address("12 Oak Street")
-            .build();
-    Trainee trainee2 =
-        Trainee.builder()
-            .id(202L)
-            .firstName("Bob")
-            .lastName("Miller")
-            .username("bob.miller")
-            .password("password7")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1997, 7, 22))
-            .address("45 Pine Avenue")
-            .build();
-    Trainee trainee3 =
-        Trainee.builder()
-            .id(203L)
-            .firstName("Carol")
-            .lastName("Taylor")
-            .username("carol.taylor")
-            .password("password8")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1999, 1, 9))
-            .address("78 Maple Road")
-            .build();
-    Trainee trainee4 =
-        Trainee.builder()
-            .id(204L)
-            .firstName("Daniel")
-            .lastName("Anderson")
-            .username("daniel.anderson")
-            .password("password9")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1996, 11, 30))
-            .address("90 Cedar Lane")
-            .build();
-    Trainee trainee5 =
-        Trainee.builder()
-            .id(205L)
-            .firstName("Eva")
-            .lastName("Thomas")
-            .username("eva.thomas")
-            .password("password10")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1998, 5, 18))
-            .address("23 Birch Drive")
-            .build();
-    Trainee trainee6 =
-        Trainee.builder()
-            .id(206L)
-            .firstName("Frank")
-            .lastName("Moore")
-            .username("frank.moore")
-            .password("password11")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1995, 8, 4))
-            .address("56 Walnut Street")
-            .build();
-    Trainee trainee7 =
-        Trainee.builder()
-            .id(207L)
-            .firstName("Grace")
-            .lastName("Martin")
-            .username("grace.martin")
-            .password("password12")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(2000, 2, 27))
-            .address("34 Cherry Court")
-            .build();
-    Trainee trainee8 =
-        Trainee.builder()
-            .id(208L)
-            .firstName("Henry")
-            .lastName("Lee")
-            .username("henry.lee")
-            .password("password13")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1997, 9, 15))
-            .address("67 Spruce Way")
-            .build();
-    Trainee trainee9 =
-        Trainee.builder()
-            .id(209L)
-            .firstName("Ivy")
-            .lastName("Walker")
-            .username("ivy.walker")
-            .password("password14")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1999, 12, 6))
-            .address("89 Ash Boulevard")
-            .build();
-    Trainee trainee10 =
-        Trainee.builder()
-            .id(210L)
-            .firstName("Jack")
-            .lastName("Hall")
-            .username("jack.hall")
-            .password("password15")
-            .isActive(true)
-            .dateOfBirth(LocalDate.of(1996, 4, 21))
-            .address("10 Elm Place")
-            .build();
-
-    List<Trainee> trainees =
-        List.of(
-            trainee1, trainee2, trainee3, trainee4, trainee5, trainee6, trainee7, trainee8,
-            trainee9, trainee10);
-    trainees.forEach(traineeTable::write);
-
-    List<Training> trainings =
-        List.of(
-            Training.builder()
-                .id(301L)
-                .name("Java Basics")
-                .type(technicalTrainingType)
-                .trainee(trainee1)
-                .trainer(trainer1)
-                .date(LocalDate.of(2026, 1, 12))
-                .durationInMinutes(60)
-                .build(),
-            Training.builder()
-                .id(302L)
-                .name("Spring Boot Fundamentals")
-                .type(technicalTrainingType)
-                .trainee(trainee2)
-                .trainer(trainer1)
-                .date(LocalDate.of(2026, 1, 15))
-                .durationInMinutes(90)
-                .build(),
-            Training.builder()
-                .id(303L)
-                .name("Presentation Skills")
-                .type(nonTechnicalTrainingType)
-                .trainee(trainee3)
-                .trainer(trainer2)
-                .date(LocalDate.of(2026, 1, 19))
-                .durationInMinutes(60)
-                .build(),
-            Training.builder()
-                .id(304L)
-                .name("Team Collaboration")
-                .type(nonTechnicalTrainingType)
-                .trainee(trainee4)
-                .trainer(trainer2)
-                .date(LocalDate.of(2026, 1, 22))
-                .durationInMinutes(75)
-                .build(),
-            Training.builder()
-                .id(305L)
-                .name("AWS Essentials")
-                .type(advancedTechnicalTrainingType)
-                .trainee(trainee5)
-                .trainer(trainer3)
-                .date(LocalDate.of(2026, 1, 26))
-                .durationInMinutes(120)
-                .build(),
-            Training.builder()
-                .id(306L)
-                .name("Docker Workshop")
-                .type(advancedTechnicalTrainingType)
-                .trainee(trainee6)
-                .trainer(trainer3)
-                .date(LocalDate.of(2026, 1, 29))
-                .durationInMinutes(90)
-                .build(),
-            Training.builder()
-                .id(307L)
-                .name("SQL Query Practice")
-                .type(technicalTrainingType)
-                .trainee(trainee7)
-                .trainer(trainer4)
-                .date(LocalDate.of(2026, 2, 2))
-                .durationInMinutes(60)
-                .build(),
-            Training.builder()
-                .id(308L)
-                .name("Database Design")
-                .type(technicalTrainingType)
-                .trainee(trainee8)
-                .trainer(trainer4)
-                .date(LocalDate.of(2026, 2, 5))
-                .durationInMinutes(90)
-                .build(),
-            Training.builder()
-                .id(309L)
-                .name("Business Communication")
-                .type(nonTechnicalTrainingType)
-                .trainee(trainee9)
-                .trainer(trainer5)
-                .date(LocalDate.of(2026, 2, 9))
-                .durationInMinutes(60)
-                .build(),
-            Training.builder()
-                .id(310L)
-                .name("Conflict Management")
-                .type(nonTechnicalTrainingType)
-                .trainee(trainee10)
-                .trainer(trainer5)
-                .date(LocalDate.of(2026, 2, 12))
-                .durationInMinutes(75)
-                .build());
-    trainings.forEach(trainingTable::write);
-
-    trainer1.setTraining(trainings.get(0));
-    trainer2.setTraining(trainings.get(2));
-    trainer3.setTraining(trainings.get(4));
-    trainer4.setTraining(trainings.get(6));
-    trainer5.setTraining(trainings.get(8));
+    createTrainings(seedData.trainings(), trainingTypes, trainees, trainers);
   }
+
+  private SeedData readSeedData() {
+    try (InputStream inputStream = seedDataResource.getInputStream()) {
+      return objectMapper.readValue(inputStream, SeedData.class);
+    } catch (IOException exception) {
+      throw new IllegalStateException("Failed to read seed data", exception);
+    }
+  }
+
+  private Map<Long, TrainingType> createTrainingTypes(List<TrainingTypeSeed> seeds) {
+    Map<Long, TrainingType> trainingTypes =
+        seeds.stream()
+            .map(seed -> TrainingType.builder().id(seed.id()).name(seed.name()).build())
+            .collect(Collectors.toMap(TrainingType::getId, Function.identity()));
+
+    trainingTypes.values().forEach(trainingTypeTable::write);
+    return trainingTypes;
+  }
+
+  private Map<Long, Trainee> createTrainees(List<TraineeSeed> seeds) {
+    Map<Long, Trainee> trainees =
+        seeds.stream()
+            .map(
+                seed ->
+                    Trainee.builder()
+                        .id(seed.id())
+                        .firstName(seed.firstName())
+                        .lastName(seed.lastName())
+                        .username(seed.username())
+                        .password(seed.password())
+                        .isActive(seed.active())
+                        .dateOfBirth(seed.dateOfBirth())
+                        .address(seed.address())
+                        .build())
+            .collect(Collectors.toMap(Trainee::getId, Function.identity()));
+
+    trainees.values().forEach(traineeTable::write);
+    return trainees;
+  }
+
+  private Map<Long, Trainer> createTrainers(
+      List<TrainerSeed> seeds, Map<Long, TrainingType> trainingTypes) {
+    Map<Long, Trainer> trainers =
+        seeds.stream()
+            .map(
+                seed ->
+                    Trainer.builder()
+                        .id(seed.id())
+                        .firstName(seed.firstName())
+                        .lastName(seed.lastName())
+                        .username(seed.username())
+                        .password(seed.password())
+                        .isActive(seed.active())
+                        .specialization(getById(trainingTypes, seed.specializationId()))
+                        .build())
+            .collect(Collectors.toMap(Trainer::getId, Function.identity()));
+
+    trainers.values().forEach(trainerTable::write);
+    return trainers;
+  }
+
+  private void createTrainings(
+      List<TrainingSeed> seeds,
+      Map<Long, TrainingType> trainingTypes,
+      Map<Long, Trainee> trainees,
+      Map<Long, Trainer> trainers) {
+    seeds.stream()
+        .map(
+            seed ->
+                Training.builder()
+                    .id(seed.id())
+                    .name(seed.name())
+                    .type(getById(trainingTypes, seed.typeId()))
+                    .trainee(getById(trainees, seed.traineeId()))
+                    .trainer(getById(trainers, seed.trainerId()))
+                    .date(seed.date())
+                    .durationInMinutes(seed.durationInMinutes())
+                    .build())
+        .forEach(this::writeTraining);
+  }
+
+  private void writeTraining(Training training) {
+    trainingTable.write(training);
+    Trainer trainer = training.getTrainer();
+    if (trainer.getTraining() == null) {
+      trainer.setTraining(training);
+    }
+  }
+
+  private <T> T getById(Map<Long, T> entities, Long id) {
+    T entity = entities.get(id);
+    if (entity == null) {
+      throw new IllegalStateException("Seed data references missing id: " + id);
+    }
+    return entity;
+  }
+
+  private record SeedData(
+      List<TrainingTypeSeed> trainingTypes,
+      List<TraineeSeed> trainees,
+      List<TrainerSeed> trainers,
+      List<TrainingSeed> trainings) {}
+
+  private record TrainingTypeSeed(Long id, String name) {}
+
+  private record TraineeSeed(
+      Long id,
+      String firstName,
+      String lastName,
+      String username,
+      String password,
+      boolean active,
+      LocalDate dateOfBirth,
+      String address) {}
+
+  private record TrainerSeed(
+      Long id,
+      String firstName,
+      String lastName,
+      String username,
+      String password,
+      boolean active,
+      Long specializationId) {}
+
+  private record TrainingSeed(
+      Long id,
+      String name,
+      Long typeId,
+      Long traineeId,
+      Long trainerId,
+      LocalDate date,
+      int durationInMinutes) {}
 }
