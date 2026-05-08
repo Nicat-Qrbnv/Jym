@@ -14,4 +14,3 @@ Multi-module Maven project containing Java/Spring Boot microservices.
 Modules inherit common dependency and plugin management from the parent `pom.xml`.
 
 - ### crm
-- ### auth

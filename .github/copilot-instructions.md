@@ -1,0 +1,4 @@
+- don't run any command unless explicitly asked
+- don't suppress any warning unless explicitly asked
+- don't go outside the context of the task
+- do what I say not what the best unless explicitly asked
