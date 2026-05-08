@@ -1,11 +1,15 @@
 package com.epam.jym.crm.service.impl;
 
 import com.epam.jym.crm.dto.TrainerDto;
+import com.epam.jym.crm.dto.TrainerUpdateDto;
 import com.epam.jym.crm.entity.Trainer;
+import com.epam.jym.crm.entity.Training;
+import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.AuthenticationService;
 import com.epam.jym.crm.service.TrainerService;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,16 +40,34 @@ public class TrainerServiceImpl implements TrainerService {
   }
 
   @Override
-  public TrainerDto updateTrainer(Long trainerId, TrainerDto trainerDto) {
-    trainerRepository
+  public TrainerDto updateTrainer(Long trainerId, TrainerUpdateDto trainerDto) {
+    if (trainerDto == null) {
+      throw new IllegalArgumentException("trainerDto must not be null");
+    }
+
+    Trainer trainer = trainerRepository
         .findById(trainerId)
         .orElseThrow(
             () -> {
               log.warn("Failed to update trainer: trainerId={} not found", trainerId);
               return new IllegalArgumentException("Trainer not found: " + trainerId);
             });
-    Trainer trainer = modelMapper.map(trainerDto, Trainer.class);
-    trainer.setId(trainerId);
+
+    if (isNameChanged(trainer, trainerDto.firstName(), trainerDto.lastName())) {
+      trainer.setUsername(authenticationService.generateUsername(
+          trainerDto.firstName(), trainerDto.lastName()));
+    }
+    trainer.setFirstName(trainerDto.firstName());
+    trainer.setLastName(trainerDto.lastName());
+    trainer.setPassword(trainerDto.password());
+    trainer.setActive(trainerDto.active());
+    trainer.setTraining(trainerDto.training() == null
+        ? null
+        : modelMapper.map(trainerDto.training(), Training.class));
+    trainer.setSpecialization(trainerDto.specialization() == null
+        ? null
+        : modelMapper.map(trainerDto.specialization(), TrainingType.class));
+
     trainer = trainerRepository.save(trainer);
     log.info(
         "Updated trainer with id={} username={}",
@@ -53,6 +75,11 @@ public class TrainerServiceImpl implements TrainerService {
         trainer.getUsername());
 
     return modelMapper.map(trainer, TrainerDto.class);
+  }
+
+  private boolean isNameChanged(Trainer trainer, String firstName, String lastName) {
+    return !Objects.equals(trainer.getFirstName(), firstName)
+        || !Objects.equals(trainer.getLastName(), lastName);
   }
 
   @Override

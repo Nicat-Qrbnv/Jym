@@ -35,7 +35,7 @@ public class Initiator {
       Table<Training> trainingTable,
       Table<TrainingType> trainingTypeTable,
       ObjectMapper objectMapper,
-      @Value("classpath:data/seed-data.json") Resource seedDataResource) {
+      @Value("${seed-data.location}") Resource seedDataResource) {
     this.traineeTable = traineeTable;
     this.trainerTable = trainerTable;
     this.trainingTable = trainingTable;

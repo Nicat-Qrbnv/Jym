@@ -4,3 +4,6 @@ server:
 spring:
   application:
     name: crm
+
+seed-data:
+  location: ${SEED_DATA_LOCATION:classpath:data/seed-data.json}

@@ -5,12 +5,15 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.TrainerDto;
+import com.epam.jym.crm.dto.TrainerUpdateDto;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.AuthenticationService;
+import com.epam.jym.crm.service.TrainerService;
 import java.util.List;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +34,14 @@ class TrainerServiceImplTest {
   private ModelMapper modelMapper;
 
   @InjectMocks
-  private TrainerServiceImpl trainerService;
+  private TrainerServiceImpl trainerServiceImpl;
+
+  private TrainerService trainerService;
+
+  @BeforeEach
+  void setUp() {
+    trainerService = trainerServiceImpl;
+  }
 
   @Test
   void createTrainerShouldRegisterSaveAndReturnDto() {
@@ -53,30 +63,50 @@ class TrainerServiceImplTest {
   }
 
   @Test
-  void updateTrainerShouldSaveMappedEntityWithRequestedId() {
+  void updateTrainerShouldPreserveIdAndRegenerateUsernameWhenNameChanges() {
     Long trainerId = 10L;
-    TrainerDto trainerDto = createTrainerDto(null, "updated.trainer");
-    Trainer existingTrainer = createTrainer(trainerId, "old.trainer");
-    Trainer mappedTrainer = createTrainer(null, "updated.trainer");
-    Trainer savedTrainer = createTrainer(trainerId, "updated.trainer");
-    TrainerDto savedTrainerDto = createTrainerDto(trainerId, "updated.trainer");
+    TrainerUpdateDto trainerDto = createTrainerUpdateDto();
+    Trainer existingTrainer = createTrainer(trainerId, "Old.Name");
+    existingTrainer.setFirstName("Old");
+    existingTrainer.setLastName("Name");
+    TrainerDto savedTrainerDto = createTrainerDto(trainerId, "John.Doe");
 
     when(trainerRepository.findById(trainerId)).thenReturn(Optional.of(existingTrainer));
-    when(modelMapper.map(trainerDto, Trainer.class)).thenReturn(mappedTrainer);
-    when(trainerRepository.save(mappedTrainer)).thenReturn(savedTrainer);
-    when(modelMapper.map(savedTrainer, TrainerDto.class)).thenReturn(savedTrainerDto);
+    when(authenticationService.generateUsername("John", "Doe")).thenReturn("John.Doe");
+    when(trainerRepository.save(existingTrainer)).thenReturn(existingTrainer);
+    when(modelMapper.map(existingTrainer, TrainerDto.class)).thenReturn(savedTrainerDto);
 
     TrainerDto result = trainerService.updateTrainer(trainerId, trainerDto);
 
     Assertions.assertThat(result).isSameAs(savedTrainerDto);
-    Assertions.assertThat(mappedTrainer.getId()).isEqualTo(trainerId);
-    verify(trainerRepository).save(mappedTrainer);
+    Assertions.assertThat(existingTrainer.getId()).isEqualTo(trainerId);
+    Assertions.assertThat(existingTrainer.getUsername()).isEqualTo("John.Doe");
+    verify(authenticationService).generateUsername("John", "Doe");
+    verify(trainerRepository).save(existingTrainer);
+  }
+
+  @Test
+  void updateTrainerShouldKeepUsernameWhenNameDoesNotChange() {
+    Long trainerId = 10L;
+    TrainerUpdateDto trainerDto = createTrainerUpdateDto();
+    Trainer existingTrainer = createTrainer(trainerId, "John.Doe");
+    TrainerDto savedTrainerDto = createTrainerDto(trainerId, "John.Doe");
+
+    when(trainerRepository.findById(trainerId)).thenReturn(Optional.of(existingTrainer));
+    when(trainerRepository.save(existingTrainer)).thenReturn(existingTrainer);
+    when(modelMapper.map(existingTrainer, TrainerDto.class)).thenReturn(savedTrainerDto);
+
+    TrainerDto result = trainerService.updateTrainer(trainerId, trainerDto);
+
+    Assertions.assertThat(result).isSameAs(savedTrainerDto);
+    Assertions.assertThat(existingTrainer.getUsername()).isEqualTo("John.Doe");
+    verifyNoInteractions(authenticationService);
   }
 
   @Test
   void updateTrainerShouldThrowExceptionWhenTrainerDoesNotExist() {
     Long trainerId = 404L;
-    TrainerDto trainerDto = createTrainerDto(null, "missing.trainer");
+    TrainerUpdateDto trainerDto = createTrainerUpdateDto();
 
     when(trainerRepository.findById(trainerId)).thenReturn(Optional.empty());
 
@@ -156,6 +186,10 @@ class TrainerServiceImplTest {
 
   private TrainerDto createTrainerDto(Long id, String username) {
     return new TrainerDto(id, "John", "Doe", username, "password", true, null, null);
+  }
+
+  private TrainerUpdateDto createTrainerUpdateDto() {
+    return new TrainerUpdateDto("John", "Doe", "password", true, null, null);
   }
 }
 

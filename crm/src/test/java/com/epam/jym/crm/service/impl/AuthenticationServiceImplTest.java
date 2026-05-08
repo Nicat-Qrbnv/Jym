@@ -36,13 +36,13 @@ class AuthenticationServiceImplTest {
     trainee.setFirstName("John");
     trainee.setLastName("Doe");
 
-    when(trainerRepository.findByUsername("john.doe")).thenReturn(Optional.empty());
-    when(traineeRepository.findByUsername("john.doe")).thenReturn(Optional.empty());
+    when(trainerRepository.findByUsername("John.Doe")).thenReturn(Optional.empty());
+    when(traineeRepository.findByUsername("John.Doe")).thenReturn(Optional.empty());
 
     Trainee registeredTrainee = authenticationService.register(trainee);
 
     Assertions.assertThat(registeredTrainee).isSameAs(trainee);
-    Assertions.assertThat(registeredTrainee.getUsername()).isEqualTo("john.doe");
+    Assertions.assertThat(registeredTrainee.getUsername()).isEqualTo("John.Doe");
     Assertions.assertThat(registeredTrainee.getPassword()).hasSize(PASSWORD_LENGTH);
     Assertions.assertThat(registeredTrainee.getId()).isNotNull();
   }
@@ -54,13 +54,13 @@ class AuthenticationServiceImplTest {
     trainer.setFirstName("Jane");
     trainer.setLastName("Smith");
 
-    when(trainerRepository.findByUsername("jane.smith")).thenReturn(Optional.empty());
-    when(traineeRepository.findByUsername("jane.smith")).thenReturn(Optional.empty());
+    when(trainerRepository.findByUsername("Jane.Smith")).thenReturn(Optional.empty());
+    when(traineeRepository.findByUsername("Jane.Smith")).thenReturn(Optional.empty());
 
     Trainer registeredTrainer = authenticationService.register(trainer);
 
     Assertions.assertThat(registeredTrainer.getId()).isEqualTo(99L);
-    Assertions.assertThat(registeredTrainer.getUsername()).isEqualTo("jane.smith");
+    Assertions.assertThat(registeredTrainer.getUsername()).isEqualTo("Jane.Smith");
     Assertions.assertThat(registeredTrainer.getPassword()).hasSize(PASSWORD_LENGTH);
   }
 
@@ -78,13 +78,13 @@ class AuthenticationServiceImplTest {
     existingTrainee.setFirstName("Alice");
     existingTrainee.setLastName("Doe");
 
-    when(trainerRepository.findByUsername("john.doe")).thenReturn(Optional.of(existingTrainer));
+    when(trainerRepository.findByUsername("John.Doe")).thenReturn(Optional.of(existingTrainer));
     when(trainerRepository.findAll()).thenReturn(List.of(existingTrainer));
     when(traineeRepository.findAll()).thenReturn(List.of(existingTrainee));
 
     Trainee registeredTrainee = authenticationService.register(trainee);
 
-    Assertions.assertThat(registeredTrainee.getUsername()).isEqualTo("john.doe1");
+    Assertions.assertThat(registeredTrainee.getUsername()).isEqualTo("John.Doe1");
     Assertions.assertThat(registeredTrainee.getPassword()).hasSize(PASSWORD_LENGTH);
     Assertions.assertThat(registeredTrainee.getId()).isNotNull();
   }
@@ -103,14 +103,14 @@ class AuthenticationServiceImplTest {
     existingTrainee.setFirstName("john");
     existingTrainee.setLastName("doe");
 
-    when(trainerRepository.findByUsername("john.doe")).thenReturn(Optional.empty());
-    when(traineeRepository.findByUsername("john.doe")).thenReturn(Optional.of(existingTrainee));
+    when(trainerRepository.findByUsername("John.Doe")).thenReturn(Optional.empty());
+    when(traineeRepository.findByUsername("John.Doe")).thenReturn(Optional.of(existingTrainee));
     when(trainerRepository.findAll()).thenReturn(List.of(existingTrainer));
     when(traineeRepository.findAll()).thenReturn(List.of(existingTrainee));
 
     Trainer registeredTrainer = authenticationService.register(trainer);
 
-    Assertions.assertThat(registeredTrainer.getUsername()).isEqualTo("john.doe2");
+    Assertions.assertThat(registeredTrainer.getUsername()).isEqualTo("John.Doe2");
   }
 
   @Test

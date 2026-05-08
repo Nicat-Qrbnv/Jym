@@ -5,7 +5,6 @@ import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.repository.UserRepository;
 import com.epam.jym.crm.service.AuthenticationService;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -45,13 +44,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     return user;
   }
 
-  private String generateUsername(String firstName, String lastName) {
+  @Override
+  public String generateUsername(String firstName, String lastName) {
     if (firstName == null || lastName == null) {
       log.warn("Username generation failed: firstName or lastName is null");
       throw new IllegalArgumentException("firstName and lastName must not be null");
     }
 
-    String baseUsername = (firstName + "." + lastName).toLowerCase(Locale.ROOT);
+    String baseUsername = firstName + "." + lastName;
     if (usernameExists(baseUsername)) {
       log.debug("Username {} already exists, adding suffix", baseUsername);
       baseUsername += countUsersWithSameName(baseUsername);

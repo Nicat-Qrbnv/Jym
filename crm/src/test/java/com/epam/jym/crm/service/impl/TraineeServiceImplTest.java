@@ -5,13 +5,16 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.TraineeDto;
+import com.epam.jym.crm.dto.TraineeUpdateDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.service.AuthenticationService;
+import com.epam.jym.crm.service.TraineeService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,7 +35,14 @@ class TraineeServiceImplTest {
   private ModelMapper modelMapper;
 
   @InjectMocks
-  private TraineeServiceImpl traineeService;
+  private TraineeServiceImpl traineeServiceImpl;
+
+  private TraineeService traineeService;
+
+  @BeforeEach
+  void setUp() {
+    traineeService = traineeServiceImpl;
+  }
 
   @Test
   void createTraineeShouldRegisterSaveAndReturnDto() {
@@ -54,30 +64,50 @@ class TraineeServiceImplTest {
   }
 
   @Test
-  void updateTraineeShouldSaveMappedEntityWithRequestedId() {
+  void updateTraineeShouldPreserveIdAndRegenerateUsernameWhenNameChanges() {
     Long traineeId = 10L;
-    TraineeDto traineeDto = createTraineeDto(null, "updated.trainee");
-    Trainee existingTrainee = createTrainee(traineeId, "old.trainee");
-    Trainee mappedTrainee = createTrainee(null, "updated.trainee");
-    Trainee savedTrainee = createTrainee(traineeId, "updated.trainee");
-    TraineeDto savedTraineeDto = createTraineeDto(traineeId, "updated.trainee");
+    TraineeUpdateDto traineeDto = createTraineeUpdateDto();
+    Trainee existingTrainee = createTrainee(traineeId, "Old.Name");
+    existingTrainee.setFirstName("Old");
+    existingTrainee.setLastName("Name");
+    TraineeDto savedTraineeDto = createTraineeDto(traineeId, "John.Doe");
 
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(existingTrainee));
-    when(modelMapper.map(traineeDto, Trainee.class)).thenReturn(mappedTrainee);
-    when(traineeRepository.save(mappedTrainee)).thenReturn(savedTrainee);
-    when(modelMapper.map(savedTrainee, TraineeDto.class)).thenReturn(savedTraineeDto);
+    when(authenticationService.generateUsername("John", "Doe")).thenReturn("John.Doe");
+    when(traineeRepository.save(existingTrainee)).thenReturn(existingTrainee);
+    when(modelMapper.map(existingTrainee, TraineeDto.class)).thenReturn(savedTraineeDto);
 
     TraineeDto result = traineeService.updateTrainee(traineeId, traineeDto);
 
     Assertions.assertThat(result).isSameAs(savedTraineeDto);
-    Assertions.assertThat(mappedTrainee.getId()).isEqualTo(traineeId);
-    verify(traineeRepository).save(mappedTrainee);
+    Assertions.assertThat(existingTrainee.getId()).isEqualTo(traineeId);
+    Assertions.assertThat(existingTrainee.getUsername()).isEqualTo("John.Doe");
+    verify(authenticationService).generateUsername("John", "Doe");
+    verify(traineeRepository).save(existingTrainee);
+  }
+
+  @Test
+  void updateTraineeShouldKeepUsernameWhenNameDoesNotChange() {
+    Long traineeId = 10L;
+    TraineeUpdateDto traineeDto = createTraineeUpdateDto();
+    Trainee existingTrainee = createTrainee(traineeId, "John.Doe");
+    TraineeDto savedTraineeDto = createTraineeDto(traineeId, "John.Doe");
+
+    when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(existingTrainee));
+    when(traineeRepository.save(existingTrainee)).thenReturn(existingTrainee);
+    when(modelMapper.map(existingTrainee, TraineeDto.class)).thenReturn(savedTraineeDto);
+
+    TraineeDto result = traineeService.updateTrainee(traineeId, traineeDto);
+
+    Assertions.assertThat(result).isSameAs(savedTraineeDto);
+    Assertions.assertThat(existingTrainee.getUsername()).isEqualTo("John.Doe");
+    verifyNoInteractions(authenticationService);
   }
 
   @Test
   void updateTraineeShouldThrowExceptionWhenTraineeDoesNotExist() {
     Long traineeId = 404L;
-    TraineeDto traineeDto = createTraineeDto(null, "missing.trainee");
+    TraineeUpdateDto traineeDto = createTraineeUpdateDto();
 
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.empty());
 
@@ -172,6 +202,16 @@ class TraineeServiceImplTest {
         "John",
         "Doe",
         username,
+        "password",
+        true,
+        LocalDate.of(2000, 1, 1),
+        "Baku");
+  }
+
+  private TraineeUpdateDto createTraineeUpdateDto() {
+    return new TraineeUpdateDto(
+        "John",
+        "Doe",
         "password",
         true,
         LocalDate.of(2000, 1, 1),
