@@ -12,6 +12,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,7 +22,12 @@ public class TraineeServiceImpl implements TraineeService {
 
   private final TraineeRepository traineeRepository;
   private final AuthenticationService authenticationService;
-  private final ModelMapper modelMapper;
+  private ModelMapper modelMapper;
+
+  @Autowired
+  public void setModelMapper(ModelMapper modelMapper) {
+    this.modelMapper = modelMapper;
+  }
 
   @Override
   public TraineeDto createTrainee(TraineeDto traineeDto) {

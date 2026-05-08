@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -26,21 +27,27 @@ public class Initiator {
   private final Table<Trainer> trainerTable;
   private final Table<Training> trainingTable;
   private final Table<TrainingType> trainingTypeTable;
-  private final ObjectMapper objectMapper;
-  private final Resource seedDataResource;
+  private ObjectMapper objectMapper;
+  private Resource seedDataResource;
 
   public Initiator(
       Table<Trainee> traineeTable,
       Table<Trainer> trainerTable,
       Table<Training> trainingTable,
-      Table<TrainingType> trainingTypeTable,
-      ObjectMapper objectMapper,
-      @Value("${seed-data.location}") Resource seedDataResource) {
+      Table<TrainingType> trainingTypeTable) {
     this.traineeTable = traineeTable;
     this.trainerTable = trainerTable;
     this.trainingTable = trainingTable;
     this.trainingTypeTable = trainingTypeTable;
+  }
+
+  @Autowired
+  public void setObjectMapper(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
+  }
+
+  @Value("${seed-data.location}")
+  public void setSeedDataResource(Resource seedDataResource) {
     this.seedDataResource = seedDataResource;
   }
 
