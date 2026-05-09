@@ -40,7 +40,8 @@ class TraineeServiceImplTest {
   private TraineeService traineeService;
 
   @BeforeEach
-  void setUp() {
+  public void setUp() {
+    traineeServiceImpl.setModelMapper(modelMapper);
     traineeService = traineeServiceImpl;
   }
 

@@ -9,10 +9,11 @@ import com.epam.jym.crm.dto.TrainerUpdateDto;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.AuthenticationService;
-import com.epam.jym.crm.service.TrainerService;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,13 +35,11 @@ class TrainerServiceImplTest {
   private ModelMapper modelMapper;
 
   @InjectMocks
-  private TrainerServiceImpl trainerServiceImpl;
-
-  private TrainerService trainerService;
+  private TrainerServiceImpl trainerService;
 
   @BeforeEach
-  void setUp() {
-    trainerService = trainerServiceImpl;
+  public void setUp() {
+    trainerService.setModelMapper(modelMapper);
   }
 
   @Test
