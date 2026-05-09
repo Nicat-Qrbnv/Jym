@@ -10,8 +10,6 @@ public interface TrainingTypeRepository extends BaseRepository<TrainingType> {
 
   Optional<TrainingType> findById(Long id);
 
-  Optional<TrainingType> findByName(String name);
-
   List<TrainingType> findAll();
 
   void delete(Long id);

@@ -10,8 +10,6 @@ public interface TrainingRepository extends BaseRepository<Training> {
 
   Optional<Training> findById(Long id);
 
-  Optional<Training> findByName(String name);
-
   List<Training> findAll();
 
   void delete(Long id);

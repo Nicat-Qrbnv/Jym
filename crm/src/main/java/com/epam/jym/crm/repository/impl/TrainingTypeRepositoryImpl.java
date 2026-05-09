@@ -30,12 +30,6 @@ public class TrainingTypeRepositoryImpl implements TrainingTypeRepository {
   }
 
   @Override
-  public Optional<TrainingType> findByName(String name) {
-    requireName(name);
-    return trainingTypeTable.getByName(name);
-  }
-
-  @Override
   public List<TrainingType> findAll() {
     return List.copyOf(trainingTypeTable.getAll());
   }
