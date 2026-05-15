@@ -1,0 +1,31 @@
+name: jym
+services:
+  postgres:
+    image: postgres:17
+    container_name: crm-postgres
+    environment:
+      POSTGRES_DB: crm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - crm-postgres-data:/var/lib/postgresql/data
+
+  crm:
+    build:
+      context: .
+      dockerfile: crm/Dockerfile
+    container_name: crm-app
+    environment:
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_URL: jdbc:postgresql://postgres:5432/crm
+      SEED_DATA_LOCATION: classpath:data/seed-data.json
+    ports:
+      - "8010:8010"
+    depends_on:
+      - postgres
+
+volumes:
+  crm-postgres-data:
