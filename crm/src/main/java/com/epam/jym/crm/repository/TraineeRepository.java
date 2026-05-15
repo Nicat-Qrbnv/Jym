@@ -1,18 +1,10 @@
 package com.epam.jym.crm.repository;
 
 import com.epam.jym.crm.entity.Trainee;
-import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TraineeRepository extends UserRepository<Trainee> {
+public interface TraineeRepository extends JpaRepository<Trainee, Long> {
 
-  Trainee save(Trainee trainee);
-
-  Optional<Trainee> findById(Long id);
-
-  Optional<Trainee> findByUsername(String name);
-
-  List<Trainee> findAll();
-
-  void delete(Long id);
+  Optional<Trainee> findByUserUsername(String username);
 }

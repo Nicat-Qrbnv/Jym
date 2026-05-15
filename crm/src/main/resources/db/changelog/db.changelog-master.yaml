@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/ddl/004-create-trainers.sql
   - include:
       file: db/changelog/changes/ddl/005-create-trainings.sql
+  - include:
+      file: db/changelog/changes/seed/006-seed-data.sql

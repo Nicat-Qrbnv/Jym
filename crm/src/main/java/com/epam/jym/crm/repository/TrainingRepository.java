@@ -1,16 +1,6 @@
 package com.epam.jym.crm.repository;
 
 import com.epam.jym.crm.entity.Training;
-import java.util.List;
-import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TrainingRepository extends BaseRepository<Training> {
-
-  Training save(Training training);
-
-  Optional<Training> findById(Long id);
-
-  List<Training> findAll();
-
-  void delete(Long id);
-}
+public interface TrainingRepository extends JpaRepository<Training, Long> {}

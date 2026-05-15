@@ -12,6 +12,5 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-
-seed-data:
-  location: ${SEED_DATA_LOCATION:classpath:data/seed-data.json}
+  liquibase:
+    enabled: true
