@@ -17,6 +17,8 @@ The current `Entity` interface is temporary and should not drive the final entit
 
 ## Java Model
 
+Use Jakarta Bean Validation on entity fields to protect required domain data before persistence.
+
 ### `User`
 
 Stores common account data:
@@ -31,26 +33,63 @@ Stores common account data:
 ```text
 public class User {
   private Long id;
+  @NotBlank
+  @Size(max = 255)
   private String firstName;
+  @NotBlank
+  @Size(max = 255)
   private String lastName;
+  @NotBlank
+  @Size(max = 255)
   private String username;
+  @NotBlank
+  @Size(max = 255)
   private String password;
   private boolean isActive;
 }
+```
+
+Validation rules:
+
+```text
+firstName: required, not blank, max 255 characters
+lastName: required, not blank, max 255 characters
+username: required, not blank, max 255 characters, unique in database
+password: required, not blank, max 255 characters
+isActive: primitive boolean, no validation needed
 ```
 
 ### `Trainer`
 
 Stores trainer-specific data and references one `User`.
 
+Current entity state:
+
+- `Trainer` has its own independent `id`.
+- `Trainer` references one existing `User` through `user_id`.
+- `Trainer` references one required `TrainingType` through `specialization_id`.
+- `Trainer` does not store a direct `Training` field.
+- Trainer trainings are represented from the `Training` side through `Training.trainer`.
+- `getUsername()` is a transient convenience method that reads `user.username`.
+
 ```text
 public class Trainer {
   private Long id;
+  @NotNull
   private User user;
-  private Training training;
+  @NotNull
   private TrainingType specialization;
 }
 ```
+
+Validation rules:
+
+```text
+user: required, must reference an existing User
+specialization: required, must reference an existing TrainingType
+```
+
+Do not add `private Training training` to `Trainer`. The current model keeps the training relationship owned by `Training`.
 
 ### `Trainee`
 
@@ -59,10 +98,73 @@ Stores trainee-specific data and references one `User`.
 ```text
 public class Trainee {
   private Long id;
+  @NotNull
   private User user;
   private LocalDate dateOfBirth;
+  @Size(max = 255)
   private String address;
 }
+```
+
+Validation rules:
+
+```text
+user: required, must reference an existing User
+dateOfBirth: optional
+address: optional, max 255 characters
+```
+
+### `TrainingType`
+
+Stores available training categories.
+
+```text
+public class TrainingType {
+  private Long id;
+  @NotBlank
+  @Size(max = 255)
+  private String name;
+}
+```
+
+Validation rules:
+
+```text
+name: required, not blank, max 255 characters
+```
+
+### `Training`
+
+Stores scheduled training data.
+
+```text
+public class Training {
+  private Long id;
+  @NotBlank
+  @Size(max = 255)
+  private String name;
+  @NotNull
+  private TrainingType type;
+  @NotNull
+  private Trainee trainee;
+  @NotNull
+  private Trainer trainer;
+  @NotNull
+  private LocalDate scheduledDate;
+  @Min(1)
+  private int durationInMinutes;
+}
+```
+
+Validation rules:
+
+```text
+name: required, not blank, max 255 characters
+type: required, must reference an existing TrainingType
+trainee: required, must reference an existing Trainee
+trainer: required, must reference an existing Trainer
+scheduledDate: required
+durationInMinutes: minimum 1 minute
 ```
 
 Common user fields should be accessed through the composed user:
@@ -139,7 +241,7 @@ User 1 -> 0..1 Trainee
 TrainingType 1 -> many Trainer
 TrainingType 1 -> many Training
 Trainee 1 -> many Training
-Trainer 1 -> many Training
+Trainer 1 -> many Training, represented by `Training.trainer`
 ```
 
 ## JPA Mapping
@@ -156,9 +258,18 @@ public class Trainer {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToOne(optional = false)
+  @OneToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false, unique = true)
   private User user;
+
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "specialization_id", nullable = false)
+  private TrainingType specialization;
+
+  @Transient
+  public String getUsername() {
+    return user == null ? null : user.getUsername();
+  }
 }
 ```
 
@@ -201,4 +312,5 @@ Optional<Trainee> findByUserUsername(String username);
 7. Update mappers/builders to use nested `User` objects.
 8. Update repositories to search by `user.username`.
 9. Add JPA `@OneToOne` mappings without cascade to `user` when persistence is introduced.
-10. Update tests for composition and user-first profile creation.
+10. Add Jakarta Bean Validation annotations to required entity fields.
+11. Update tests for composition, validations, and user-first profile creation.

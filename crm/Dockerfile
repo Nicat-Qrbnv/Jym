@@ -4,9 +4,11 @@ WORKDIR /app
 
 COPY pom.xml /app/pom.xml
 COPY crm/pom.xml /app/crm/pom.xml
+RUN mvn dependency:go-offline -B
+
 COPY crm/src /app/crm/src
 
-RUN mvn -pl crm -am clean package -DskipTests
+RUN mvn -pl crm -am clean package
 
 
 FROM eclipse-temurin:25-jre
