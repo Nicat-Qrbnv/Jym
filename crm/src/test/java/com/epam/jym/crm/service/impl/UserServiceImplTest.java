@@ -26,14 +26,11 @@ class UserServiceImplTest {
 
   private static final int PASSWORD_LENGTH = 10;
 
-  @Mock
-  private UserRepository userRepository;
+  @Mock private UserRepository userRepository;
 
-  @Mock
-  private ModelMapper mapper;
+  @Mock private ModelMapper mapper;
 
-  @InjectMocks
-  private UserServiceImpl authenticationService;
+  @InjectMocks private UserServiceImpl authenticationService;
 
   @BeforeEach
   void setUp() {
@@ -46,15 +43,19 @@ class UserServiceImplTest {
     UserCreateDto userDto = new UserCreateDto("John", "Doe");
 
     when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(0);
-    when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-      User user = invocation.getArgument(0);
-      user.setId(10L);
-      return user;
-    });
-    when(mapper.map(any(User.class), eq(RegisteredUserDto.class))).thenAnswer(invocation -> {
-      User user = invocation.getArgument(0);
-      return toRegisteredUserDto(user);
-    });
+    when(userRepository.save(any(User.class)))
+        .thenAnswer(
+            invocation -> {
+              User user = invocation.getArgument(0);
+              user.setId(10L);
+              return user;
+            });
+    when(mapper.map(any(User.class), eq(RegisteredUserDto.class)))
+        .thenAnswer(
+            invocation -> {
+              User user = invocation.getArgument(0);
+              return toRegisteredUserDto(user);
+            });
 
     RegisteredUserDto registeredUser = authenticationService.register(userDto);
 
@@ -80,10 +81,12 @@ class UserServiceImplTest {
 
     when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(2);
     when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-    when(mapper.map(any(User.class), eq(RegisteredUserDto.class))).thenAnswer(invocation -> {
-      User user = invocation.getArgument(0);
-      return toRegisteredUserDto(user);
-    });
+    when(mapper.map(any(User.class), eq(RegisteredUserDto.class)))
+        .thenAnswer(
+            invocation -> {
+              User user = invocation.getArgument(0);
+              return toRegisteredUserDto(user);
+            });
 
     RegisteredUserDto registeredUser = authenticationService.register(userDto);
 

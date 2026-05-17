@@ -13,7 +13,7 @@ import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.TrainerRepository;
-import com.epam.jym.crm.repository.TrainingTypeRepository;
+import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
 import java.util.List;
 import java.util.Optional;
@@ -30,20 +30,15 @@ import org.modelmapper.ModelMapper;
 @ExtendWith(MockitoExtension.class)
 class TrainerServiceImplTest {
 
-  @Mock
-  private TrainerRepository trainerRepository;
+  @Mock private TrainerRepository trainerRepository;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
-  @Mock
-  private TrainingTypeRepository trainingTypeRepository;
+  @Mock private TrainingTypeService trainingTypeService;
 
-  @Mock
-  private ModelMapper modelMapper;
+  @Mock private ModelMapper modelMapper;
 
-  @InjectMocks
-  private TrainerServiceImpl trainerService;
+  @InjectMocks private TrainerServiceImpl trainerService;
 
   @BeforeEach
   public void setUp() {
@@ -60,7 +55,7 @@ class TrainerServiceImplTest {
 
     when(trainerRepository.userHasTrainerProfile(1L)).thenReturn(false);
     when(userService.getUser(1L)).thenReturn(user);
-    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.of(specialization));
+    when(trainingTypeService.getType(2L)).thenReturn(specialization);
     when(trainerRepository.save(any(Trainer.class))).thenReturn(savedTrainer);
     when(modelMapper.map(savedTrainer, TrainerDto.class)).thenReturn(savedTrainerDto);
 
@@ -83,7 +78,7 @@ class TrainerServiceImplTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("User already has a trainer profile: 1");
 
-    verifyNoInteractions(userService, trainingTypeRepository, modelMapper);
+    verifyNoInteractions(userService, trainingTypeService, modelMapper);
   }
 
   @Test
@@ -93,7 +88,8 @@ class TrainerServiceImplTest {
 
     when(trainerRepository.userHasTrainerProfile(1L)).thenReturn(false);
     when(userService.getUser(1L)).thenReturn(user);
-    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.empty());
+    when(trainingTypeService.getType(2L))
+        .thenThrow(new IllegalArgumentException("Training type not found: 2"));
 
     Assertions.assertThatThrownBy(() -> trainerService.createTrainer(trainerDto))
         .isInstanceOf(IllegalArgumentException.class)
@@ -113,7 +109,7 @@ class TrainerServiceImplTest {
     TrainerDto savedTrainerDto = createTrainerDto(trainerId, "John.Doe");
 
     when(trainerRepository.findById(trainerId)).thenReturn(Optional.of(existingTrainer));
-    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.of(newSpecialization));
+    when(trainingTypeService.getType(2L)).thenReturn(newSpecialization);
     when(trainerRepository.save(existingTrainer)).thenReturn(existingTrainer);
     when(modelMapper.map(existingTrainer, TrainerDto.class)).thenReturn(savedTrainerDto);
 
@@ -132,7 +128,8 @@ class TrainerServiceImplTest {
         createTrainer(trainerId, createUser(1L, "john.doe"), createTrainingType(1L, "Yoga"));
 
     when(trainerRepository.findById(trainerId)).thenReturn(Optional.of(existingTrainer));
-    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.empty());
+    when(trainingTypeService.getType(2L))
+        .thenThrow(new IllegalArgumentException("Training type not found: 2"));
 
     Assertions.assertThatThrownBy(() -> trainerService.updateTrainer(trainerId, trainerDto))
         .isInstanceOf(IllegalArgumentException.class)
@@ -152,7 +149,7 @@ class TrainerServiceImplTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Trainer not found by id: " + trainerId);
 
-    verifyNoInteractions(userService, trainingTypeRepository, modelMapper);
+    verifyNoInteractions(userService, trainingTypeService, modelMapper);
   }
 
   @Test
@@ -267,4 +264,3 @@ class TrainerServiceImplTest {
     return new TrainerUpdateDto(2L);
   }
 }
-

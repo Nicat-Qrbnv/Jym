@@ -29,17 +29,13 @@ import org.modelmapper.ModelMapper;
 @ExtendWith(MockitoExtension.class)
 class TraineeServiceImplTest {
 
-  @Mock
-  private TraineeRepository traineeRepository;
+  @Mock private TraineeRepository traineeRepository;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
-  @Mock
-  private ModelMapper modelMapper;
+  @Mock private ModelMapper modelMapper;
 
-  @InjectMocks
-  private TraineeServiceImpl traineeServiceImpl;
+  @InjectMocks private TraineeServiceImpl traineeServiceImpl;
 
   private TraineeService traineeService;
 
@@ -130,6 +126,31 @@ class TraineeServiceImplTest {
   }
 
   @Test
+  void deleteTraineeShouldDeleteByUsername() {
+    String username = "john.doe";
+    Trainee trainee = createTrainee(10L, createUser(1L, username));
+
+    when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.of(trainee));
+
+    traineeService.deleteTrainee(username);
+
+    verify(traineeRepository).delete(trainee);
+  }
+
+  @Test
+  void deleteTraineeShouldThrowExceptionWhenUsernameDoesNotExist() {
+    String username = "missing";
+
+    when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.empty());
+
+    Assertions.assertThatThrownBy(() -> traineeService.deleteTrainee(username))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Trainee not found: " + username);
+
+    verifyNoInteractions(userService, modelMapper);
+  }
+
+  @Test
   void selectTraineeShouldReturnMappedDtoWhenTraineeExists() {
     Long traineeId = 10L;
     Trainee trainee = createTrainee(traineeId, createUser(1L, "john.doe"));
@@ -157,7 +178,7 @@ class TraineeServiceImplTest {
   }
 
   @Test
-  void selectTraineeByUsernameShouldReturnMappedDtoWhenTraineeExists() {
+  void getTraineeByUsernameShouldReturnMappedDtoWhenTraineeExists() {
     String username = "john.doe";
     Trainee trainee = createTrainee(10L, createUser(1L, username));
     TraineeDto traineeDto = createTraineeDto(10L, username);
@@ -165,18 +186,18 @@ class TraineeServiceImplTest {
     when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.of(trainee));
     when(modelMapper.map(trainee, TraineeDto.class)).thenReturn(traineeDto);
 
-    TraineeDto result = traineeService.selectTraineeByUsername(username);
+    TraineeDto result = traineeService.getTraineeByUsername(username);
 
     Assertions.assertThat(result).isSameAs(traineeDto);
   }
 
   @Test
-  void selectTraineeByUsernameShouldThrowExceptionWhenTraineeDoesNotExist() {
+  void getTraineeByUsernameShouldThrowExceptionWhenTraineeDoesNotExist() {
     String username = "missing";
 
     when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.empty());
 
-    Assertions.assertThatThrownBy(() -> traineeService.selectTraineeByUsername(username))
+    Assertions.assertThatThrownBy(() -> traineeService.getTraineeByUsername(username))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Trainee not found: " + username);
 
@@ -184,7 +205,7 @@ class TraineeServiceImplTest {
   }
 
   @Test
-  void selectAllTraineesShouldReturnMappedDtos() {
+  void getAllTraineesShouldReturnMappedDtos() {
     Trainee firstTrainee = createTrainee(1L, createUser(1L, "first.trainee"));
     Trainee secondTrainee = createTrainee(2L, createUser(2L, "second.trainee"));
     TraineeDto firstDto = createTraineeDto(1L, "first.trainee");
@@ -194,7 +215,7 @@ class TraineeServiceImplTest {
     when(modelMapper.map(firstTrainee, TraineeDto.class)).thenReturn(firstDto);
     when(modelMapper.map(secondTrainee, TraineeDto.class)).thenReturn(secondDto);
 
-    List<TraineeDto> result = traineeService.selectAllTrainees();
+    List<TraineeDto> result = traineeService.getAllTrainees();
 
     Assertions.assertThat(result).containsExactly(firstDto, secondDto);
   }
@@ -231,4 +252,3 @@ class TraineeServiceImplTest {
     return new TraineeUpdateDto(LocalDate.of(2000, 1, 1), "Baku");
   }
 }
-

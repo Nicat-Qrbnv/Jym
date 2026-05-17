@@ -19,9 +19,9 @@ public interface TraineeService {
 
   TraineeDto selectTrainee(Long traineeId);
 
-  @NonNull Trainee getTraineeById(Long traineeId);
+  @NonNull Trainee getTrainee(Long traineeId);
 
-  TraineeDto selectTraineeByUsername(String username);
+  TraineeDto getTraineeByUsername(String username);
 
-  List<TraineeDto> selectAllTrainees();
+  List<TraineeDto> getAllTrainees();
 }

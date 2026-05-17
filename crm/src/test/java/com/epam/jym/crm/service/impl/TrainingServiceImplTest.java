@@ -12,11 +12,11 @@ import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
-import com.epam.jym.crm.repository.TraineeRepository;
-import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.repository.TrainingRepository;
-import com.epam.jym.crm.repository.TrainingTypeRepository;
+import com.epam.jym.crm.service.TraineeService;
+import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
+import com.epam.jym.crm.service.TrainingTypeService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -33,23 +33,17 @@ import org.modelmapper.ModelMapper;
 @ExtendWith(MockitoExtension.class)
 class TrainingServiceImplTest {
 
-  @Mock
-  private TrainingRepository trainingRepository;
+  @Mock private TrainingRepository trainingRepository;
 
-  @Mock
-  private TrainingTypeRepository trainingTypeRepository;
+  @Mock private TrainingTypeService trainingTypeService;
 
-  @Mock
-  private TraineeRepository traineeRepository;
+  @Mock private TraineeService traineeService;
 
-  @Mock
-  private TrainerRepository trainerRepository;
+  @Mock private TrainerService trainerService;
 
-  @Mock
-  private ModelMapper modelMapper;
+  @Mock private ModelMapper modelMapper;
 
-  @InjectMocks
-  private TrainingServiceImpl trainingServiceImpl;
+  @InjectMocks private TrainingServiceImpl trainingServiceImpl;
 
   private TrainingService trainingService;
 
@@ -68,9 +62,9 @@ class TrainingServiceImplTest {
     Training savedTraining = createTraining(10L, "Java Basics", type, trainee, trainer);
     TrainingDto savedTrainingDto = createTrainingDto(10L, "Java Basics");
 
-    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.of(type));
-    when(traineeRepository.findById(3L)).thenReturn(Optional.of(trainee));
-    when(trainerRepository.findById(4L)).thenReturn(Optional.of(trainer));
+    when(trainingTypeService.getType(2L)).thenReturn(type);
+    when(traineeService.getTrainee(3L)).thenReturn(trainee);
+    when(trainerService.getTrainer(4L)).thenReturn(trainer);
     when(trainingRepository.save(any(Training.class))).thenReturn(savedTraining);
     when(modelMapper.map(savedTraining, TrainingDto.class)).thenReturn(savedTrainingDto);
 
@@ -93,39 +87,39 @@ class TrainingServiceImplTest {
   void createTrainingShouldThrowExceptionWhenTrainingTypeDoesNotExist() {
     TrainingCreateDto trainingDto = createTrainingCreateDto();
 
-    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.empty());
+    when(trainingTypeService.getType(2L))
+        .thenThrow(new IllegalArgumentException("Training type not found: 2"));
 
     Assertions.assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Training type not found: 2");
 
-    verifyNoInteractions(traineeRepository, trainerRepository, modelMapper);
+    verifyNoInteractions(traineeService, trainerService, modelMapper);
   }
 
   @Test
   void createTrainingShouldThrowExceptionWhenTraineeDoesNotExist() {
     TrainingCreateDto trainingDto = createTrainingCreateDto();
 
-    when(trainingTypeRepository.findById(2L))
-        .thenReturn(Optional.of(createTrainingType(2L, "Fitness")));
-    when(traineeRepository.findById(3L)).thenReturn(Optional.empty());
+    when(trainingTypeService.getType(2L)).thenReturn(createTrainingType(2L, "Fitness"));
+    when(traineeService.getTrainee(3L))
+        .thenThrow(new IllegalArgumentException("Trainee not found: 3"));
 
     Assertions.assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Trainee not found: 3");
 
-    verifyNoInteractions(trainerRepository, modelMapper);
+    verifyNoInteractions(trainerService, modelMapper);
   }
 
   @Test
   void createTrainingShouldThrowExceptionWhenTrainerDoesNotExist() {
     TrainingCreateDto trainingDto = createTrainingCreateDto();
 
-    when(trainingTypeRepository.findById(2L))
-        .thenReturn(Optional.of(createTrainingType(2L, "Fitness")));
-    when(traineeRepository.findById(3L))
-        .thenReturn(Optional.of(createTrainee(3L, createUser(1L, "john.doe"))));
-    when(trainerRepository.findById(4L)).thenReturn(Optional.empty());
+    when(trainingTypeService.getType(2L)).thenReturn(createTrainingType(2L, "Fitness"));
+    when(traineeService.getTrainee(3L)).thenReturn(createTrainee(3L, createUser(1L, "john.doe")));
+    when(trainerService.getTrainer(4L))
+        .thenThrow(new IllegalArgumentException("Trainer not found: 4"));
 
     Assertions.assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
         .isInstanceOf(IllegalArgumentException.class)

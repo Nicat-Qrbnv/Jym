@@ -14,6 +14,10 @@ class PasswordGeneratorUtilTest {
   private static final String DIGITS = "0123456789";
   private static final String SPECIAL_CHARACTERS = "!@#$%^&*_";
 
+  private static boolean isAllowedCharacter(int character) {
+    return ALLOWED_CHARACTERS.indexOf(Character.toLowerCase(character)) >= 0;
+  }
+
   @Test
   void generateRandomPasswordShouldReturnValidPassword() {
     String password = PasswordGeneratorUtil.generateRandomPassword(PASSWORD_LENGTH);
@@ -41,9 +45,5 @@ class PasswordGeneratorUtilTest {
             IllegalArgumentException.class, () -> PasswordGeneratorUtil.generateRandomPassword(3));
 
     assertEquals("password length must be at least 4", exception.getMessage());
-  }
-
-  private static boolean isAllowedCharacter(int character) {
-    return ALLOWED_CHARACTERS.indexOf(Character.toLowerCase(character)) >= 0;
   }
 }

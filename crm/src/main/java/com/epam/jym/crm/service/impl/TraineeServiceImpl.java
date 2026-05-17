@@ -54,7 +54,7 @@ public class TraineeServiceImpl implements TraineeService {
       throw new IllegalArgumentException("traineeDto must not be null");
     }
 
-    Trainee trainee = getTraineeById(traineeId);
+    Trainee trainee = getTrainee(traineeId);
     trainee.setDateOfBirth(traineeDto.dateOfBirth());
     trainee.setAddress(traineeDto.address());
     trainee = traineeRepo.save(trainee);
@@ -72,17 +72,27 @@ public class TraineeServiceImpl implements TraineeService {
 
   @Override
   public void deleteTrainee(String username) {
-
+    log.debug("Deleting trainee by username={}", username);
+    Trainee trainee = getTrainee(username);
+    traineeRepo.delete(trainee);
+    log.info("Deleted trainee with id={} username={}", trainee.getId(), username);
   }
 
   @Override
   public TraineeDto selectTrainee(Long traineeId) {
     log.debug("Selecting trainee by id={}", traineeId);
-    return mapper.map(getTraineeById(traineeId), TraineeDto.class);
+    return mapper.map(getTrainee(traineeId), TraineeDto.class);
   }
 
   @Override
-  public @NonNull Trainee getTraineeById(Long traineeId) {
+  public TraineeDto getTraineeByUsername(String username) {
+    log.debug("Selecting trainee by username={}", username);
+    Trainee trainee = getTrainee(username);
+    return mapper.map(trainee, TraineeDto.class);
+  }
+
+  @Override
+  public @NonNull Trainee getTrainee(Long traineeId) {
     return traineeRepo
         .findById(traineeId)
         .orElseThrow(
@@ -92,22 +102,18 @@ public class TraineeServiceImpl implements TraineeService {
             });
   }
 
-  @Override
-  public TraineeDto selectTraineeByUsername(String username) {
-    log.debug("Selecting trainee by username={}", username);
-    Trainee trainee =
-        traineeRepo
-            .findByUserUsername(username)
-            .orElseThrow(
-                () -> {
-                  log.warn("Trainee not found by username: {}", username);
-                  return new IllegalArgumentException("Trainee not found: " + username);
-                });
-    return mapper.map(trainee, TraineeDto.class);
+  private Trainee getTrainee(String username) {
+    return traineeRepo
+        .findByUserUsername(username)
+        .orElseThrow(
+            () -> {
+              log.warn("Trainee not found by username: {}", username);
+              return new IllegalArgumentException("Trainee not found: " + username);
+            });
   }
 
   @Override
-  public List<TraineeDto> selectAllTrainees() {
+  public List<TraineeDto> getAllTrainees() {
     List<Trainee> trainees = traineeRepo.findAll();
     log.debug("Selected {} trainees", trainees.size());
 

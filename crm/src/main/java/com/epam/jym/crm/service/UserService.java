@@ -10,7 +10,6 @@ public interface UserService {
 
   void changePassword(Long userId, String newPassword);
 
-
   void changeUserStatus(Long userId);
 
   User getUser(Long userId);

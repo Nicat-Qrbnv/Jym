@@ -19,5 +19,5 @@ public interface TrainerService {
 
   List<TrainerDto> selectAllTrainers();
 
-  @NonNull Trainer getTrainerById(Long trainerId);
+  @NonNull Trainer getTrainer(Long trainerId);
 }

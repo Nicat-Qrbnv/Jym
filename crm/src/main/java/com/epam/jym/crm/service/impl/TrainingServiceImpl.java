@@ -39,9 +39,9 @@ public class TrainingServiceImpl implements TrainingService {
     log.debug("Creating training");
     Training training = new Training();
     training.setName(trainingDto.name());
-    training.setType(trainingTypeService.getTypeById(trainingDto.typeId()));
-    training.setTrainee(traineeService.getTraineeById(trainingDto.traineeId()));
-    training.setTrainer(trainerService.getTrainerById(trainingDto.trainerId()));
+    training.setType(trainingTypeService.getType(trainingDto.typeId()));
+    training.setTrainee(traineeService.getTrainee(trainingDto.traineeId()));
+    training.setTrainer(trainerService.getTrainer(trainingDto.trainerId()));
     training.setScheduledDate(trainingDto.date());
     training.setDurationInMinutes(trainingDto.durationInMinutes());
 

@@ -42,7 +42,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     Trainer trainer = new Trainer();
     trainer.setUser(user);
-    trainer.setSpecialization(trainingTypeService.getTypeById(trainerDto.specializationId()));
+    trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
 
     trainer = trainerRepo.save(trainer);
     log.info("Created trainer profile: {}", trainer);
@@ -56,8 +56,8 @@ public class TrainerServiceImpl implements TrainerService {
       throw new IllegalArgumentException("trainerDto must not be null");
     }
 
-    Trainer trainer = getTrainerById(trainerId);
-    trainer.setSpecialization(trainingTypeService.getTypeById(trainerDto.specializationId()));
+    Trainer trainer = getTrainer(trainerId);
+    trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
     trainer = trainerRepo.save(trainer);
     log.info("Updated trainer with id={} username={}", trainer.getId(), trainer.getUsername());
 
@@ -67,7 +67,7 @@ public class TrainerServiceImpl implements TrainerService {
   @Override
   public TrainerDto selectTrainer(Long trainerId) {
     log.debug("Selecting trainer by id={}", trainerId);
-    return mapper.map(getTrainerById(trainerId), TrainerDto.class);
+    return mapper.map(getTrainer(trainerId), TrainerDto.class);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class TrainerServiceImpl implements TrainerService {
   }
 
   @Override
-  public @NonNull Trainer getTrainerById(Long trainerId) {
+  public @NonNull Trainer getTrainer(Long trainerId) {
     return trainerRepo
         .findById(trainerId)
         .orElseThrow(

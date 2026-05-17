@@ -14,7 +14,7 @@ public class TrainingTypeServiceImpl implements TrainingTypeService {
   private final TrainingTypeRepository trainingTypeRepository;
 
   @Override
-  public TrainingType getTypeById(Long typeId) {
+  public TrainingType getType(Long typeId) {
     return trainingTypeRepository
         .findById(typeId)
         .orElseThrow(
