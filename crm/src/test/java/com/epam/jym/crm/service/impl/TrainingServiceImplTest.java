@@ -1,12 +1,22 @@
 package com.epam.jym.crm.service.impl;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.epam.jym.crm.dto.TrainingDto;
+import com.epam.jym.crm.dto.training.TrainingCreateDto;
+import com.epam.jym.crm.dto.training.TrainingDto;
+import com.epam.jym.crm.entity.Trainee;
+import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
+import com.epam.jym.crm.entity.TrainingType;
+import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.repository.TraineeRepository;
+import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.repository.TrainingRepository;
+import com.epam.jym.crm.repository.TrainingTypeRepository;
+import com.epam.jym.crm.service.TrainingService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +24,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,63 +37,142 @@ class TrainingServiceImplTest {
   private TrainingRepository trainingRepository;
 
   @Mock
+  private TrainingTypeRepository trainingTypeRepository;
+
+  @Mock
+  private TraineeRepository traineeRepository;
+
+  @Mock
+  private TrainerRepository trainerRepository;
+
+  @Mock
   private ModelMapper modelMapper;
 
   @InjectMocks
-  private TrainingServiceImpl trainingService;
+  private TrainingServiceImpl trainingServiceImpl;
+
+  private TrainingService trainingService;
 
   @BeforeEach
   public void setUp() {
-    trainingService.setModelMapper(modelMapper);
+    trainingServiceImpl.setMapper(modelMapper);
+    trainingService = trainingServiceImpl;
   }
 
   @Test
-  void createTrainingShouldSaveMappedEntityAndReturnDto() {
-    TrainingDto trainingDto = createTrainingDto(1L, "Java Basics");
-    Training trainingEntity = createTraining(null, "Java Basics");
-    Training savedTraining = createTraining(10L, "Java Basics");
+  void createTrainingShouldLoadRelationsSaveTrainingAndReturnDto() {
+    TrainingCreateDto trainingDto = createTrainingCreateDto();
+    TrainingType type = createTrainingType(2L, "Fitness");
+    Trainee trainee = createTrainee(3L, createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(4L, createUser(2L, "jane.doe"), type);
+    Training savedTraining = createTraining(10L, "Java Basics", type, trainee, trainer);
     TrainingDto savedTrainingDto = createTrainingDto(10L, "Java Basics");
 
-    when(modelMapper.map(trainingDto, Training.class)).thenReturn(trainingEntity);
-    when(trainingRepository.save(trainingEntity)).thenReturn(savedTraining);
+    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.of(type));
+    when(traineeRepository.findById(3L)).thenReturn(Optional.of(trainee));
+    when(trainerRepository.findById(4L)).thenReturn(Optional.of(trainer));
+    when(trainingRepository.save(any(Training.class))).thenReturn(savedTraining);
     when(modelMapper.map(savedTraining, TrainingDto.class)).thenReturn(savedTrainingDto);
 
     TrainingDto result = trainingService.createTraining(trainingDto);
 
     Assertions.assertThat(result).isSameAs(savedTrainingDto);
-    verify(trainingRepository).save(trainingEntity);
+    ArgumentCaptor<Training> trainingCaptor = ArgumentCaptor.forClass(Training.class);
+    verify(trainingRepository).save(trainingCaptor.capture());
+    Assertions.assertThat(trainingCaptor.getValue().getName()).isEqualTo(trainingDto.name());
+    Assertions.assertThat(trainingCaptor.getValue().getType()).isSameAs(type);
+    Assertions.assertThat(trainingCaptor.getValue().getTrainee()).isSameAs(trainee);
+    Assertions.assertThat(trainingCaptor.getValue().getTrainer()).isSameAs(trainer);
+    Assertions.assertThat(trainingCaptor.getValue().getScheduledDate())
+        .isEqualTo(trainingDto.date());
+    Assertions.assertThat(trainingCaptor.getValue().getDurationInMinutes())
+        .isEqualTo(trainingDto.durationInMinutes());
+  }
+
+  @Test
+  void createTrainingShouldThrowExceptionWhenTrainingTypeDoesNotExist() {
+    TrainingCreateDto trainingDto = createTrainingCreateDto();
+
+    when(trainingTypeRepository.findById(2L)).thenReturn(Optional.empty());
+
+    Assertions.assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Training type not found: 2");
+
+    verifyNoInteractions(traineeRepository, trainerRepository, modelMapper);
+  }
+
+  @Test
+  void createTrainingShouldThrowExceptionWhenTraineeDoesNotExist() {
+    TrainingCreateDto trainingDto = createTrainingCreateDto();
+
+    when(trainingTypeRepository.findById(2L))
+        .thenReturn(Optional.of(createTrainingType(2L, "Fitness")));
+    when(traineeRepository.findById(3L)).thenReturn(Optional.empty());
+
+    Assertions.assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Trainee not found: 3");
+
+    verifyNoInteractions(trainerRepository, modelMapper);
+  }
+
+  @Test
+  void createTrainingShouldThrowExceptionWhenTrainerDoesNotExist() {
+    TrainingCreateDto trainingDto = createTrainingCreateDto();
+
+    when(trainingTypeRepository.findById(2L))
+        .thenReturn(Optional.of(createTrainingType(2L, "Fitness")));
+    when(traineeRepository.findById(3L))
+        .thenReturn(Optional.of(createTrainee(3L, createUser(1L, "john.doe"))));
+    when(trainerRepository.findById(4L)).thenReturn(Optional.empty());
+
+    Assertions.assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Trainer not found: 4");
+
+    verifyNoInteractions(modelMapper);
   }
 
   @Test
   void selectTrainingShouldReturnMappedDtoWhenTrainingExists() {
     Long trainingId = 10L;
-    Training training = createTraining(trainingId, "Java Basics");
+    Training training =
+        createTraining(
+            trainingId,
+            "Java Basics",
+            createTrainingType(2L, "Fitness"),
+            createTrainee(3L, createUser(1L, "john.doe")),
+            createTrainer(4L, createUser(2L, "jane.doe"), createTrainingType(2L, "Fitness")));
     TrainingDto trainingDto = createTrainingDto(trainingId, "Java Basics");
 
     when(trainingRepository.findById(trainingId)).thenReturn(Optional.of(training));
     when(modelMapper.map(training, TrainingDto.class)).thenReturn(trainingDto);
 
-    Optional<TrainingDto> result = trainingService.selectTraining(trainingId);
+    TrainingDto result = trainingService.selectTraining(trainingId);
 
-    Assertions.assertThat(result).contains(trainingDto);
+    Assertions.assertThat(result).isSameAs(trainingDto);
   }
 
   @Test
-  void selectTrainingShouldReturnEmptyWhenTrainingDoesNotExist() {
+  void selectTrainingShouldThrowExceptionWhenTrainingDoesNotExist() {
     Long trainingId = 404L;
 
     when(trainingRepository.findById(trainingId)).thenReturn(Optional.empty());
 
-    Optional<TrainingDto> result = trainingService.selectTraining(trainingId);
-
-    Assertions.assertThat(result).isEmpty();
+    Assertions.assertThatThrownBy(() -> trainingService.selectTraining(trainingId))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Training not found: " + trainingId);
     verifyNoInteractions(modelMapper);
   }
 
   @Test
   void selectAllTrainingsShouldReturnMappedDtos() {
-    Training firstTraining = createTraining(1L, "Java Basics");
-    Training secondTraining = createTraining(2L, "Spring Basics");
+    TrainingType type = createTrainingType(2L, "Fitness");
+    Trainee trainee = createTrainee(3L, createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(4L, createUser(2L, "jane.doe"), type);
+    Training firstTraining = createTraining(1L, "Java Basics", type, trainee, trainer);
+    Training secondTraining = createTraining(2L, "Spring Basics", type, trainee, trainer);
     TrainingDto firstDto = createTrainingDto(1L, "Java Basics");
     TrainingDto secondDto = createTrainingDto(2L, "Spring Basics");
 
@@ -95,17 +185,59 @@ class TrainingServiceImplTest {
     Assertions.assertThat(result).containsExactly(firstDto, secondDto);
   }
 
-  private Training createTraining(Long id, String name) {
+  private Training createTraining(
+      Long id, String name, TrainingType type, Trainee trainee, Trainer trainer) {
     Training training = new Training();
     training.setId(id);
     training.setName(name);
-    training.setDate(LocalDate.of(2026, 5, 8));
+    training.setType(type);
+    training.setTrainee(trainee);
+    training.setTrainer(trainer);
+    training.setScheduledDate(LocalDate.of(2026, 5, 8));
     training.setDurationInMinutes(60);
     return training;
+  }
+
+  private TrainingType createTrainingType(Long id, String name) {
+    TrainingType trainingType = new TrainingType();
+    trainingType.setId(id);
+    trainingType.setName(name);
+    return trainingType;
+  }
+
+  private Trainee createTrainee(Long id, User user) {
+    Trainee trainee = new Trainee();
+    trainee.setId(id);
+    trainee.setUser(user);
+    trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
+    trainee.setAddress("Baku");
+    return trainee;
+  }
+
+  private Trainer createTrainer(Long id, User user, TrainingType specialization) {
+    Trainer trainer = new Trainer();
+    trainer.setId(id);
+    trainer.setUser(user);
+    trainer.setSpecialization(specialization);
+    return trainer;
+  }
+
+  private User createUser(Long id, String username) {
+    User user = new User();
+    user.setId(id);
+    user.setFirstName("John");
+    user.setLastName("Doe");
+    user.setUsername(username);
+    user.setPassword("password");
+    user.setActive(true);
+    return user;
+  }
+
+  private TrainingCreateDto createTrainingCreateDto() {
+    return new TrainingCreateDto("Java Basics", 2L, 3L, 4L, LocalDate.of(2026, 5, 8), 60);
   }
 
   private TrainingDto createTrainingDto(Long id, String name) {
     return new TrainingDto(id, name, null, null, null, LocalDate.of(2026, 5, 8), 60);
   }
 }
-

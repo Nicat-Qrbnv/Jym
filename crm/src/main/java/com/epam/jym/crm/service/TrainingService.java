@@ -1,14 +1,14 @@
 package com.epam.jym.crm.service;
 
-import com.epam.jym.crm.dto.TrainingDto;
+import com.epam.jym.crm.dto.training.TrainingCreateDto;
+import com.epam.jym.crm.dto.training.TrainingDto;
 import java.util.List;
-import java.util.Optional;
 
 public interface TrainingService {
 
-  TrainingDto createTraining(TrainingDto trainingDto);
+  TrainingDto createTraining(TrainingCreateDto trainingDto);
 
-  Optional<TrainingDto> selectTraining(Long trainingId);
+  TrainingDto selectTraining(Long trainingId);
 
   List<TrainingDto> selectAllTrainings();
 }

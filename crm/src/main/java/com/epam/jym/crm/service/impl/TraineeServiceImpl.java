@@ -1,16 +1,18 @@
 package com.epam.jym.crm.service.impl;
 
-import com.epam.jym.crm.dto.TraineeDto;
-import com.epam.jym.crm.dto.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
+import com.epam.jym.crm.dto.trainee.TraineeDto;
+import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.entity.Trainee;
+import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.TraineeRepository;
-import com.epam.jym.crm.service.AuthenticationService;
 import com.epam.jym.crm.service.TraineeService;
+import com.epam.jym.crm.service.UserService;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,27 +22,30 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class TraineeServiceImpl implements TraineeService {
 
-  private final TraineeRepository traineeRepository;
-  private final AuthenticationService authenticationService;
-  private ModelMapper modelMapper;
+  private final TraineeRepository traineeRepo;
+  private final UserService userService;
 
-  @Autowired
-  public void setModelMapper(ModelMapper modelMapper) {
-    this.modelMapper = modelMapper;
-  }
+  @Setter(onMethod_ = @Autowired)
+  private ModelMapper mapper;
 
   @Override
-  public TraineeDto createTrainee(TraineeDto traineeDto) {
-    log.debug("Creating trainee");
-    Trainee trainee = modelMapper.map(traineeDto, Trainee.class);
-    trainee = authenticationService.register(trainee);
-    trainee = traineeRepository.save(trainee);
-    log.info(
-        "Created trainee with id={} username={}",
-        trainee.getId(),
-        trainee.getUsername());
+  public TraineeDto createTrainee(TraineeCreateDto traineeDto) {
+    if (traineeDto == null) {
+      throw new IllegalArgumentException("traineeDto must not be null");
+    }
 
-    return modelMapper.map(trainee, TraineeDto.class);
+    log.debug("Creating trainee");
+    ensureUserHasNoTraineeProfile(traineeDto.userId());
+    User user = userService.getUser(traineeDto.userId());
+    Trainee trainee = new Trainee();
+    trainee.setUser(user);
+    trainee.setDateOfBirth(traineeDto.dateOfBirth());
+    trainee.setAddress(traineeDto.address());
+
+    trainee = traineeRepo.save(trainee);
+    log.info("Created trainee profile: {}", trainee);
+
+    return mapper.map(trainee, TraineeDto.class);
   }
 
   @Override
@@ -49,69 +54,70 @@ public class TraineeServiceImpl implements TraineeService {
       throw new IllegalArgumentException("traineeDto must not be null");
     }
 
-    Trainee trainee = traineeRepository
-        .findById(traineeId)
-        .orElseThrow(
-            () -> {
-              log.warn("Failed to update trainee: traineeId={} not found", traineeId);
-              return new IllegalArgumentException("Trainee not found: " + traineeId);
-            });
-
-    if (isNameChanged(trainee, traineeDto.firstName(), traineeDto.lastName())) {
-      trainee.setUsername(authenticationService.generateUsername(
-          traineeDto.firstName(), traineeDto.lastName()));
-    }
-    trainee.setFirstName(traineeDto.firstName());
-    trainee.setLastName(traineeDto.lastName());
-    trainee.setPassword(traineeDto.password());
-    trainee.setActive(traineeDto.active());
+    Trainee trainee = getTraineeById(traineeId);
     trainee.setDateOfBirth(traineeDto.dateOfBirth());
     trainee.setAddress(traineeDto.address());
+    trainee = traineeRepo.save(trainee);
+    log.info("Updated trainee with id={} username={}", trainee.getId(), trainee.getUsername());
 
-    trainee = traineeRepository.save(trainee);
-    log.info(
-        "Updated trainee with id={} username={}",
-        trainee.getId(),
-        trainee.getUsername());
-
-    return modelMapper.map(trainee, TraineeDto.class);
-  }
-
-  private boolean isNameChanged(Trainee trainee, String firstName, String lastName) {
-    return !Objects.equals(trainee.getFirstName(), firstName)
-        || !Objects.equals(trainee.getLastName(), lastName);
+    return mapper.map(trainee, TraineeDto.class);
   }
 
   @Override
   public void deleteTrainee(Long traineeId) {
     log.debug("Deleting trainee with id={}", traineeId);
-    traineeRepository.delete(traineeId);
+    traineeRepo.deleteById(traineeId);
     log.info("Deleted trainee with id={}", traineeId);
   }
 
   @Override
-  public Optional<TraineeDto> selectTrainee(Long traineeId) {
-    log.debug("Selecting trainee by id={}", traineeId);
-    return traineeRepository
-        .findById(traineeId)
-        .map(trainee -> modelMapper.map(trainee, TraineeDto.class));
+  public void deleteTrainee(String username) {
+
   }
 
   @Override
-  public Optional<TraineeDto> selectTraineeByUsername(String username) {
+  public TraineeDto selectTrainee(Long traineeId) {
+    log.debug("Selecting trainee by id={}", traineeId);
+    return mapper.map(getTraineeById(traineeId), TraineeDto.class);
+  }
+
+  @Override
+  public @NonNull Trainee getTraineeById(Long traineeId) {
+    return traineeRepo
+        .findById(traineeId)
+        .orElseThrow(
+            () -> {
+              log.warn("Trainee not found by id: {}", traineeId);
+              return new IllegalArgumentException("Trainee not found: " + traineeId);
+            });
+  }
+
+  @Override
+  public TraineeDto selectTraineeByUsername(String username) {
     log.debug("Selecting trainee by username={}", username);
-    return traineeRepository
-        .findByUsername(username)
-        .map(trainee -> modelMapper.map(trainee, TraineeDto.class));
+    Trainee trainee =
+        traineeRepo
+            .findByUserUsername(username)
+            .orElseThrow(
+                () -> {
+                  log.warn("Trainee not found by username: {}", username);
+                  return new IllegalArgumentException("Trainee not found: " + username);
+                });
+    return mapper.map(trainee, TraineeDto.class);
   }
 
   @Override
   public List<TraineeDto> selectAllTrainees() {
-    List<TraineeDto> trainees = traineeRepository.findAll().stream()
-        .map(trainee -> modelMapper.map(trainee, TraineeDto.class))
-        .toList();
+    List<Trainee> trainees = traineeRepo.findAll();
     log.debug("Selected {} trainees", trainees.size());
 
-    return trainees;
+    return trainees.stream().map(t -> mapper.map(t, TraineeDto.class)).toList();
+  }
+
+  private void ensureUserHasNoTraineeProfile(Long userId) {
+    if (traineeRepo.userHasTraineeProfile(userId)) {
+      log.warn("User already has a trainee profile: {}", userId);
+      throw new IllegalArgumentException("User already has a trainee profile: " + userId);
+    }
   }
 }
