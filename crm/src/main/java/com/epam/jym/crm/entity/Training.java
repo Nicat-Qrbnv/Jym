@@ -18,12 +18,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id", "name", "type", "scheduledDate"})
+@ToString
 @Entity
 @Table(name = "trainings")
 public class Training {

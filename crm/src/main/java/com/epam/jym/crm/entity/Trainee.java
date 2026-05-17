@@ -18,16 +18,19 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id", "user"})
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "trainees")
 public class Trainee {
 
+  @ToString.Include
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -43,6 +46,7 @@ public class Trainee {
   @Size(max = 255)
   private String address;
 
+  @ToString.Include
   @Transient
   public String getUsername() {
     return user == null ? null : user.getUsername();

@@ -13,12 +13,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id", "username"})
+@ToString(exclude = "password")
 @Entity
 @Table(name = "users")
 public class User {
@@ -28,22 +30,22 @@ public class User {
   private Long id;
 
   @NotBlank
-  @Size(max = 255)
+  @Size(max = 150)
   @Column(name = "first_name", nullable = false)
   private String firstName;
 
   @NotBlank
-  @Size(max = 255)
+  @Size(max = 150)
   @Column(name = "last_name", nullable = false)
   private String lastName;
 
   @NotBlank
-  @Size(max = 255)
+  @Size(max = 310)
   @Column(nullable = false, unique = true)
   private String username;
 
   @NotBlank
-  @Size(max = 255)
+  @Size(max = 60)
   @Column(nullable = false)
   private String password;
 

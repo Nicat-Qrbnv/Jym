@@ -16,16 +16,19 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode (of = {"id", "user"})
+@EqualsAndHashCode(of = {"id", "user"})
+@ToString(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "trainers")
 public class Trainer {
 
+  @ToString.Include
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -40,6 +43,7 @@ public class Trainer {
   @JoinColumn(name = "specialization_id", nullable = false)
   private TrainingType specialization;
 
+  @ToString.Include
   @Transient
   public String getUsername() {
     return user == null ? null : user.getUsername();
