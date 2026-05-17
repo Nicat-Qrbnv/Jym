@@ -1,27 +1,31 @@
 package com.epam.jym.crm.service.impl;
 
-import com.epam.jym.crm.dto.RegisteredUserDto;
-import com.epam.jym.crm.dto.UserCreateDto;
+import com.epam.jym.crm.dto.user.RegisteredUserDto;
+import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
-import com.epam.jym.crm.service.AuthenticationService;
+import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.PasswordGeneratorUtil;
 import jakarta.transaction.Transactional;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthenticationServiceImpl implements AuthenticationService {
+public class UserServiceImpl implements UserService {
 
   private final ReentrantLock lock = new ReentrantLock();
   private final UserRepository userRepo;
-  private final ModelMapper mapper;
+
+  @Setter(onMethod_ = @Autowired)
+  private ModelMapper mapper;
 
   @Value(value = "${security.password.length}")
   private int passwordLength;
@@ -65,5 +69,27 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   private String generatePassword() {
     return PasswordGeneratorUtil.generateRandomPassword(passwordLength);
+  }
+
+  @Override
+  public void changePassword(Long userId, String newPassword) {
+    userRepo.changePassword(userId, newPassword);
+    log.info("User with id={} changed password", userId);
+  }
+
+  @Override
+  public void changeUserStatus(Long userId) {
+    userRepo.changeStatus();
+  }
+
+  @Override
+  public User getUser(Long userId) {
+    return userRepo
+        .findById(userId)
+        .orElseThrow(
+            () -> {
+              log.warn("Failed to create trainer: userId={} not found", userId);
+              return new IllegalArgumentException("User not found: " + userId);
+            });
   }
 }

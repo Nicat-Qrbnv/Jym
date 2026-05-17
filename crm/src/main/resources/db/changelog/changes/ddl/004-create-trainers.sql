@@ -8,7 +8,8 @@ CREATE TABLE trainers
     specialization_id BIGINT NOT NULL,
     CONSTRAINT uk_trainers_user_id UNIQUE (user_id),
     CONSTRAINT fk_trainers_user_id FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_trainers_specialization_id FOREIGN KEY (specialization_id) REFERENCES training_types (id)
+    CONSTRAINT fk_trainers_specialization_id
+        FOREIGN KEY (specialization_id) REFERENCES training_types (id) ON DELETE RESTRICT
 );
 
 --rollback DROP TABLE trainers;

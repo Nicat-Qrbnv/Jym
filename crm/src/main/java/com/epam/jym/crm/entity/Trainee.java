@@ -25,16 +25,16 @@ import lombok.ToString;
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id", "user"})
-@ToString(onlyExplicitlyIncluded = true)
+@ToString
 @Entity
 @Table(name = "trainees")
 public class Trainee {
 
-  @ToString.Include
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @ToString.Exclude
   @NotNull
   @OneToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false, unique = true)

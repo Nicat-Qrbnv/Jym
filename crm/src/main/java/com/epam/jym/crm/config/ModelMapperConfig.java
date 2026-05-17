@@ -1,8 +1,15 @@
 package com.epam.jym.crm.config;
 
-import com.epam.jym.crm.dto.RegisteredUserDto;
+import com.epam.jym.crm.dto.trainee.TraineeDto;
+import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.training.TrainingDto;
+import com.epam.jym.crm.dto.training.TrainingTypeDto;
+import com.epam.jym.crm.dto.user.RegisteredUserDto;
+import com.epam.jym.crm.entity.Trainee;
+import com.epam.jym.crm.entity.Trainer;
+import com.epam.jym.crm.entity.Training;
+import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
-import org.hibernate.type.MappingContext;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +22,9 @@ public class ModelMapperConfig {
   ModelMapper modelMapper() {
     ModelMapper mapper = new ModelMapper();
     mapper.addConverter(getRegisteredUserDto());
+    mapper.addConverter(getTraineeDto());
+    mapper.addConverter(getTrainerDto());
+    mapper.addConverter(getTrainingDto());
     return mapper;
   }
 
@@ -31,5 +41,67 @@ public class ModelMapperConfig {
           source.getUsername(),
           source.getPassword());
     };
+  }
+
+  private Converter<Trainee, TraineeDto> getTraineeDto() {
+    return ctx -> toTraineeDto(ctx.getSource());
+  }
+
+  private Converter<Trainer, TrainerDto> getTrainerDto() {
+    return ctx -> toTrainerDto(ctx.getSource());
+  }
+
+  private Converter<Training, TrainingDto> getTrainingDto() {
+    return ctx -> {
+      Training source = ctx.getSource();
+      if (source == null) {
+        return null;
+      }
+      return new TrainingDto(
+          source.getId(),
+          source.getName(),
+          toTrainingTypeDto(source.getType()),
+          toTraineeDto(source.getTrainee()),
+          toTrainerDto(source.getTrainer()),
+          source.getScheduledDate(),
+          source.getDurationInMinutes());
+    };
+  }
+
+  private TraineeDto toTraineeDto(Trainee source) {
+    if (source == null) {
+      return null;
+    }
+
+    User user = source.getUser();
+    return new TraineeDto(
+        source.getId(),
+        user == null ? null : user.getId(),
+        user == null ? null : user.getUsername(),
+        source.getDateOfBirth(),
+        source.getAddress());
+  }
+
+  private TrainerDto toTrainerDto(Trainer source) {
+    if (source == null) {
+      return null;
+    }
+
+    User user = source.getUser();
+    TrainingType specialization = source.getSpecialization();
+    return new TrainerDto(
+        source.getId(),
+        user == null ? null : user.getId(),
+        user == null ? null : user.getUsername(),
+        specialization == null
+            ? null
+            : new TrainingTypeDto(specialization.getId(), specialization.getName()));
+  }
+
+  private TrainingTypeDto toTrainingTypeDto(TrainingType source) {
+    if (source == null) {
+      return null;
+    }
+    return new TrainingTypeDto(source.getId(), source.getName());
   }
 }

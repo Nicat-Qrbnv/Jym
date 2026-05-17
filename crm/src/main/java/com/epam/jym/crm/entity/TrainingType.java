@@ -31,6 +31,6 @@ public class TrainingType {
 
   @NotBlank
   @Size(max = 255)
-  @Column(nullable = false)
+  @Column(name = "type_name", nullable = false, unique = true)
   private String name;
 }

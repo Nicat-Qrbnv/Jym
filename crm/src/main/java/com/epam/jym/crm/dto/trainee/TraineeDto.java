@@ -1,13 +1,10 @@
-package com.epam.jym.crm.dto;
+package com.epam.jym.crm.dto.trainee;
 
 import java.time.LocalDate;
 
 public record TraineeDto(
     Long id,
-    String firstName,
-    String lastName,
+    Long userId,
     String username,
-    String password,
-    boolean active,
     LocalDate dateOfBirth,
     String address) {}

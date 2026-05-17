@@ -6,8 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.epam.jym.crm.dto.RegisteredUserDto;
-import com.epam.jym.crm.dto.UserCreateDto;
+import com.epam.jym.crm.dto.user.RegisteredUserDto;
+import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
 import org.assertj.core.api.Assertions;
@@ -22,7 +22,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-class AuthenticationServiceImplTest {
+class UserServiceImplTest {
 
   private static final int PASSWORD_LENGTH = 10;
 
@@ -33,11 +33,12 @@ class AuthenticationServiceImplTest {
   private ModelMapper mapper;
 
   @InjectMocks
-  private AuthenticationServiceImpl authenticationService;
+  private UserServiceImpl authenticationService;
 
   @BeforeEach
   void setUp() {
     ReflectionTestUtils.setField(authenticationService, "passwordLength", PASSWORD_LENGTH);
+    authenticationService.setMapper(mapper);
   }
 
   @Test
