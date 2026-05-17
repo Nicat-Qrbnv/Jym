@@ -1,10 +1,9 @@
 package com.epam.jym.crm.service;
 
-import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.dto.RegisteredUserDto;
+import com.epam.jym.crm.dto.UserCreateDto;
 
 public interface AuthenticationService {
 
-  <U extends User> U register(U user);
-
-  String generateUsername(String firstName, String lastName);
+  RegisteredUserDto register(UserCreateDto user);
 }

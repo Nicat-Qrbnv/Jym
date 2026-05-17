@@ -1,20 +1,25 @@
 package com.epam.jym.crm.service.impl;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.epam.jym.crm.entity.Trainee;
-import com.epam.jym.crm.entity.Trainer;
-import com.epam.jym.crm.repository.TraineeRepository;
-import com.epam.jym.crm.repository.TrainerRepository;
-import java.util.List;
-import java.util.Optional;
+import com.epam.jym.crm.dto.RegisteredUserDto;
+import com.epam.jym.crm.dto.UserCreateDto;
+import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.repository.UserRepository;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceImplTest {
@@ -22,128 +27,107 @@ class AuthenticationServiceImplTest {
   private static final int PASSWORD_LENGTH = 10;
 
   @Mock
-  private TrainerRepository trainerRepository;
+  private UserRepository userRepository;
 
   @Mock
-  private TraineeRepository traineeRepository;
+  private ModelMapper mapper;
 
   @InjectMocks
   private AuthenticationServiceImpl authenticationService;
 
-  @Test
-  void registerShouldGenerateUsernamePasswordAndIdForTrainee() {
-    Trainee trainee = new Trainee();
-    trainee.setFirstName("John");
-    trainee.setLastName("Doe");
-
-    when(trainerRepository.findByUsername("John.Doe")).thenReturn(Optional.empty());
-    when(traineeRepository.findByUsername("John.Doe")).thenReturn(Optional.empty());
-
-    Trainee registeredTrainee = authenticationService.register(trainee);
-
-    Assertions.assertThat(registeredTrainee).isSameAs(trainee);
-    Assertions.assertThat(registeredTrainee.getUsername()).isEqualTo("John.Doe");
-    Assertions.assertThat(registeredTrainee.getPassword()).hasSize(PASSWORD_LENGTH);
-    Assertions.assertThat(registeredTrainee.getId()).isNotNull();
+  @BeforeEach
+  void setUp() {
+    ReflectionTestUtils.setField(authenticationService, "passwordLength", PASSWORD_LENGTH);
   }
 
   @Test
-  void registerShouldKeepExistingId() {
-    Trainer trainer = new Trainer();
-    trainer.setId(99L);
-    trainer.setFirstName("Jane");
-    trainer.setLastName("Smith");
+  void registerShouldCreateUserSaveAndReturnRegisteredUser() {
+    UserCreateDto userDto = new UserCreateDto("John", "Doe");
 
-    when(trainerRepository.findByUsername("Jane.Smith")).thenReturn(Optional.empty());
-    when(traineeRepository.findByUsername("Jane.Smith")).thenReturn(Optional.empty());
+    when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(0);
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+      User user = invocation.getArgument(0);
+      user.setId(10L);
+      return user;
+    });
+    when(mapper.map(any(User.class), eq(RegisteredUserDto.class))).thenAnswer(invocation -> {
+      User user = invocation.getArgument(0);
+      return toRegisteredUserDto(user);
+    });
 
-    Trainer registeredTrainer = authenticationService.register(trainer);
+    RegisteredUserDto registeredUser = authenticationService.register(userDto);
 
-    Assertions.assertThat(registeredTrainer.getId()).isEqualTo(99L);
-    Assertions.assertThat(registeredTrainer.getUsername()).isEqualTo("Jane.Smith");
-    Assertions.assertThat(registeredTrainer.getPassword()).hasSize(PASSWORD_LENGTH);
+    Assertions.assertThat(registeredUser.id()).isEqualTo(10L);
+    Assertions.assertThat(registeredUser.firstName()).isEqualTo("John");
+    Assertions.assertThat(registeredUser.lastName()).isEqualTo("Doe");
+    Assertions.assertThat(registeredUser.username()).isEqualTo("John.Doe");
+    Assertions.assertThat(registeredUser.password()).hasSize(PASSWORD_LENGTH);
+
+    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(userCaptor.capture());
+    User savedUser = userCaptor.getValue();
+    Assertions.assertThat(savedUser.getFirstName()).isEqualTo("John");
+    Assertions.assertThat(savedUser.getLastName()).isEqualTo("Doe");
+    Assertions.assertThat(savedUser.getUsername()).isEqualTo("John.Doe");
+    Assertions.assertThat(savedUser.getPassword()).hasSize(PASSWORD_LENGTH);
+    Assertions.assertThat(savedUser.isActive()).isTrue();
   }
 
   @Test
   void registerShouldAddSuffixWhenUsernameAlreadyExists() {
-    Trainee trainee = new Trainee();
-    trainee.setFirstName("John");
-    trainee.setLastName("Doe");
+    UserCreateDto userDto = new UserCreateDto("John", "Doe");
 
-    Trainer existingTrainer = new Trainer();
-    existingTrainer.setFirstName("John");
-    existingTrainer.setLastName("Doe");
+    when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(2);
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(mapper.map(any(User.class), eq(RegisteredUserDto.class))).thenAnswer(invocation -> {
+      User user = invocation.getArgument(0);
+      return toRegisteredUserDto(user);
+    });
 
-    Trainee existingTrainee = new Trainee();
-    existingTrainee.setFirstName("Alice");
-    existingTrainee.setLastName("Doe");
+    RegisteredUserDto registeredUser = authenticationService.register(userDto);
 
-    when(trainerRepository.findByUsername("John.Doe")).thenReturn(Optional.of(existingTrainer));
-    when(trainerRepository.findAll()).thenReturn(List.of(existingTrainer));
-    when(traineeRepository.findAll()).thenReturn(List.of(existingTrainee));
-
-    Trainee registeredTrainee = authenticationService.register(trainee);
-
-    Assertions.assertThat(registeredTrainee.getUsername()).isEqualTo("John.Doe1");
-    Assertions.assertThat(registeredTrainee.getPassword()).hasSize(PASSWORD_LENGTH);
-    Assertions.assertThat(registeredTrainee.getId()).isNotNull();
-  }
-
-  @Test
-  void registerShouldCountMatchingNamesFromBothRepositoriesWhenAddingSuffix() {
-    Trainer trainer = new Trainer();
-    trainer.setFirstName("John");
-    trainer.setLastName("Doe");
-
-    Trainer existingTrainer = new Trainer();
-    existingTrainer.setFirstName("John");
-    existingTrainer.setLastName("Doe");
-
-    Trainee existingTrainee = new Trainee();
-    existingTrainee.setFirstName("john");
-    existingTrainee.setLastName("doe");
-
-    when(trainerRepository.findByUsername("John.Doe")).thenReturn(Optional.empty());
-    when(traineeRepository.findByUsername("John.Doe")).thenReturn(Optional.of(existingTrainee));
-    when(trainerRepository.findAll()).thenReturn(List.of(existingTrainer));
-    when(traineeRepository.findAll()).thenReturn(List.of(existingTrainee));
-
-    Trainer registeredTrainer = authenticationService.register(trainer);
-
-    Assertions.assertThat(registeredTrainer.getUsername()).isEqualTo("John.Doe2");
+    Assertions.assertThat(registeredUser.username()).isEqualTo("John.Doe2");
+    Assertions.assertThat(registeredUser.password()).hasSize(PASSWORD_LENGTH);
+    verify(userRepository).save(any(User.class));
   }
 
   @Test
   void registerShouldThrowExceptionWhenUserIsNull() {
-    Assertions.assertThatThrownBy(() -> authenticationService.register((Trainee) null))
+    Assertions.assertThatThrownBy(() -> authenticationService.register(null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("user must not be null");
 
-    verifyNoInteractions(trainerRepository, traineeRepository);
+    verifyNoInteractions(userRepository, mapper);
   }
 
   @Test
   void registerShouldThrowExceptionWhenFirstNameIsNull() {
-    Trainee trainee = new Trainee();
-    trainee.setLastName("Doe");
+    UserCreateDto userDto = new UserCreateDto(null, "Doe");
 
-    Assertions.assertThatThrownBy(() -> authenticationService.register(trainee))
+    Assertions.assertThatThrownBy(() -> authenticationService.register(userDto))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("firstName and lastName must not be null");
 
-    verifyNoInteractions(trainerRepository, traineeRepository);
+    verifyNoInteractions(userRepository, mapper);
   }
 
   @Test
   void registerShouldThrowExceptionWhenLastNameIsNull() {
-    Trainee trainee = new Trainee();
-    trainee.setFirstName("John");
+    UserCreateDto userDto = new UserCreateDto("John", null);
 
-    Assertions.assertThatThrownBy(() -> authenticationService.register(trainee))
+    Assertions.assertThatThrownBy(() -> authenticationService.register(userDto))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("firstName and lastName must not be null");
 
-    verifyNoInteractions(trainerRepository, traineeRepository);
+    verifyNoInteractions(userRepository, mapper);
+  }
+
+  private RegisteredUserDto toRegisteredUserDto(User user) {
+    return new RegisteredUserDto(
+        user.getId(),
+        user.getFirstName(),
+        user.getLastName(),
+        user.getUsername(),
+        user.getPassword());
   }
 }
-
