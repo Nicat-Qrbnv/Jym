@@ -1,18 +1,21 @@
 package com.epam.jym.crm.repository;
 
 import com.epam.jym.crm.entity.Trainee;
-import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
-public interface TraineeRepository extends UserRepository<Trainee> {
+@Repository
+public interface TraineeRepository extends JpaRepository<Trainee, Long> {
 
-  Trainee save(Trainee trainee);
+  Optional<Trainee> findByUserUsername(String username);
 
-  Optional<Trainee> findById(Long id);
-
-  Optional<Trainee> findByUsername(String name);
-
-  List<Trainee> findAll();
-
-  void delete(Long id);
+  @Query(
+      """
+          SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
+          FROM Trainee t
+          WHERE t.user.id = :userId
+          """)
+  boolean userHasTraineeProfile(Long userId);
 }

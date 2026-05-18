@@ -1,41 +1,66 @@
 package com.epam.jym.crm.facade;
 
-import com.epam.jym.crm.dto.TraineeDto;
-import com.epam.jym.crm.dto.TraineeUpdateDto;
-import com.epam.jym.crm.dto.TrainerDto;
-import com.epam.jym.crm.dto.TrainerUpdateDto;
-import com.epam.jym.crm.dto.TrainingDto;
+import com.epam.jym.crm.auth.Authenticated;
+import com.epam.jym.crm.auth.SkipAuthentication;
+import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
+import com.epam.jym.crm.dto.trainee.TraineeDto;
+import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
+import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainingCreateDto;
+import com.epam.jym.crm.dto.training.TrainingDto;
 import java.util.List;
-import java.util.Optional;
 
+@Authenticated
 public interface CrmFacade {
 
-  TraineeDto createTrainee(TraineeDto traineeDto);
+  @SkipAuthentication
+  TraineeDto createTrainee(TraineeCreateDto traineeDto);
 
-  TraineeDto updateTrainee(Long traineeId, TraineeUpdateDto traineeDto);
+  TraineeDto updateTrainee(
+      CredentialsDto credentials, Long traineeId, TraineeUpdateDto traineeDto);
 
-  void deleteTrainee(Long traineeId);
+  void deleteTrainee(CredentialsDto credentials, Long traineeId);
 
-  Optional<TraineeDto> selectTrainee(Long traineeId);
+  void deleteTrainee(CredentialsDto credentials, String username);
 
-  Optional<TraineeDto> selectTraineeByUsername(String username);
+  TraineeDto getTraineeById(CredentialsDto credentials, Long traineeId);
 
-  List<TraineeDto> selectAllTrainees();
+  TraineeDto getTraineeByUsername(CredentialsDto credentials, String username);
 
-  TrainerDto createTrainer(TrainerDto trainerDto);
+  List<TraineeDto> getAllTrainees(CredentialsDto credentials);
 
-  TrainerDto updateTrainer(Long trainerId, TrainerUpdateDto trainerDto);
+  List<TrainerDto> updateTraineeTrainers(
+      CredentialsDto credentials, Long traineeId, List<Long> trainerIds);
 
-  Optional<TrainerDto> selectTrainer(Long trainerId);
+  @SkipAuthentication
+  TrainerDto createTrainer(TrainerCreateDto trainerDto);
 
-  Optional<TrainerDto> selectTrainerByUsername(String username);
+  TrainerDto updateTrainer(
+      CredentialsDto credentials, Long trainerId, TrainerUpdateDto trainerDto);
 
-  List<TrainerDto> selectAllTrainers();
+  TrainerDto selectTrainer(CredentialsDto credentials, Long trainerId);
 
-  TrainingDto createTraining(TrainingDto trainingDto);
+  TrainerDto selectTrainerByUsername(CredentialsDto credentials, String username);
 
-  Optional<TrainingDto> selectTraining(Long trainingId);
+  List<TrainerDto> selectAllTrainers(CredentialsDto credentials);
 
-  List<TrainingDto> selectAllTrainings();
+  List<TrainerDto> selectTrainersNotAssignedToTrainee(
+      CredentialsDto credentials, String traineeUsername);
+
+  TrainingDto createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto);
+
+  TrainingDto getTraining(CredentialsDto credentials, Long trainingId);
+
+  List<TrainingDto> getAllTrainings(CredentialsDto credentials);
+
+  List<TrainingDto> getTraineeTrainings(
+      CredentialsDto credentials, String traineeUsername, TraineeTrainingsCriteriaDto criteria);
+
+  List<TrainingDto> getTrainerTrainings(
+      CredentialsDto credentials, String trainerUsername, TrainerTrainingsCriteriaDto criteria);
 }
-

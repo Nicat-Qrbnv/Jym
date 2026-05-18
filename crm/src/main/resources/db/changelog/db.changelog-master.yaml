@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/ddl/001-create-users.sql
+  - include:
+      file: db/changelog/changes/ddl/002-create-training-types.sql
+  - include:
+      file: db/changelog/changes/ddl/003-create-trainees.sql
+  - include:
+      file: db/changelog/changes/ddl/004-create-trainers.sql
+  - include:
+      file: db/changelog/changes/ddl/006-create-trainee-trainers.sql
+  - include:
+      file: db/changelog/changes/ddl/005-create-trainings.sql
+  - include:
+      file: db/changelog/changes/seed/001-seed-data.sql
+  - include:
+      file: db/changelog/changes/seed/002-seed-trainee-trainers.sql

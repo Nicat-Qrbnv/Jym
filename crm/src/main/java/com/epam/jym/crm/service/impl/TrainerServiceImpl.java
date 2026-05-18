@@ -1,116 +1,146 @@
 package com.epam.jym.crm.service.impl;
 
-import com.epam.jym.crm.dto.TrainerDto;
-import com.epam.jym.crm.dto.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
+import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.entity.Trainer;
-import com.epam.jym.crm.entity.Training;
-import com.epam.jym.crm.entity.TrainingType;
+import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.repository.TrainerRepository;
-import com.epam.jym.crm.service.AuthenticationService;
 import com.epam.jym.crm.service.TrainerService;
+import com.epam.jym.crm.service.TrainingTypeService;
+import com.epam.jym.crm.service.UserService;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class TrainerServiceImpl implements TrainerService {
 
-  private final TrainerRepository trainerRepository;
-  private final AuthenticationService authenticationService;
-  private ModelMapper modelMapper;
+  private final TrainerRepository trainerRepo;
+  private final TraineeRepository traineeRepo;
+  private final UserService userService;
+  private final TrainingTypeService trainingTypeService;
 
-  @Autowired
-  public void setModelMapper(ModelMapper modelMapper) {
-    this.modelMapper = modelMapper;
-  }
+  @Setter(onMethod_ = @Autowired)
+  private ModelMapper mapper;
 
+  @Transactional
   @Override
-  public TrainerDto createTrainer(TrainerDto trainerDto) {
-    log.debug("Creating trainer");
-    Trainer trainer = modelMapper.map(trainerDto, Trainer.class);
-    trainer = authenticationService.register(trainer);
-    trainer = trainerRepository.save(trainer);
-    log.info(
-        "Created trainer with id={} username={}",
-        trainer.getId(),
-        trainer.getUsername());
+  public TrainerDto createTrainer(TrainerCreateDto trainerDto) {
+    if (trainerDto == null) {
+      throw new IllegalArgumentException("trainerDto must not be null");
+    }
 
-    return modelMapper.map(trainer, TrainerDto.class);
+    log.debug("Creating trainer");
+    ensureUserHasNoTrainerProfile(trainerDto.userId());
+    User user = userService.getUser(trainerDto.userId());
+
+    Trainer trainer = new Trainer();
+    trainer.setUser(user);
+    trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
+
+    trainer = trainerRepo.save(trainer);
+    log.info("Created trainer profile: {}", trainer);
+
+    return mapper.map(trainer, TrainerDto.class);
   }
 
+  @Transactional
   @Override
   public TrainerDto updateTrainer(Long trainerId, TrainerUpdateDto trainerDto) {
     if (trainerDto == null) {
       throw new IllegalArgumentException("trainerDto must not be null");
     }
 
-    Trainer trainer = trainerRepository
-        .findById(trainerId)
-        .orElseThrow(
-            () -> {
-              log.warn("Failed to update trainer: trainerId={} not found", trainerId);
-              return new IllegalArgumentException("Trainer not found: " + trainerId);
-            });
+    Trainer trainer = getTrainer(trainerId);
+    trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
+    trainer = trainerRepo.save(trainer);
+    log.info("Updated trainer with id={} username={}", trainer.getId(), trainer.getUsername());
 
-    if (isNameChanged(trainer, trainerDto.firstName(), trainerDto.lastName())) {
-      trainer.setUsername(authenticationService.generateUsername(
-          trainerDto.firstName(), trainerDto.lastName()));
-    }
-    trainer.setFirstName(trainerDto.firstName());
-    trainer.setLastName(trainerDto.lastName());
-    trainer.setPassword(trainerDto.password());
-    trainer.setActive(trainerDto.active());
-    trainer.setTraining(trainerDto.training() == null
-        ? null
-        : modelMapper.map(trainerDto.training(), Training.class));
-    trainer.setSpecialization(trainerDto.specialization() == null
-        ? null
-        : modelMapper.map(trainerDto.specialization(), TrainingType.class));
-
-    trainer = trainerRepository.save(trainer);
-    log.info(
-        "Updated trainer with id={} username={}",
-        trainer.getId(),
-        trainer.getUsername());
-
-    return modelMapper.map(trainer, TrainerDto.class);
-  }
-
-  private boolean isNameChanged(Trainer trainer, String firstName, String lastName) {
-    return !Objects.equals(trainer.getFirstName(), firstName)
-        || !Objects.equals(trainer.getLastName(), lastName);
+    return mapper.map(trainer, TrainerDto.class);
   }
 
   @Override
-  public Optional<TrainerDto> selectTrainer(Long trainerId) {
+  public TrainerDto selectTrainer(Long trainerId) {
     log.debug("Selecting trainer by id={}", trainerId);
-    return trainerRepository
-        .findById(trainerId)
-        .map(trainer -> modelMapper.map(trainer, TrainerDto.class));
+    return mapper.map(getTrainer(trainerId), TrainerDto.class);
   }
 
   @Override
-  public Optional<TrainerDto> selectTrainerByUsername(String username) {
+  public TrainerDto getTrainerByUsername(String username) {
     log.debug("Selecting trainer by username={}", username);
-    return trainerRepository
-        .findByUsername(username)
-        .map(trainer -> modelMapper.map(trainer, TrainerDto.class));
+    Trainer trainer =
+        trainerRepo
+            .findByUserUsername(username)
+            .orElseThrow(
+                () -> {
+                  log.warn("Trainer not found by username: {}", username);
+                  return new IllegalArgumentException("Trainer not found: " + username);
+                });
+    return mapper.map(trainer, TrainerDto.class);
   }
 
   @Override
-  public List<TrainerDto> selectAllTrainers() {
-    List<TrainerDto> trainers = trainerRepository.findAll().stream()
-        .map(trainer -> modelMapper.map(trainer, TrainerDto.class))
-        .toList();
+  public List<TrainerDto> getAllTrainers() {
+    List<TrainerDto> trainers =
+        trainerRepo.findAll().stream().map(t -> mapper.map(t, TrainerDto.class)).toList();
     log.debug("Selected {} trainers", trainers.size());
 
     return trainers;
+  }
+
+  @Override
+  public List<TrainerDto> selectTrainersNotAssignedToTrainee(String traineeUsername) {
+    if (traineeRepo.findByUserUsername(traineeUsername).isEmpty()) {
+      log.warn("Trainee not found by username: {}", traineeUsername);
+      throw new IllegalArgumentException("Trainee not found: " + traineeUsername);
+    }
+
+    List<TrainerDto> trainers =
+        trainerRepo.findTrainersNotAssignedToTrainee(traineeUsername).stream()
+            .map(t -> mapper.map(t, TrainerDto.class))
+            .toList();
+    log.debug(
+        "Selected {} trainers not assigned to trainee username={}",
+        trainers.size(),
+        traineeUsername);
+
+    return trainers;
+  }
+
+  @Override
+  public @NonNull Trainer getTrainer(Long trainerId) {
+    return trainerRepo
+        .findById(trainerId)
+        .orElseThrow(
+            () -> {
+              log.warn("Trainer not found by id: {}", trainerId);
+              return new IllegalArgumentException("Trainer not found by id: " + trainerId);
+            });
+  }
+
+  @Override
+  public List<Trainer> getTrainersByIds(List<Long> trainerIds) {
+    if (trainerIds != null && !trainerIds.isEmpty()) {
+      return trainerRepo.findAllById(trainerIds);
+    }
+    return List.of();
+  }
+
+  private void ensureUserHasNoTrainerProfile(Long userId) {
+    if (trainerRepo.userHasTrainerProfile(userId)) {
+      log.warn("User already has a trainer profile: {}", userId);
+      throw new IllegalArgumentException("User already has a trainer profile: " + userId);
+    }
   }
 }
