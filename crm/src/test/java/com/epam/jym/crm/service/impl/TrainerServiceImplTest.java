@@ -186,7 +186,7 @@ class TrainerServiceImplTest {
   }
 
   @Test
-  void selectTrainerByUsernameShouldReturnMappedDtoWhenTrainerExists() {
+  void getTrainerByUsernameShouldReturnMappedDtoWhenTrainerExists() {
     String username = "john.doe";
     Trainer trainer =
         createTrainer(10L, createUser(1L, username), createTrainingType(2L, "Fitness"));
@@ -195,18 +195,18 @@ class TrainerServiceImplTest {
     when(trainerRepository.findByUserUsername(username)).thenReturn(Optional.of(trainer));
     when(modelMapper.map(trainer, TrainerDto.class)).thenReturn(trainerDto);
 
-    TrainerDto result = trainerService.selectTrainerByUsername(username);
+    TrainerDto result = trainerService.getTrainerByUsername(username);
 
     Assertions.assertThat(result).isSameAs(trainerDto);
   }
 
   @Test
-  void selectTrainerByUsernameShouldThrowExceptionWhenTrainerDoesNotExist() {
+  void getTrainerByUsernameShouldThrowExceptionWhenTrainerDoesNotExist() {
     String username = "missing";
 
     when(trainerRepository.findByUserUsername(username)).thenReturn(Optional.empty());
 
-    Assertions.assertThatThrownBy(() -> trainerService.selectTrainerByUsername(username))
+    Assertions.assertThatThrownBy(() -> trainerService.getTrainerByUsername(username))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Trainer not found: " + username);
 
@@ -214,7 +214,7 @@ class TrainerServiceImplTest {
   }
 
   @Test
-  void selectAllTrainersShouldReturnMappedDtos() {
+  void getAllTrainersShouldReturnMappedDtos() {
     Trainer firstTrainer =
         createTrainer(1L, createUser(1L, "first.trainer"), createTrainingType(2L, "Fitness"));
     Trainer secondTrainer =
@@ -226,7 +226,7 @@ class TrainerServiceImplTest {
     when(modelMapper.map(firstTrainer, TrainerDto.class)).thenReturn(firstDto);
     when(modelMapper.map(secondTrainer, TrainerDto.class)).thenReturn(secondDto);
 
-    List<TrainerDto> result = trainerService.selectAllTrainers();
+    List<TrainerDto> result = trainerService.getAllTrainers();
 
     Assertions.assertThat(result).containsExactly(firstDto, secondDto);
   }
@@ -234,7 +234,7 @@ class TrainerServiceImplTest {
   @Test
   void selectTrainersNotAssignedToTraineeShouldReturnMappedDtos() {
     String traineeUsername = "john.doe";
-    Trainee trainee = createTrainee(10L, createUser(1L, traineeUsername));
+    Trainee trainee = createTrainee(createUser(1L, traineeUsername));
     Trainer firstTrainer =
         createTrainer(1L, createUser(2L, "first.trainer"), createTrainingType(2L, "Fitness"));
     Trainer secondTrainer =
@@ -267,9 +267,9 @@ class TrainerServiceImplTest {
     verifyNoInteractions(userService, trainingTypeService, modelMapper);
   }
 
-  private Trainee createTrainee(Long id, User user) {
+  private Trainee createTrainee(User user) {
     Trainee trainee = new Trainee();
-    trainee.setId(id);
+    trainee.setId(10L);
     trainee.setUser(user);
     trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
     trainee.setAddress("Baku");

@@ -77,7 +77,7 @@ public class TrainerServiceImpl implements TrainerService {
   }
 
   @Override
-  public TrainerDto selectTrainerByUsername(String username) {
+  public TrainerDto getTrainerByUsername(String username) {
     log.debug("Selecting trainer by username={}", username);
     Trainer trainer =
         trainerRepo
@@ -91,7 +91,7 @@ public class TrainerServiceImpl implements TrainerService {
   }
 
   @Override
-  public List<TrainerDto> selectAllTrainers() {
+  public List<TrainerDto> getAllTrainers() {
     List<TrainerDto> trainers =
         trainerRepo.findAll().stream().map(t -> mapper.map(t, TrainerDto.class)).toList();
     log.debug("Selected {} trainers", trainers.size());

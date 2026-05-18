@@ -63,13 +63,13 @@ public class TrainingServiceImpl implements TrainingService {
   }
 
   @Override
-  public TrainingDto selectTraining(Long trainingId) {
+  public TrainingDto getTraining(Long trainingId) {
     log.debug("Selecting training by id={}", trainingId);
     return mapper.map(getTrainingById(trainingId), TrainingDto.class);
   }
 
   @Override
-  public List<TrainingDto> selectAllTrainings() {
+  public List<TrainingDto> getAllTrainings() {
     List<TrainingDto> trainings =
         trainingRepo.findAll().stream()
             .map(training -> mapper.map(training, TrainingDto.class))

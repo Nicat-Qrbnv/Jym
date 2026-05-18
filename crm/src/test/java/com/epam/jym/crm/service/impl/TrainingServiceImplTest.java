@@ -131,7 +131,7 @@ class TrainingServiceImplTest {
   }
 
   @Test
-  void selectTrainingShouldReturnMappedDtoWhenTrainingExists() {
+  void getTrainingShouldReturnMappedDtoWhenTrainingExists() {
     Long trainingId = 10L;
     Training training =
         createTraining(
@@ -145,25 +145,25 @@ class TrainingServiceImplTest {
     when(trainingRepository.findById(trainingId)).thenReturn(Optional.of(training));
     when(modelMapper.map(training, TrainingDto.class)).thenReturn(trainingDto);
 
-    TrainingDto result = trainingService.selectTraining(trainingId);
+    TrainingDto result = trainingService.getTraining(trainingId);
 
     Assertions.assertThat(result).isSameAs(trainingDto);
   }
 
   @Test
-  void selectTrainingShouldThrowExceptionWhenTrainingDoesNotExist() {
+  void getTrainingShouldThrowExceptionWhenTrainingDoesNotExist() {
     Long trainingId = 404L;
 
     when(trainingRepository.findById(trainingId)).thenReturn(Optional.empty());
 
-    Assertions.assertThatThrownBy(() -> trainingService.selectTraining(trainingId))
+    Assertions.assertThatThrownBy(() -> trainingService.getTraining(trainingId))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Training not found: " + trainingId);
     verifyNoInteractions(modelMapper);
   }
 
   @Test
-  void selectAllTrainingsShouldReturnMappedDtos() {
+  void getAllTrainingsShouldReturnMappedDtos() {
     TrainingType type = createTrainingType();
     Trainee trainee = createTrainee(createUser(1L, "john.doe"));
     Trainer trainer = createTrainer(createUser(2L, "jane.doe"), type);
@@ -176,7 +176,7 @@ class TrainingServiceImplTest {
     when(modelMapper.map(firstTraining, TrainingDto.class)).thenReturn(firstDto);
     when(modelMapper.map(secondTraining, TrainingDto.class)).thenReturn(secondDto);
 
-    List<TrainingDto> result = trainingService.selectAllTrainings();
+    List<TrainingDto> result = trainingService.getAllTrainings();
 
     Assertions.assertThat(result).containsExactly(firstDto, secondDto);
   }

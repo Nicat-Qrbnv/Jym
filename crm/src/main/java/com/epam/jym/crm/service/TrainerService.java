@@ -15,9 +15,9 @@ public interface TrainerService {
 
   TrainerDto selectTrainer(Long trainerId);
 
-  TrainerDto selectTrainerByUsername(String username);
+  TrainerDto getTrainerByUsername(String username);
 
-  List<TrainerDto> selectAllTrainers();
+  List<TrainerDto> getAllTrainers();
 
   List<TrainerDto> selectTrainersNotAssignedToTrainee(String traineeUsername);
 

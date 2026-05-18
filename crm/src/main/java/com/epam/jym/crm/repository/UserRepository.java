@@ -1,6 +1,7 @@
 package com.epam.jym.crm.repository;
 
 import com.epam.jym.crm.entity.User;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
           WHERE u.username LIKE :username
           """)
   Integer findNumberOfUsersWithSameName(String username);
+
+  Optional<User> findByUsername(String username);
 
   @Modifying
   @Query("UPDATE User u SET u.password = :newPassword WHERE u.id = :userId")
