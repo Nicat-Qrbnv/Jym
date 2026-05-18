@@ -5,6 +5,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.entity.Trainee;
@@ -56,9 +58,9 @@ class TrainingServiceImplTest {
   @Test
   void createTrainingShouldLoadRelationsSaveTrainingAndReturnDto() {
     TrainingCreateDto trainingDto = createTrainingCreateDto();
-    TrainingType type = createTrainingType(2L, "Fitness");
-    Trainee trainee = createTrainee(3L, createUser(1L, "john.doe"));
-    Trainer trainer = createTrainer(4L, createUser(2L, "jane.doe"), type);
+    TrainingType type = createTrainingType();
+    Trainee trainee = createTrainee(createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(createUser(2L, "jane.doe"), type);
     Training savedTraining = createTraining(10L, "Java Basics", type, trainee, trainer);
     TrainingDto savedTrainingDto = createTrainingDto(10L, "Java Basics");
 
@@ -101,7 +103,7 @@ class TrainingServiceImplTest {
   void createTrainingShouldThrowExceptionWhenTraineeDoesNotExist() {
     TrainingCreateDto trainingDto = createTrainingCreateDto();
 
-    when(trainingTypeService.getType(2L)).thenReturn(createTrainingType(2L, "Fitness"));
+    when(trainingTypeService.getType(2L)).thenReturn(createTrainingType());
     when(traineeService.getTrainee(3L))
         .thenThrow(new IllegalArgumentException("Trainee not found: 3"));
 
@@ -116,8 +118,8 @@ class TrainingServiceImplTest {
   void createTrainingShouldThrowExceptionWhenTrainerDoesNotExist() {
     TrainingCreateDto trainingDto = createTrainingCreateDto();
 
-    when(trainingTypeService.getType(2L)).thenReturn(createTrainingType(2L, "Fitness"));
-    when(traineeService.getTrainee(3L)).thenReturn(createTrainee(3L, createUser(1L, "john.doe")));
+    when(trainingTypeService.getType(2L)).thenReturn(createTrainingType());
+    when(traineeService.getTrainee(3L)).thenReturn(createTrainee(createUser(1L, "john.doe")));
     when(trainerService.getTrainer(4L))
         .thenThrow(new IllegalArgumentException("Trainer not found: 4"));
 
@@ -135,9 +137,9 @@ class TrainingServiceImplTest {
         createTraining(
             trainingId,
             "Java Basics",
-            createTrainingType(2L, "Fitness"),
-            createTrainee(3L, createUser(1L, "john.doe")),
-            createTrainer(4L, createUser(2L, "jane.doe"), createTrainingType(2L, "Fitness")));
+            createTrainingType(),
+            createTrainee(createUser(1L, "john.doe")),
+            createTrainer(createUser(2L, "jane.doe"), createTrainingType()));
     TrainingDto trainingDto = createTrainingDto(trainingId, "Java Basics");
 
     when(trainingRepository.findById(trainingId)).thenReturn(Optional.of(training));
@@ -162,9 +164,9 @@ class TrainingServiceImplTest {
 
   @Test
   void selectAllTrainingsShouldReturnMappedDtos() {
-    TrainingType type = createTrainingType(2L, "Fitness");
-    Trainee trainee = createTrainee(3L, createUser(1L, "john.doe"));
-    Trainer trainer = createTrainer(4L, createUser(2L, "jane.doe"), type);
+    TrainingType type = createTrainingType();
+    Trainee trainee = createTrainee(createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(createUser(2L, "jane.doe"), type);
     Training firstTraining = createTraining(1L, "Java Basics", type, trainee, trainer);
     Training secondTraining = createTraining(2L, "Spring Basics", type, trainee, trainer);
     TrainingDto firstDto = createTrainingDto(1L, "Java Basics");
@@ -177,6 +179,107 @@ class TrainingServiceImplTest {
     List<TrainingDto> result = trainingService.selectAllTrainings();
 
     Assertions.assertThat(result).containsExactly(firstDto, secondDto);
+  }
+
+  @Test
+  void getTraineeTrainingsShouldReturnMappedDtosMatchingCriteria() {
+    LocalDate fromDate = LocalDate.of(2026, 5, 1);
+    LocalDate toDate = LocalDate.of(2026, 5, 31);
+    TraineeTrainingsCriteriaDto criteria =
+        new TraineeTrainingsCriteriaDto(fromDate, toDate, " Jane Doe ", "Fitness");
+    TrainingType type = createTrainingType();
+    Trainee trainee = createTrainee(createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(createUser(2L, "jane.doe"), type);
+    Training training = createTraining(1L, "Java Basics", type, trainee, trainer);
+    TrainingDto trainingDto = createTrainingDto(1L, "Java Basics");
+
+    when(trainingRepository.findTraineeTrainings(
+            "john.doe", fromDate, toDate, "Jane Doe", "Fitness"))
+        .thenReturn(List.of(training));
+    when(modelMapper.map(training, TrainingDto.class)).thenReturn(trainingDto);
+
+    List<TrainingDto> result = trainingService.getTraineeTrainings("john.doe", criteria);
+
+    Assertions.assertThat(result).containsExactly(trainingDto);
+  }
+
+  @Test
+  void getTraineeTrainingsShouldTreatNullCriteriaAsNoOptionalFilters() {
+    TrainingType type = createTrainingType();
+    Trainee trainee = createTrainee(createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(createUser(2L, "jane.doe"), type);
+    Training training = createTraining(1L, "Java Basics", type, trainee, trainer);
+    TrainingDto trainingDto = createTrainingDto(1L, "Java Basics");
+
+    when(trainingRepository.findTraineeTrainings("john.doe", null, null, null, null))
+        .thenReturn(List.of(training));
+    when(modelMapper.map(training, TrainingDto.class)).thenReturn(trainingDto);
+
+    List<TrainingDto> result = trainingService.getTraineeTrainings("john.doe", null);
+
+    Assertions.assertThat(result).containsExactly(trainingDto);
+  }
+
+  @Test
+  void getTraineeTrainingsShouldThrowExceptionWhenTraineeUsernameIsBlank() {
+    Assertions.assertThatThrownBy(
+            () ->
+                trainingService.getTraineeTrainings(
+                    " ", new TraineeTrainingsCriteriaDto(null, null, null, null)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("traineeUsername must not be blank");
+
+    verifyNoInteractions(trainingRepository, modelMapper);
+  }
+
+  @Test
+  void getTrainerTrainingsShouldReturnMappedDtosMatchingCriteria() {
+    LocalDate fromDate = LocalDate.of(2026, 5, 1);
+    LocalDate toDate = LocalDate.of(2026, 5, 31);
+    TrainerTrainingsCriteriaDto criteria =
+        new TrainerTrainingsCriteriaDto(fromDate, toDate, " John Doe ");
+    TrainingType type = createTrainingType();
+    Trainee trainee = createTrainee(createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(createUser(2L, "jane.doe"), type);
+    Training training = createTraining(1L, "Java Basics", type, trainee, trainer);
+    TrainingDto trainingDto = createTrainingDto(1L, "Java Basics");
+
+    when(trainingRepository.findTrainerTrainings("jane.doe", fromDate, toDate, "John Doe"))
+        .thenReturn(List.of(training));
+    when(modelMapper.map(training, TrainingDto.class)).thenReturn(trainingDto);
+
+    List<TrainingDto> result = trainingService.getTrainerTrainings("jane.doe", criteria);
+
+    Assertions.assertThat(result).containsExactly(trainingDto);
+  }
+
+  @Test
+  void getTrainerTrainingsShouldTreatNullCriteriaAsNoOptionalFilters() {
+    TrainingType type = createTrainingType();
+    Trainee trainee = createTrainee(createUser(1L, "john.doe"));
+    Trainer trainer = createTrainer(createUser(2L, "jane.doe"), type);
+    Training training = createTraining(1L, "Java Basics", type, trainee, trainer);
+    TrainingDto trainingDto = createTrainingDto(1L, "Java Basics");
+
+    when(trainingRepository.findTrainerTrainings("jane.doe", null, null, null))
+        .thenReturn(List.of(training));
+    when(modelMapper.map(training, TrainingDto.class)).thenReturn(trainingDto);
+
+    List<TrainingDto> result = trainingService.getTrainerTrainings("jane.doe", null);
+
+    Assertions.assertThat(result).containsExactly(trainingDto);
+  }
+
+  @Test
+  void getTrainerTrainingsShouldThrowExceptionWhenTrainerUsernameIsBlank() {
+    Assertions.assertThatThrownBy(
+            () ->
+                trainingService.getTrainerTrainings(
+                    " ", new TrainerTrainingsCriteriaDto(null, null, null)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("trainerUsername must not be blank");
+
+    verifyNoInteractions(trainingRepository, modelMapper);
   }
 
   private Training createTraining(
@@ -192,25 +295,25 @@ class TrainingServiceImplTest {
     return training;
   }
 
-  private TrainingType createTrainingType(Long id, String name) {
+  private TrainingType createTrainingType() {
     TrainingType trainingType = new TrainingType();
-    trainingType.setId(id);
-    trainingType.setName(name);
+    trainingType.setId(2L);
+    trainingType.setName("Fitness");
     return trainingType;
   }
 
-  private Trainee createTrainee(Long id, User user) {
+  private Trainee createTrainee(User user) {
     Trainee trainee = new Trainee();
-    trainee.setId(id);
+    trainee.setId(3L);
     trainee.setUser(user);
     trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
     trainee.setAddress("Baku");
     return trainee;
   }
 
-  private Trainer createTrainer(Long id, User user, TrainingType specialization) {
+  private Trainer createTrainer(User user, TrainingType specialization) {
     Trainer trainer = new Trainer();
-    trainer.setId(id);
+    trainer.setId(4L);
     trainer.setUser(user);
     trainer.setSpecialization(specialization);
     return trainer;

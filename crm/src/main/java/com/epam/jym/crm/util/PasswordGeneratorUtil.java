@@ -3,8 +3,7 @@ package com.epam.jym.crm.util;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import org.jspecify.annotations.NonNull;
 
 public final class PasswordGeneratorUtil {
@@ -21,7 +20,7 @@ public final class PasswordGeneratorUtil {
       throw new IllegalArgumentException("password length must be at least " + MIN_PASSWORD_LENGTH);
     }
 
-    Set<String> passwordPieces = new HashSet<>(5);
+    List<String> passwordPieces = new ArrayList<>(5);
     passwordPieces.add(String.valueOf(randomChar(DIGITS)));
     passwordPieces.add(String.valueOf(randomChar(SPECIAL_CHARACTERS)));
     passwordPieces.add(getRandomWord(length));
@@ -30,7 +29,7 @@ public final class PasswordGeneratorUtil {
       passwordPieces.add(String.valueOf(randomChar(SPECIAL_CHARACTERS)));
     }
 
-    Collections.shuffle(new ArrayList<>(passwordPieces), RANDOM);
+    Collections.shuffle(passwordPieces, RANDOM);
 
     return passwordPieces.stream()
         .reduce(new StringBuilder(), StringBuilder::append, StringBuilder::append)

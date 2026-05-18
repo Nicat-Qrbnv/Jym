@@ -6,7 +6,6 @@ import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
 import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.PasswordGeneratorUtil;
-import jakarta.transaction.Transactional;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -15,10 +14,12 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
   private final ReentrantLock lock = new ReentrantLock();
@@ -71,15 +72,17 @@ public class UserServiceImpl implements UserService {
     return PasswordGeneratorUtil.generateRandomPassword(passwordLength);
   }
 
+  @Transactional
   @Override
   public void changePassword(Long userId, String newPassword) {
     userRepo.changePassword(userId, newPassword);
     log.info("User with id={} changed password", userId);
   }
 
+  @Transactional
   @Override
   public void changeUserStatus(Long userId) {
-    userRepo.changeStatus();
+    userRepo.changeStatus(userId);
   }
 
   @Override

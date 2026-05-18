@@ -10,6 +10,7 @@ import com.epam.jym.crm.dto.user.RegisteredUserDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
+import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -124,6 +125,51 @@ class UserServiceImplTest {
         .hasMessage("firstName and lastName must not be null");
 
     verifyNoInteractions(userRepository, mapper);
+  }
+
+  @Test
+  void changePasswordShouldDelegateToRepository() {
+    authenticationService.changePassword(10L, "newPassword");
+
+    verify(userRepository).changePassword(10L, "newPassword");
+  }
+
+  @Test
+  void changeUserStatusShouldDelegateToRepository() {
+    authenticationService.changeUserStatus(10L);
+
+    verify(userRepository).changeStatus(10L);
+  }
+
+  @Test
+  void getUserShouldReturnUserWhenExists() {
+    User user = createUser();
+
+    when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+
+    User result = authenticationService.getUser(10L);
+
+    Assertions.assertThat(result).isSameAs(user);
+  }
+
+  @Test
+  void getUserShouldThrowExceptionWhenUserDoesNotExist() {
+    when(userRepository.findById(404L)).thenReturn(Optional.empty());
+
+    Assertions.assertThatThrownBy(() -> authenticationService.getUser(404L))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("User not found: 404");
+  }
+
+  private User createUser() {
+    User user = new User();
+    user.setId(10L);
+    user.setFirstName("John");
+    user.setLastName("Doe");
+    user.setUsername("John.Doe");
+    user.setPassword("password");
+    user.setActive(true);
+    return user;
   }
 
   private RegisteredUserDto toRegisteredUserDto(User user) {

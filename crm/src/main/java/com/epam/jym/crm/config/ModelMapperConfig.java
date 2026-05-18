@@ -21,10 +21,10 @@ public class ModelMapperConfig {
   @Bean
   ModelMapper modelMapper() {
     ModelMapper mapper = new ModelMapper();
-    mapper.addConverter(getRegisteredUserDto());
-    mapper.addConverter(getTraineeDto());
-    mapper.addConverter(getTrainerDto());
-    mapper.addConverter(getTrainingDto());
+    mapper.addConverter(getRegisteredUserDto(), User.class, RegisteredUserDto.class);
+    mapper.addConverter(getTraineeDto(), Trainee.class, TraineeDto.class);
+    mapper.addConverter(getTrainerDto(), Trainer.class, TrainerDto.class);
+    mapper.addConverter(getTrainingDto(), Training.class, TrainingDto.class);
     return mapper;
   }
 

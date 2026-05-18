@@ -19,5 +19,9 @@ public interface TrainerService {
 
   List<TrainerDto> selectAllTrainers();
 
+  List<TrainerDto> selectTrainersNotAssignedToTrainee(String traineeUsername);
+
   @NonNull Trainer getTrainer(Long trainerId);
+
+  List<Trainer> getTrainersByIds(List<Long> trainerIds);
 }

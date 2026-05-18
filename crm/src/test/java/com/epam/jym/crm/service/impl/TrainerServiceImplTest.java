@@ -9,12 +9,15 @@ import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
+import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
@@ -31,6 +34,8 @@ import org.modelmapper.ModelMapper;
 class TrainerServiceImplTest {
 
   @Mock private TrainerRepository trainerRepository;
+
+  @Mock private TraineeRepository traineeRepository;
 
   @Mock private UserService userService;
 
@@ -224,6 +229,51 @@ class TrainerServiceImplTest {
     List<TrainerDto> result = trainerService.selectAllTrainers();
 
     Assertions.assertThat(result).containsExactly(firstDto, secondDto);
+  }
+
+  @Test
+  void selectTrainersNotAssignedToTraineeShouldReturnMappedDtos() {
+    String traineeUsername = "john.doe";
+    Trainee trainee = createTrainee(10L, createUser(1L, traineeUsername));
+    Trainer firstTrainer =
+        createTrainer(1L, createUser(2L, "first.trainer"), createTrainingType(2L, "Fitness"));
+    Trainer secondTrainer =
+        createTrainer(2L, createUser(3L, "second.trainer"), createTrainingType(3L, "Yoga"));
+    TrainerDto firstDto = createTrainerDto(1L, "first.trainer");
+    TrainerDto secondDto = createTrainerDto(2L, "second.trainer");
+
+    when(traineeRepository.findByUserUsername(traineeUsername)).thenReturn(Optional.of(trainee));
+    when(trainerRepository.findTrainersNotAssignedToTrainee(traineeUsername))
+        .thenReturn(List.of(firstTrainer, secondTrainer));
+    when(modelMapper.map(firstTrainer, TrainerDto.class)).thenReturn(firstDto);
+    when(modelMapper.map(secondTrainer, TrainerDto.class)).thenReturn(secondDto);
+
+    List<TrainerDto> result = trainerService.selectTrainersNotAssignedToTrainee(traineeUsername);
+
+    Assertions.assertThat(result).containsExactly(firstDto, secondDto);
+  }
+
+  @Test
+  void selectTrainersNotAssignedToTraineeShouldThrowExceptionWhenTraineeDoesNotExist() {
+    String traineeUsername = "missing";
+
+    when(traineeRepository.findByUserUsername(traineeUsername)).thenReturn(Optional.empty());
+
+    Assertions.assertThatThrownBy(
+            () -> trainerService.selectTrainersNotAssignedToTrainee(traineeUsername))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Trainee not found: " + traineeUsername);
+
+    verifyNoInteractions(userService, trainingTypeService, modelMapper);
+  }
+
+  private Trainee createTrainee(Long id, User user) {
+    Trainee trainee = new Trainee();
+    trainee.setId(id);
+    trainee.setUser(user);
+    trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
+    trainee.setAddress("Baku");
+    return trainee;
   }
 
   private Trainer createTrainer(Long id, User user, TrainingType specialization) {

@@ -8,6 +8,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -53,6 +55,14 @@ public class Trainee {
   @ToString.Exclude
   @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE, orphanRemoval = true)
   private List<Training> trainings = new ArrayList<>();
+
+  @ToString.Exclude
+  @ManyToMany
+  @JoinTable(
+      name = "trainee_trainers",
+      joinColumns = @JoinColumn(name = "trainee_id"),
+      inverseJoinColumns = @JoinColumn(name = "trainer_id"))
+  private List<Trainer> trainers = new ArrayList<>();
 
   @ToString.Include
   @Transient
