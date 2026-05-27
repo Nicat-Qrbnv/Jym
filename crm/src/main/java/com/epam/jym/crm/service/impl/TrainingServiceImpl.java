@@ -3,7 +3,6 @@ package com.epam.jym.crm.service.impl;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
-import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.repository.TrainingRepository;
 import com.epam.jym.crm.service.TraineeService;
@@ -14,11 +13,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,12 +30,9 @@ public class TrainingServiceImpl implements TrainingService {
   private final TraineeService traineeService;
   private final TrainerService trainerService;
 
-  @Setter(onMethod_ = @Autowired)
-  private ModelMapper mapper;
-
   @Transactional
   @Override
-  public TrainingDto createTraining(TrainingCreateDto trainingDto) {
+  public Training createTraining(TrainingCreateDto trainingDto) {
     if (trainingDto == null) {
       throw new IllegalArgumentException("trainingDto must not be null");
     }
@@ -47,7 +40,6 @@ public class TrainingServiceImpl implements TrainingService {
       throw new IllegalArgumentException("Trainee and trainer cannot be the same person");
     }
 
-    log.debug("Creating training");
     Training training = new Training();
     training.setName(trainingDto.name());
     training.setType(trainingTypeService.getType(trainingDto.typeId()));
@@ -57,30 +49,22 @@ public class TrainingServiceImpl implements TrainingService {
     training.setDurationInMinutes(trainingDto.durationInMinutes());
 
     training = trainingRepo.save(training);
-    log.info("Created training with id={} name={}", training.getId(), training.getName());
 
-    return mapper.map(training, TrainingDto.class);
+    return training;
   }
 
   @Override
-  public TrainingDto getTraining(Long trainingId) {
-    log.debug("Selecting training by id={}", trainingId);
-    return mapper.map(getTrainingById(trainingId), TrainingDto.class);
+  public Training getTraining(Long trainingId) {
+    return getTrainingById(trainingId);
   }
 
   @Override
-  public List<TrainingDto> getAllTrainings() {
-    List<TrainingDto> trainings =
-        trainingRepo.findAll().stream()
-            .map(training -> mapper.map(training, TrainingDto.class))
-            .toList();
-    log.debug("Selected {} trainings", trainings.size());
-
-    return trainings;
+  public List<Training> getAllTrainings() {
+    return trainingRepo.findAll();
   }
 
   @Override
-  public List<TrainingDto> getTraineeTrainings(
+  public List<Training> getTraineeTrainings(
       String traineeUsername, TraineeTrainingsCriteriaDto criteria) {
     if (traineeUsername == null || traineeUsername.isBlank()) {
       throw new IllegalArgumentException("traineeUsername must not be blank");
@@ -98,15 +82,11 @@ public class TrainingServiceImpl implements TrainingService {
           trainingRepo.findTraineeTrainings(
               traineeUsername, fromDate, toDate, trainerName, trainingType);
     }
-    log.debug("Selected {} trainings for trainee = {}", traineeTrainings.size(), traineeUsername);
-
-    return traineeTrainings.stream()
-        .map(training -> mapper.map(training, TrainingDto.class))
-        .toList();
+    return traineeTrainings;
   }
 
   @Override
-  public List<TrainingDto> getTrainerTrainings(
+  public List<Training> getTrainerTrainings(
       String trainerUsername, TrainerTrainingsCriteriaDto criteria) {
     if (trainerUsername == null || trainerUsername.isBlank()) {
       throw new IllegalArgumentException("trainerUsername must not be blank");
@@ -122,11 +102,7 @@ public class TrainingServiceImpl implements TrainingService {
       trainerTrainings =
           trainingRepo.findTrainerTrainings(trainerUsername, fromDate, toDate, traineeName);
     }
-    log.debug("Selected {} trainings for trainer = {}", trainerTrainings.size(), trainerUsername);
-
-    return trainerTrainings.stream()
-        .map(training -> mapper.map(training, TrainingDto.class))
-        .toList();
+    return trainerTrainings;
   }
 
   private @NonNull Training getTrainingById(Long trainingId) {

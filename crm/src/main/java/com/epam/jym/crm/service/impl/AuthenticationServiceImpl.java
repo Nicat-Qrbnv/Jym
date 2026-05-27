@@ -25,8 +25,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       throw failAuthentication(credentials == null ? "null" : credentials.username());
     }
 
-    User foundUser = userRepository.findByUsername(credentials.username())
-        .orElseThrow(() -> failAuthentication(credentials.username()));
+    User foundUser =
+        userRepository
+            .findByUsername(credentials.username())
+            .orElseThrow(() -> failAuthentication(credentials.username()));
 
     boolean passwordMatches = credentials.password().equals(foundUser.getPassword());
 

@@ -19,10 +19,9 @@ import java.util.List;
 public interface CrmFacade {
 
   @SkipAuthentication
-  TraineeDto createTrainee(TraineeCreateDto traineeDto);
+  CredentialsDto createTrainee(TraineeCreateDto traineeDto);
 
-  TraineeDto updateTrainee(
-      CredentialsDto credentials, Long traineeId, TraineeUpdateDto traineeDto);
+  TraineeDto updateTrainee(CredentialsDto credentials, Long traineeId, TraineeUpdateDto traineeDto);
 
   void deleteTrainee(CredentialsDto credentials, Long traineeId);
 
@@ -38,10 +37,9 @@ public interface CrmFacade {
       CredentialsDto credentials, Long traineeId, List<Long> trainerIds);
 
   @SkipAuthentication
-  TrainerDto createTrainer(TrainerCreateDto trainerDto);
+  CredentialsDto createTrainer(TrainerCreateDto trainerDto);
 
-  TrainerDto updateTrainer(
-      CredentialsDto credentials, Long trainerId, TrainerUpdateDto trainerDto);
+  TrainerDto updateTrainer(CredentialsDto credentials, Long trainerId, TrainerUpdateDto trainerDto);
 
   TrainerDto selectTrainer(CredentialsDto credentials, Long trainerId);
 

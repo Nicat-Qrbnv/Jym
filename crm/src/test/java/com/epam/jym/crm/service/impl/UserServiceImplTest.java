@@ -1,12 +1,10 @@
 package com.epam.jym.crm.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.epam.jym.crm.dto.user.RegisteredUserDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
@@ -19,7 +17,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,14 +26,11 @@ class UserServiceImplTest {
 
   @Mock private UserRepository userRepository;
 
-  @Mock private ModelMapper mapper;
-
   @InjectMocks private UserServiceImpl authenticationService;
 
   @BeforeEach
   void setUp() {
     ReflectionTestUtils.setField(authenticationService, "passwordLength", PASSWORD_LENGTH);
-    authenticationService.setMapper(mapper);
   }
 
   @Test
@@ -51,20 +45,14 @@ class UserServiceImplTest {
               user.setId(10L);
               return user;
             });
-    when(mapper.map(any(User.class), eq(RegisteredUserDto.class)))
-        .thenAnswer(
-            invocation -> {
-              User user = invocation.getArgument(0);
-              return toRegisteredUserDto(user);
-            });
 
-    RegisteredUserDto registeredUser = authenticationService.register(userDto);
+    User registeredUser = authenticationService.register(userDto);
 
-    Assertions.assertThat(registeredUser.id()).isEqualTo(10L);
-    Assertions.assertThat(registeredUser.firstName()).isEqualTo("John");
-    Assertions.assertThat(registeredUser.lastName()).isEqualTo("Doe");
-    Assertions.assertThat(registeredUser.username()).isEqualTo("John.Doe");
-    Assertions.assertThat(registeredUser.password()).hasSize(PASSWORD_LENGTH);
+    Assertions.assertThat(registeredUser.getId()).isEqualTo(10L);
+    Assertions.assertThat(registeredUser.getFirstName()).isEqualTo("John");
+    Assertions.assertThat(registeredUser.getLastName()).isEqualTo("Doe");
+    Assertions.assertThat(registeredUser.getUsername()).isEqualTo("John.Doe");
+    Assertions.assertThat(registeredUser.getPassword()).hasSize(PASSWORD_LENGTH);
 
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
     verify(userRepository).save(userCaptor.capture());
@@ -82,17 +70,11 @@ class UserServiceImplTest {
 
     when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(2);
     when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-    when(mapper.map(any(User.class), eq(RegisteredUserDto.class)))
-        .thenAnswer(
-            invocation -> {
-              User user = invocation.getArgument(0);
-              return toRegisteredUserDto(user);
-            });
 
-    RegisteredUserDto registeredUser = authenticationService.register(userDto);
+    User registeredUser = authenticationService.register(userDto);
 
-    Assertions.assertThat(registeredUser.username()).isEqualTo("John.Doe2");
-    Assertions.assertThat(registeredUser.password()).hasSize(PASSWORD_LENGTH);
+    Assertions.assertThat(registeredUser.getUsername()).isEqualTo("John.Doe2");
+    Assertions.assertThat(registeredUser.getPassword()).hasSize(PASSWORD_LENGTH);
     verify(userRepository).save(any(User.class));
   }
 
@@ -102,7 +84,7 @@ class UserServiceImplTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("user must not be null");
 
-    verifyNoInteractions(userRepository, mapper);
+    verifyNoInteractions(userRepository);
   }
 
   @Test
@@ -113,7 +95,7 @@ class UserServiceImplTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("firstName and lastName must not be null");
 
-    verifyNoInteractions(userRepository, mapper);
+    verifyNoInteractions(userRepository);
   }
 
   @Test
@@ -124,7 +106,7 @@ class UserServiceImplTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("firstName and lastName must not be null");
 
-    verifyNoInteractions(userRepository, mapper);
+    verifyNoInteractions(userRepository);
   }
 
   @Test
@@ -172,12 +154,4 @@ class UserServiceImplTest {
     return user;
   }
 
-  private RegisteredUserDto toRegisteredUserDto(User user) {
-    return new RegisteredUserDto(
-        user.getId(),
-        user.getFirstName(),
-        user.getLastName(),
-        user.getUsername(),
-        user.getPassword());
-  }
 }

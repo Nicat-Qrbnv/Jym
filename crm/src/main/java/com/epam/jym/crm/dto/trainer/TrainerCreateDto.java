@@ -1,7 +1,9 @@
 package com.epam.jym.crm.dto.trainer;
 
+import com.epam.jym.crm.dto.user.UserCreateDto;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record TrainerCreateDto(
-    @NotNull @Positive Long userId, @NotNull @Positive Long specializationId) {}
+    @NotNull @Valid UserCreateDto userDto, @NotNull @Positive Long specializationId) {}
