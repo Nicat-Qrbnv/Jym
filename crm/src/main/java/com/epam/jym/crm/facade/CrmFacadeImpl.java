@@ -22,6 +22,7 @@ import com.epam.jym.crm.service.TrainingService;
 import com.epam.jym.crm.util.mapper.TraineeMapper;
 import com.epam.jym.crm.util.mapper.TrainerMapper;
 import com.epam.jym.crm.util.mapper.TrainingMapper;
+import com.epam.jym.crm.util.mapper.UserMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ public class CrmFacadeImpl implements CrmFacade {
   private final TrainingService trainingService;
   private final TraineeMapper traineeMapper;
   private final TrainerMapper trainerMapper;
+  private final UserMapper userMapper;
   private final TrainingMapper trainingMapper;
 
   @Override
@@ -50,6 +52,8 @@ public class CrmFacadeImpl implements CrmFacade {
         trainee.getId(),
         trainee.getUsername());
     return traineeMapper.toCredentialsDto(trainee);
+    return userMapper.toCredentialsDto(trainee.getUser());
+  }
   }
 
   @Override
