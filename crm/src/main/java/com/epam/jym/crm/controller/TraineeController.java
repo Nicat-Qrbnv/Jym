@@ -4,10 +4,13 @@ import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 
 import com.epam.jym.crm.dto.auth.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
+import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -29,6 +32,13 @@ public class TraineeController {
     return crmFacade.createTrainee(request);
   }
 
+  @GetMapping
+  @ResponseStatus(HttpStatus.OK)
+  public TraineeProfileDto getProfile(
+      @NotBlank @RequestParam String username,
+      @RequestHeader("user-credentials") String userCredentials) {
+    return crmFacade.getTraineeProfile(parse(userCredentials), username);
+  }
   @PatchMapping("/change-status")
   @ResponseStatus(HttpStatus.OK)
   public void updateStatus(

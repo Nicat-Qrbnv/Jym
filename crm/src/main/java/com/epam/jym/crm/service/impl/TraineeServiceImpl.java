@@ -74,7 +74,13 @@ public class TraineeServiceImpl implements TraineeService {
 
   @Override
   public @NonNull Trainee getTraineeByUsername(String username) {
-    return getTrainee(username);
+    return traineeRepo
+        .findTraineeByUsername(username)
+        .orElseThrow(
+            () -> {
+              log.warn("Trainee not found by username: {}", username);
+              return new IllegalArgumentException("Trainee not found: " + username);
+            });
   }
 
   @Override
@@ -86,21 +92,6 @@ public class TraineeServiceImpl implements TraineeService {
               log.warn("Trainee not found by id: {}", traineeId);
               return new IllegalArgumentException("Trainee not found: " + traineeId);
             });
-  }
-
-  private Trainee getTrainee(String username) {
-    return traineeRepo
-        .findByUserUsername(username)
-        .orElseThrow(
-            () -> {
-              log.warn("Trainee not found by username: {}", username);
-              return new IllegalArgumentException("Trainee not found: " + username);
-            });
-  }
-
-  @Override
-  public List<Trainee> getAllTrainees() {
-    return traineeRepo.findAll();
   }
 
   @Transactional

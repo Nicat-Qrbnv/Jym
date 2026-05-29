@@ -4,21 +4,25 @@ import com.epam.jym.crm.auth.Authenticated;
 import com.epam.jym.crm.auth.SkipAuthentication;
 import com.epam.jym.crm.dto.auth.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
-import com.epam.jym.crm.dto.trainee.TraineeDto;
-import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
+import com.epam.jym.crm.dto.trainee.TraineeProfileUpdateDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
-import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerProfileUpdateDto;
+import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
-import com.epam.jym.crm.dto.training.TrainingCreateDto;
-import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
+import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
+import com.epam.jym.crm.service.TrainingTypeService;
+import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.mapper.TraineeMapper;
 import com.epam.jym.crm.util.mapper.TrainerMapper;
 import com.epam.jym.crm.util.mapper.TrainingMapper;
@@ -103,27 +107,11 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public TraineeDto getTraineeById(CredentialsDto credentials, Long traineeId) {
-    log.debug("Facade request: get trainee with id={}", traineeId);
-    Trainee trainee = traineeService.getTrainee(traineeId);
-    log.debug("Facade completed: selected trainee with id={}", traineeId);
-    return traineeMapper.toTraineeDto(trainee);
-  }
-
-  @Override
-  public TraineeDto getTraineeByUsername(CredentialsDto credentials, String username) {
-    log.debug("Facade request: get trainee by username={}", username);
+  public TraineeProfileDto getTraineeProfile(CredentialsDto credentials, String username) {
+    log.debug("Facade request: get trainee profile by username={}", username);
     Trainee trainee = traineeService.getTraineeByUsername(username);
-    log.debug("Facade completed: selected trainee by username={}", username);
-    return traineeMapper.toTraineeDto(trainee);
-  }
-
-  @Override
-  public List<TraineeDto> getAllTrainees(CredentialsDto credentials) {
-    log.debug("Facade request: get all trainees");
-    List<Trainee> trainees = traineeService.getAllTrainees();
-    log.debug("Facade completed: selected {} trainees", trainees.size());
-    return trainees.stream().map(traineeMapper::toTraineeDto).toList();
+    log.debug("Facade completed: selected trainee profile by username={}", username);
+    return traineeMapper.toTraineeProfileDto(trainee);
   }
 
   @Override

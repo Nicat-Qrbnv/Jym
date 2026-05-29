@@ -4,15 +4,16 @@ import com.epam.jym.crm.auth.Authenticated;
 import com.epam.jym.crm.auth.SkipAuthentication;
 import com.epam.jym.crm.dto.auth.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
-import com.epam.jym.crm.dto.trainee.TraineeDto;
-import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
+import com.epam.jym.crm.dto.trainee.TraineeProfileUpdateDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
-import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerProfileUpdateDto;
+import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
-import com.epam.jym.crm.dto.training.TrainingCreateDto;
-import com.epam.jym.crm.dto.training.TrainingDto;
 import java.util.List;
 
 @Authenticated
@@ -34,11 +35,7 @@ public interface CrmFacade {
 
   void deleteTrainee(CredentialsDto credentials, String username);
 
-  TraineeDto getTraineeById(CredentialsDto credentials, Long traineeId);
-
-  TraineeDto getTraineeByUsername(CredentialsDto credentials, String username);
-
-  List<TraineeDto> getAllTrainees(CredentialsDto credentials);
+  TraineeProfileDto getTraineeProfile(CredentialsDto credentials, String username);
 
   List<TrainerDto> updateTraineeTrainers(
       CredentialsDto credentials, Long traineeId, List<Long> trainerIds);

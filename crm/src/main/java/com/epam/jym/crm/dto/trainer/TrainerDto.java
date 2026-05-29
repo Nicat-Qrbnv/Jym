@@ -1,5 +1,5 @@
 package com.epam.jym.crm.dto.trainer;
 
-import com.epam.jym.crm.dto.training.TrainingTypeDto;
 
-public record TrainerDto(Long id, Long userId, String username, TrainingTypeDto specialization) {}
+public record TrainerDto(
+    String username, String firstName, String lastName, String specialization) {}
