@@ -39,9 +39,7 @@ public class TrainerServiceImpl implements TrainerService {
     trainer.setUser(user);
     trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
 
-    trainer = trainerRepo.save(trainer);
-
-    return trainer;
+    return trainerRepo.save(trainer);
   }
 
   @Transactional

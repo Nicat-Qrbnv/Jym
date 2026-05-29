@@ -51,7 +51,6 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: created trainee with id={} username={}",
         trainee.getId(),
         trainee.getUsername());
-    return traineeMapper.toCredentialsDto(trainee);
     return userMapper.toCredentialsDto(trainee.getUser());
   }
   }
@@ -124,7 +123,7 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: created trainer with id={} username={}",
         trainer.getId(),
         trainer.getUsername());
-    return trainerMapper.toCredentialsDto(trainer);
+    return userMapper.toCredentialsDto(trainer.getUser());
   }
 
   @Override
