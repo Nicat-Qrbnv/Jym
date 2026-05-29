@@ -29,9 +29,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
       """
           UPDATE User u
           SET u.isActive = CASE WHEN u.isActive THEN FALSE ELSE TRUE END
-          WHERE u.id = :userId
+          WHERE u.username = :username
           """)
-  void changeStatus(Long userId);
+  void changeStatus(String username);
 
   @Modifying
   @Query(

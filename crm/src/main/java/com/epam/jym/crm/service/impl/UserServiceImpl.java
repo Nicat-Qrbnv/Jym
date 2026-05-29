@@ -67,8 +67,8 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public void changeUserStatus(Long userId) {
-    userRepo.changeStatus(userId);
+  public void changeUserStatus(String username) {
+    userRepo.changeStatus(username);
   }
 
   @Transactional

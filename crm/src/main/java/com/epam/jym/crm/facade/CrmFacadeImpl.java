@@ -37,6 +37,7 @@ public class CrmFacadeImpl implements CrmFacade {
   private final TraineeService traineeService;
   private final TrainerService trainerService;
   private final TrainingService trainingService;
+  private final UserService userService;
   private final TraineeMapper traineeMapper;
   private final TrainerMapper trainerMapper;
   private final UserMapper userMapper;
@@ -53,6 +54,18 @@ public class CrmFacadeImpl implements CrmFacade {
         trainee.getUsername());
     return userMapper.toCredentialsDto(trainee.getUser());
   }
+
+  @Override
+  public void login(CredentialsDto credentials) {
+    log.debug("Facade request: login username={}", credentials.username());
+    log.info("Facade completed: login username={}", credentials.username());
+  }
+
+  @Override
+  public void changeLogin(CredentialsDto credentials, String newPassword) {
+    log.debug("Facade request: change login username={}", credentials.username());
+    userService.changePassword(credentials.username(), newPassword);
+    log.info("Facade completed: changed login username={}", credentials.username());
   }
 
   @Override
@@ -65,6 +78,14 @@ public class CrmFacadeImpl implements CrmFacade {
         trainee.getId(),
         trainee.getUsername());
     return traineeMapper.toTraineeDto(trainee);
+  }
+
+
+  @Override
+  public void changeUserStatus(CredentialsDto credentials, String username) {
+    log.debug("Facade request: update user status with username={}", username);
+    userService.changeUserStatus(username);
+    log.info("Facade completed: updated user status with username={}", username);
   }
 
   @Override
