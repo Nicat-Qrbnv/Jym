@@ -18,6 +18,10 @@ import java.util.List;
 @Authenticated
 public interface CrmFacade {
 
+  void login(CredentialsDto credentials);
+
+  void changeLogin(CredentialsDto credentials, String newPassword);
+
   @SkipAuthentication
   CredentialsDto createTrainee(TraineeCreateDto traineeDto);
 

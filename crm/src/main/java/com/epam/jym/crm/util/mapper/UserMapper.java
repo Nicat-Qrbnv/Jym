@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-  public CredentialsDto getCredentialsDto(User source) {
+  public CredentialsDto toCredentialsDto(User source) {
     if (source == null) {
       return null;
     }

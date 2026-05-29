@@ -7,9 +7,9 @@ public interface UserService {
 
   User register(UserCreateDto user);
 
-  void changePassword(Long userId, String newPassword);
+  void changePassword(String username, String newPassword);
 
   void changeUserStatus(Long userId);
 
-  User getUser(Long userId);
+  void deactivateUser(Long userId);
 }

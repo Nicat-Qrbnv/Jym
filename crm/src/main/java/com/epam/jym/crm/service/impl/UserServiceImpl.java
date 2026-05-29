@@ -48,11 +48,6 @@ public class UserServiceImpl implements UserService {
   }
 
   private String generateUsername(String firstName, String lastName) {
-    if (firstName == null || lastName == null) {
-      log.warn("Username generation failed: firstName or lastName is null");
-      throw new IllegalArgumentException("firstName and lastName must not be null");
-    }
-
     String baseUsername = firstName + "." + lastName;
 
     Integer duplicates = userRepo.findNumberOfUsersWithSameName(baseUsername + '%');
@@ -66,8 +61,8 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public void changePassword(Long userId, String newPassword) {
-    userRepo.changePassword(userId, newPassword);
+  public void changePassword(String username, String newPassword) {
+    userRepo.changePassword(username, newPassword);
   }
 
   @Transactional
@@ -76,14 +71,9 @@ public class UserServiceImpl implements UserService {
     userRepo.changeStatus(userId);
   }
 
+  @Transactional
   @Override
-  public User getUser(Long userId) {
-    return userRepo
-        .findById(userId)
-        .orElseThrow(
-            () -> {
-              log.warn("Failed to create trainer: userId={} not found", userId);
-              return new IllegalArgumentException("User not found: " + userId);
-            });
+  public void deactivateUser(Long userId) {
+    userRepo.changeStatus(userId, false);
   }
 }
