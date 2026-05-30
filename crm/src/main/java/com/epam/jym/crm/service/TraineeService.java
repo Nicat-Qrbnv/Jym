@@ -19,7 +19,5 @@ public interface TraineeService {
 
   @NonNull Trainee getTraineeByUsername(String username);
 
-  List<Trainee> getAllTrainees();
-
-  List<Trainer> updateTraineeTrainers(Long traineeId, List<Long> trainerIds);
+  List<Trainer> updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames);
 }

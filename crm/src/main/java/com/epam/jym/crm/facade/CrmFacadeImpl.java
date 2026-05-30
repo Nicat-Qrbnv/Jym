@@ -108,11 +108,14 @@ public class CrmFacadeImpl implements CrmFacade {
 
   @Override
   public List<TrainerDto> updateTraineeTrainers(
-      CredentialsDto credentials, Long traineeId, List<Long> trainerIds) {
-    log.debug("Facade request: update trainee trainers with trainee id={}", traineeId);
-    List<Trainer> trainers = traineeService.updateTraineeTrainers(traineeId, trainerIds);
-    log.info("Facade completed: updated {} trainers for trainee id={}", trainers.size(), traineeId);
-    return trainerMapper.toTrainerDtoList(trainers);
+      CredentialsDto credentials, String traineeUsername, List<String> trainerUsernames) {
+    log.debug("Facade request: update trainee trainers with trainee username={}", traineeUsername);
+    List<Trainer> trainers = traineeService.updateTraineeTrainers(traineeUsername, trainerUsernames);
+    log.info(
+        "Facade completed: updated {} trainers for trainee username={}",
+        trainers.size(),
+        traineeUsername);
+    return traineeMapper.toTrainerDtos(trainers);
   }
 
   @Override

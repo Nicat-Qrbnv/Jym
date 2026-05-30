@@ -2,7 +2,6 @@ package com.epam.jym.crm.facade;
 
 import com.epam.jym.crm.auth.Authenticated;
 import com.epam.jym.crm.auth.SkipAuthentication;
-import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
@@ -14,6 +13,7 @@ import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import java.util.List;
 
 @Authenticated
@@ -36,7 +36,7 @@ public interface CrmFacade {
   TraineeProfileDto getTraineeProfile(CredentialsDto credentials, String username);
 
   List<TrainerDto> updateTraineeTrainers(
-      CredentialsDto credentials, Long traineeId, List<Long> trainerIds);
+      CredentialsDto credentials, String traineeUsername, List<String> trainerUsernames);
 
   @SkipAuthentication
   CredentialsDto createTrainer(TrainerCreateDto trainerDto);

@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -91,6 +92,16 @@ public class TraineeController {
       @RequestHeader("user-credentials") String userCredentials) {
     crmFacade.changeUserStatus(parse(userCredentials), username);
   }
+
+  @PutMapping("/trainers")
+  @ResponseStatus(HttpStatus.OK)
+  public List<TrainerDto> updateTrainers(
+      @RequestParam @NotBlank @Size(max = 310) String traineeUsername,
+      @RequestBody @NotNull List<@NotBlank @Size(max = 310) String> trainerUsernames,
+      @RequestHeader("user-credentials") String userCredentials) {
+    return crmFacade.updateTraineeTrainers(parse(userCredentials), traineeUsername, trainerUsernames);
+  }
+
   @DeleteMapping
   @ResponseStatus(HttpStatus.OK)
   public void deleteProfile(

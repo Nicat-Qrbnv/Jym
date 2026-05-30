@@ -94,18 +94,16 @@ public class TraineeServiceImpl implements TraineeService {
 
   @Transactional
   @Override
-  public List<Trainer> updateTraineeTrainers(Long traineeId, List<Long> trainerIds) {
-    if (traineeId == null) {
-      throw new IllegalArgumentException("trainerUsernames must not be null");
+  public List<Trainer> updateTraineeTrainers(
+      String traineeUsername, List<String> trainerUsernames) {
+    Trainee trainee = getTraineeByUsername(traineeUsername);
+    if (trainerUsernames.isEmpty()) {
+      trainee.setTrainers(List.of());
+      trainee = traineeRepo.save(trainee);
+      return trainee.getTrainers();
     }
 
-    Trainee trainee = getTrainee(traineeId);
-    if (trainerIds == null || trainerIds.isEmpty()) {
-      trainee.setTrainers(List.of());
-      traineeRepo.save(trainee);
-      return List.of();
-    }
-    List<Trainer> trainers = trainerService.getTrainersByIds(trainerIds);
+    List<Trainer> trainers = trainerService.getTrainersByUsernames(trainerUsernames);
     trainee.setTrainers(trainers);
     traineeRepo.save(trainee);
 
