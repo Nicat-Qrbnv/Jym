@@ -1,6 +1,6 @@
 package com.epam.jym.crm.service.impl;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.exception.BadCredentialsException;
 import com.epam.jym.crm.repository.UserRepository;

@@ -31,8 +31,6 @@ public interface CrmFacade {
 
   void changeUserStatus(CredentialsDto credentials, String username);
 
-  void deleteTrainee(CredentialsDto credentials, Long traineeId);
-
   void deleteTrainee(CredentialsDto credentials, String username);
 
   TraineeProfileDto getTraineeProfile(CredentialsDto credentials, String username);

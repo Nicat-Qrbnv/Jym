@@ -92,13 +92,6 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public void deleteTrainee(CredentialsDto credentials, Long traineeId) {
-    log.debug("Facade request: delete trainee with id={}", traineeId);
-    traineeService.deleteTrainee(traineeId);
-    log.info("Facade completed: deleted trainee with id={}", traineeId);
-  }
-
-  @Override
   public void deleteTrainee(CredentialsDto credentials, String username) {
     log.debug("Facade request: delete trainee with username={}", username);
     traineeService.deleteTrainee(username);

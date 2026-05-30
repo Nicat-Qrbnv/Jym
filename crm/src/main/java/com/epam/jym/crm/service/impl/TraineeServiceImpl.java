@@ -65,8 +65,9 @@ public class TraineeServiceImpl implements TraineeService {
   @Transactional
   @Override
   public void deleteTrainee(String username) {
-    Trainee trainee = getTrainee(username);
+    Trainee trainee = getTraineeByUsername(username);
     traineeRepo.delete(trainee);
+    userService.deactivateUser(trainee.getUser().getId());
   }
 
   @Override

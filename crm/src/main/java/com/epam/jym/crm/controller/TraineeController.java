@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +51,30 @@ public class TraineeController {
     return crmFacade.getTraineeProfile(parse(userCredentials), username);
   }
 
+  @GetMapping("/not-assigned-trainers")
+  @ResponseStatus(HttpStatus.OK)
+  public List<TrainerDto> getNotAssignedActiveTrainers(
+      @NotBlank @RequestParam String username,
+      @RequestHeader("user-credentials") String userCredentials) {
+    return crmFacade.getNotAssignedActiveTrainers(parse(userCredentials), username);
+  }
+
+  @GetMapping("/trainings")
+  @ResponseStatus(HttpStatus.OK)
+  public List<TraineeTrainingDto> getTrainings(
+      @NotBlank @RequestParam String username,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate periodFrom,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate periodTo,
+      @RequestParam(required = false) String trainerName,
+      @RequestParam(required = false) String trainingType,
+      @RequestHeader("user-credentials") String userCredentials) {
+    TraineeTrainingsCriteriaDto criteria =
+        new TraineeTrainingsCriteriaDto(periodFrom, periodTo, trainerName, trainingType);
+    return crmFacade.getTraineeTrainings(parse(userCredentials), username, criteria);
+  }
+
   @PutMapping
   @ResponseStatus(HttpStatus.OK)
   public TraineeProfileDto updateProfile(
@@ -65,5 +90,12 @@ public class TraineeController {
       @Valid @RequestParam String username,
       @RequestHeader("user-credentials") String userCredentials) {
     crmFacade.changeUserStatus(parse(userCredentials), username);
+  }
+  @DeleteMapping
+  @ResponseStatus(HttpStatus.OK)
+  public void deleteProfile(
+      @NotBlank @RequestParam String username,
+      @RequestHeader("user-credentials") String userCredentials) {
+    crmFacade.deleteTrainee(parse(userCredentials), username);
   }
 }
