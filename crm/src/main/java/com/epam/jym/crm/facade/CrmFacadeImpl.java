@@ -9,7 +9,7 @@ import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
-import com.epam.jym.crm.dto.trainer.TrainerProfileUpdateDto;
+import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
@@ -41,6 +41,7 @@ public class CrmFacadeImpl implements CrmFacade {
   private final TraineeService traineeService;
   private final TrainerService trainerService;
   private final TrainingService trainingService;
+  private final TrainingTypeService trainingTypeService;
   private final UserService userService;
   private final TraineeMapper traineeMapper;
   private final TrainerMapper trainerMapper;
@@ -131,23 +132,15 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public TrainerDto updateTrainer(
-      CredentialsDto credentials, Long trainerId, TrainerUpdateDto trainerDto) {
-    log.debug("Facade request: update trainer with id={}", trainerId);
-    Trainer trainer = trainerService.updateTrainer(trainerId, trainerDto);
+  public TrainerProfileDto updateTrainerProfile(
+      CredentialsDto credentials, String username, TrainerUpdateDto trainerDto) {
+    log.debug("Facade request: update trainer profile with username={}", username);
+    Trainer trainer = trainerService.updateTrainerProfile(username, trainerDto);
     log.info(
-        "Facade completed: updated trainer with id={} username={}",
+        "Facade completed: updated trainer profile with id={} username={}",
         trainer.getId(),
         trainer.getUsername());
-    return trainerMapper.toTrainerDto(trainer);
-  }
-
-  @Override
-  public TrainerDto selectTrainer(CredentialsDto credentials, Long trainerId) {
-    log.debug("Facade request: select trainer with id={}", trainerId);
-    Trainer trainer = trainerService.getTrainer(trainerId);
-    log.debug("Facade completed: selected trainer with id={}", trainerId);
-    return trainerMapper.toTrainerDto(trainer);
+    return trainerMapper.toTrainerProfileDto(trainer);
   }
 
   @Override

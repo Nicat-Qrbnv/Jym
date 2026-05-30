@@ -32,11 +32,15 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
       """
           SELECT trainer
           FROM Trainer trainer
-          WHERE trainer.id NOT IN (
-            SELECT assignedTrainer.id
+          JOIN FETCH trainer.user user
+          JOIN FETCH trainer.specialization specialization
+          WHERE user.isActive = true
+          AND NOT EXISTS (
+            SELECT 1
             FROM Trainee trainee
             JOIN trainee.trainers assignedTrainer
             WHERE trainee.user.username = :traineeUsername
+            AND assignedTrainer = trainer
           )
           """)
   List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername);

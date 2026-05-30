@@ -1,8 +1,8 @@
 package com.epam.jym.crm.util.mapper;
 
-import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
+import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.TrainingType;
@@ -17,8 +17,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class TrainerMapper {
   private final UserMapper userMapper;
+
   @Setter(onMethod_ = {@Autowired})
   private TraineeMapper traineeMapper;
+
+  @Setter(onMethod_ = {@Autowired})
+  private TrainingTypeMapper trainingTypeMapper;
 
   public TrainerProfileDto toTrainerProfileDto(Trainer source) {
     if (source == null) {
@@ -29,7 +33,7 @@ public class TrainerMapper {
     TrainingType specialization = source.getSpecialization();
     return new TrainerProfileDto(
         userMapper.toUserDto(user),
-        specialization == null ? null : specialization.getName(),
+        trainingTypeMapper.toTrainingTypeDto(specialization),
         toTraineeDtos(source.getTrainees()));
   }
 
@@ -43,7 +47,7 @@ public class TrainerMapper {
   public TrainerDto toTrainerDto(Trainer trainer) {
     User user = trainer.getUser();
     TrainingType specialization = trainer.getSpecialization();
-    return new TrainerDto(userMapper.toUserProfileDto(user),
-        specialization == null ? null : specialization.getName());
+    return new TrainerDto(
+        userMapper.toUserProfileDto(user), trainingTypeMapper.toTrainingTypeDto(specialization));
   }
 }

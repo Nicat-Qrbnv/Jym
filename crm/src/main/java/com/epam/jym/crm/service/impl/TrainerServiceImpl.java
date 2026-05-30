@@ -35,23 +35,25 @@ public class TrainerServiceImpl implements TrainerService {
     User user = userService.register(trainerDto.profile());
     Trainer trainer = new Trainer();
     trainer.setUser(user);
-    trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
+    trainer.setSpecialization(trainingTypeService.getTypeIfValid(trainerDto.specialization()));
 
     return trainerRepo.save(trainer);
   }
 
   @Transactional
   @Override
-  public Trainer updateTrainer(Long trainerId, TrainerUpdateDto trainerDto) {
+  public Trainer updateTrainerProfile(String username, TrainerUpdateDto trainerDto) {
     if (trainerDto == null) {
       throw new IllegalArgumentException("trainerDto must not be null");
     }
 
-    Trainer trainer = getTrainer(trainerId);
-    trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
-    trainer = trainerRepo.save(trainer);
+    Trainer trainer = getTrainerByUsername(username);
+    User user = trainer.getUser();
+    user.setFirstName(trainerDto.profile().firstName());
+    user.setLastName(trainerDto.profile().lastName());
+    user.setActive(trainerDto.profile().isActive());
 
-    return trainer;
+    return trainerRepo.save(trainer);
   }
 
   @Override

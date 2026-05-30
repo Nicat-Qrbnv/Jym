@@ -10,7 +10,7 @@ public interface TrainerService {
 
   Trainer createTrainer(TrainerCreateDto trainerDto);
 
-  Trainer updateTrainer(Long trainerId, TrainerUpdateDto trainerDto);
+  Trainer updateTrainerProfile(String username, TrainerUpdateDto trainerDto);
 
   @NonNull Trainer getTrainer(Long trainerId);
 

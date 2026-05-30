@@ -8,7 +8,7 @@ import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
-import com.epam.jym.crm.dto.trainer.TrainerProfileUpdateDto;
+import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
@@ -41,9 +41,8 @@ public interface CrmFacade {
   @SkipAuthentication
   CredentialsDto createTrainer(TrainerCreateDto trainerDto);
 
-  TrainerDto updateTrainer(CredentialsDto credentials, Long trainerId, TrainerUpdateDto trainerDto);
-
-  TrainerDto selectTrainer(CredentialsDto credentials, Long trainerId);
+  TrainerProfileDto updateTrainerProfile(
+      CredentialsDto credentials, String username, TrainerUpdateDto trainerDto);
 
   TrainerProfileDto getTrainerProfile(CredentialsDto credentials, String username);
 
