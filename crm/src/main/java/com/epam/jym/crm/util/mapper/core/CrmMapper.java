@@ -28,6 +28,8 @@ public class CrmMapper implements MappingContext {
     }
 
     MapperKey key = new MapperKey(source.getClass(), targetType);
+
+    @SuppressWarnings("unchecked")
     Mapper<S, T> mapper = (Mapper<S, T>) mappers.get(key);
 
     if (mapper == null) {
