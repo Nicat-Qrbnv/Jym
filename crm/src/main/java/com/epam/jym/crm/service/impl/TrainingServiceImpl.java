@@ -40,7 +40,7 @@ public class TrainingServiceImpl implements TrainingService {
     Training training = new Training();
     training.setName(trainingDto.name());
     training.setTrainee(traineeService.getTraineeByUsername(trainingDto.traineeUsername()));
-    training.setTrainer(trainerService.getTrainerByUsername(trainingDto.traineeUsername()));
+    training.setTrainer(trainerService.getTrainerByUsername(trainingDto.trainerUsername()));
     training.setScheduledDate(trainingDto.date());
     training.setDurationInMinutes(trainingDto.durationInMinutes());
     training.setType(training.getTrainer().getSpecialization());
@@ -51,10 +51,21 @@ public class TrainingServiceImpl implements TrainingService {
   @Override
   public List<Training> getTraineeTrainings(
       String traineeUsername, TraineeTrainingsCriteriaDto criteria) {
-    LocalDate fromDate = criteria.fromDate();
-    LocalDate toDate = criteria.toDate();
-    List<Long> trainers = trainerService.searchTrainersByName(normalize(criteria.trainerName()));
-    String trainingType = normalize(criteria.trainingType());
+    if (traineeUsername == null || traineeUsername.isBlank()) {
+      throw new IllegalArgumentException("traineeUsername must not be blank");
+    }
+
+    LocalDate fromDate = null;
+    LocalDate toDate = null;
+    String trainerName = null;
+    String trainingType = null;
+    if (criteria != null) {
+      fromDate = criteria.fromDate();
+      toDate = criteria.toDate();
+      trainerName = normalize(criteria.trainerName());
+      trainingType = normalize(criteria.trainingType());
+    }
+    List<Long> trainers = trainerService.searchTrainersByName(trainerName);
 
     return trainingRepo.findTraineeTrainings(
         traineeUsername, fromDate, toDate, !trainers.isEmpty(), trainers, trainingType);

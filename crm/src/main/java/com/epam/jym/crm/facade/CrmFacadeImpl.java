@@ -179,7 +179,7 @@ public class CrmFacadeImpl implements CrmFacade {
         trainings.size(),
         traineeUsername);
     return trainings.stream()
-        .map(t -> trainingMapper.toTrainingDto(t, t.getTrainee().getUser()))
+        .map(t -> trainingMapper.toTrainingDto(t, t.getTrainer().getUser()))
         .toList();
   }
 
@@ -193,7 +193,7 @@ public class CrmFacadeImpl implements CrmFacade {
         trainings.size(),
         trainerUsername);
     return trainings.stream()
-        .map(t -> trainingMapper.toTrainingDto(t, t.getTrainer().getUser()))
+        .map(t -> trainingMapper.toTrainingDto(t, t.getTrainee().getUser()))
         .toList();
   }
 
