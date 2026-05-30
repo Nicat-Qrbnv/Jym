@@ -3,6 +3,7 @@ package com.epam.jym.crm.util.mapper;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.user.UserDto;
+import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.util.mapper.core.Mapper;
 import com.epam.jym.crm.util.mapper.core.MappingContext;
@@ -32,6 +33,26 @@ public class TraineeMapping {
             source.getDateOfBirth(),
             source.getAddress(),
             context.mapCollection(source.getTrainers(), TrainerDto.class).toList());
+      }
+    };
+  }
+
+  @Bean
+  Mapper<Trainee, UserProfileDto> toProfileDto() {
+    return new Mapper<>() {
+      @Override
+      public Class<Trainee> sourceType() {
+        return Trainee.class;
+      }
+
+      @Override
+      public Class<UserProfileDto> targetType() {
+        return UserProfileDto.class;
+      }
+
+      @Override
+      public UserProfileDto map(Trainee source, MappingContext context) {
+        return context.map(source.getUser(), UserProfileDto.class);
       }
     };
   }

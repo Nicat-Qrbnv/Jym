@@ -14,7 +14,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
       """
           SELECT t
           FROM Trainer t
-          LEFT JOIN FETCH User u
+          LEFT JOIN FETCH t.user u
           WHERE u.username IN (:usernames)
           """)
   List<Trainer> findByUsernames(List<String> usernames);
@@ -23,7 +23,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
       """
           SELECT t
           FROM Trainer t
-          LEFT JOIN FETCH User u
+          LEFT JOIN FETCH t.user u
           WHERE u.username = :username
           """)
   Optional<Trainer> findByUsername(String username);

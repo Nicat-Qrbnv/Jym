@@ -27,10 +27,8 @@ public class CrmMapper implements MappingContext {
       return null;
     }
 
-    MapperKey key = new MapperKey(source.getClass(), targetType);
-
     @SuppressWarnings("unchecked")
-    Mapper<S, T> mapper = (Mapper<S, T>) mappers.get(key);
+    Mapper<S, T> mapper = (Mapper<S, T>) findMapper(source.getClass(), targetType);
 
     if (mapper == null) {
       throw new IllegalArgumentException(
@@ -46,5 +44,19 @@ public class CrmMapper implements MappingContext {
   @Override
   public <S, T> Stream<T> mapCollection(Collection<S> source, Class<T> targetType) {
     return source.stream().map(item -> map(item, targetType));
+  }
+
+  private Mapper<?, ?> findMapper(Class<?> sourceType, Class<?> targetType) {
+    Mapper<?, ?> exactMapper = mappers.get(new MapperKey(sourceType, targetType));
+    if (exactMapper != null) {
+      return exactMapper;
+    }
+
+    return mappers.entrySet().stream()
+        .filter(entry -> entry.getKey().targetType().equals(targetType))
+        .filter(entry -> entry.getKey().sourceType().isAssignableFrom(sourceType))
+        .map(Map.Entry::getValue)
+        .findFirst()
+        .orElse(null);
   }
 }

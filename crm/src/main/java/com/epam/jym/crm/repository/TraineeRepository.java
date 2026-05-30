@@ -13,7 +13,7 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
       """
           SELECT t
           FROM Trainee t
-          LEFT JOIN FETCH User u
+          LEFT JOIN FETCH t.user u
           WHERE u.username = :username
           """)
   Optional<Trainee> findTraineeByUsername(String username);
@@ -22,7 +22,7 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
       """
           SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
           FROM Trainee t
-          LEFT JOIN User u
+          LEFT JOIN t.user u
           WHERE u.username = :traineeUsername
           """)
   boolean existsByUsername(String traineeUsername);
