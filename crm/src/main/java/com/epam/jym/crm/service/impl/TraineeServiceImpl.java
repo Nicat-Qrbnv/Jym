@@ -5,6 +5,8 @@ import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.exception.InvalidRequestException;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
@@ -30,7 +32,7 @@ public class TraineeServiceImpl implements TraineeService {
   @Override
   public Trainee createTrainee(TraineeCreateDto traineeDto) {
     if (traineeDto == null) {
-      throw new IllegalArgumentException("traineeDto must not be null");
+      throw new InvalidRequestException("traineeDto must not be null");
     }
 
     User user = userService.register(traineeDto.profile());
@@ -48,7 +50,7 @@ public class TraineeServiceImpl implements TraineeService {
   @Override
   public Trainee updateTraineeProfile(String username, TraineeUpdateDto traineeDto) {
     if (traineeDto == null) {
-      throw new IllegalArgumentException("traineeDto must not be null");
+      throw new InvalidRequestException("traineeDto must not be null");
     }
 
     Trainee trainee = getTraineeByUsername(username);
@@ -77,7 +79,7 @@ public class TraineeServiceImpl implements TraineeService {
         .orElseThrow(
             () -> {
               log.warn("Trainee not found by username: {}", username);
-              return new IllegalArgumentException("Trainee not found: " + username);
+              return new ResourceNotFoundException("Trainee not found: " + username);
             });
   }
 
@@ -88,7 +90,7 @@ public class TraineeServiceImpl implements TraineeService {
         .orElseThrow(
             () -> {
               log.warn("Trainee not found by id: {}", traineeId);
-              return new IllegalArgumentException("Trainee not found: " + traineeId);
+              return new ResourceNotFoundException("Trainee not found: " + traineeId);
             });
   }
 

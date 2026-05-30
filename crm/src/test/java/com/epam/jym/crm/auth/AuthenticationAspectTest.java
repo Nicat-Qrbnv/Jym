@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.user.CredentialsDto;
+import com.epam.jym.crm.exception.InvalidCredentialsException;
 import com.epam.jym.crm.service.AuthenticationService;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.assertj.core.api.Assertions;
@@ -41,7 +42,7 @@ class AuthenticationAspectTest {
     when(joinPoint.getArgs()).thenReturn(new Object[] {"not credentials"});
 
     Assertions.assertThatThrownBy(() -> aspect.authenticate(joinPoint))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidCredentialsException.class)
         .hasMessage("Credentials are required");
     verifyNoInteractions(authenticationService);
   }

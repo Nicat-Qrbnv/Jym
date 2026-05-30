@@ -17,7 +17,8 @@ public final class PasswordGeneratorUtil {
 
   public static String generateRandomPassword(int length) {
     if (length < MIN_PASSWORD_LENGTH) {
-      throw new IllegalArgumentException("password length must be at least " + MIN_PASSWORD_LENGTH);
+      throw new IllegalArgumentException(
+          "password length must be at least " + MIN_PASSWORD_LENGTH);
     }
 
     List<String> passwordPieces = new ArrayList<>(5);

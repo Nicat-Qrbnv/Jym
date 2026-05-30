@@ -22,7 +22,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   @Modifying
   @Query("UPDATE User u SET u.password = :newPassword WHERE u.username = :username")
-  void changePassword(String username, String newPassword);
+  int changePassword(String username, String newPassword);
 
   @Modifying
   @Query(
@@ -31,7 +31,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
           SET u.isActive = CASE WHEN u.isActive THEN FALSE ELSE TRUE END
           WHERE u.username = :username
           """)
-  void changeStatus(String username);
+  int changeStatus(String username);
 
   @Modifying
   @Query(

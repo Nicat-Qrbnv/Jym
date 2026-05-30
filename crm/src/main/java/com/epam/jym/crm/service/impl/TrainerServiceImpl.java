@@ -4,6 +4,8 @@ import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.exception.InvalidRequestException;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.TrainerService;
@@ -31,7 +33,7 @@ public class TrainerServiceImpl implements TrainerService {
   @Override
   public Trainer createTrainer(TrainerCreateDto trainerDto) {
     if (trainerDto == null) {
-      throw new IllegalArgumentException("trainerDto must not be null");
+      throw new InvalidRequestException("trainerDto must not be null");
     }
 
     User user = userService.register(trainerDto.profile());
@@ -46,7 +48,7 @@ public class TrainerServiceImpl implements TrainerService {
   @Override
   public Trainer updateTrainerProfile(String username, TrainerUpdateDto trainerDto) {
     if (trainerDto == null) {
-      throw new IllegalArgumentException("trainerDto must not be null");
+      throw new InvalidRequestException("trainerDto must not be null");
     }
 
     Trainer trainer = getTrainerByUsername(username);
@@ -65,7 +67,7 @@ public class TrainerServiceImpl implements TrainerService {
         .orElseThrow(
             () -> {
               log.warn("Trainer not found by username: {}", username);
-              return new IllegalArgumentException("Trainer not found: " + username);
+              return new ResourceNotFoundException("Trainer not found: " + username);
             });
   }
 
@@ -73,7 +75,7 @@ public class TrainerServiceImpl implements TrainerService {
   public List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername) {
     if (!traineeRepo.existsByUsername(traineeUsername)) {
       log.warn("Trainee not found by username: {}", traineeUsername);
-      throw new IllegalArgumentException("Trainee not found: " + traineeUsername);
+      throw new ResourceNotFoundException("Trainee not found: " + traineeUsername);
     }
 
     return trainerRepo.findTrainersNotAssignedToTrainee(traineeUsername);
@@ -94,7 +96,7 @@ public class TrainerServiceImpl implements TrainerService {
         .orElseThrow(
             () -> {
               log.warn("Trainer not found by id: {}", trainerId);
-              return new IllegalArgumentException("Trainer not found by id: " + trainerId);
+              return new ResourceNotFoundException("Trainer not found by id: " + trainerId);
             });
   }
 

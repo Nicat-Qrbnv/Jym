@@ -1,12 +1,15 @@
 package com.epam.jym.crm.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.exception.InvalidRequestException;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.UserRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +84,7 @@ class UserServiceImplTest {
   @Test
   void registerShouldThrowExceptionWhenUserIsNull() {
     Assertions.assertThatThrownBy(() -> authenticationService.register(null))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("profile must not be null");
 
     verifyNoInteractions(userRepository);
@@ -92,7 +95,7 @@ class UserServiceImplTest {
     UserCreateDto profile = new UserCreateDto(null, "Doe");
 
     Assertions.assertThatThrownBy(() -> authenticationService.register(profile))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("firstName and lastName must not be null");
 
     verifyNoInteractions(userRepository);
@@ -103,7 +106,7 @@ class UserServiceImplTest {
     UserCreateDto profile = new UserCreateDto("John", null);
 
     Assertions.assertThatThrownBy(() -> authenticationService.register(profile))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("firstName and lastName must not be null");
 
     verifyNoInteractions(userRepository);
@@ -111,16 +114,39 @@ class UserServiceImplTest {
 
   @Test
   void changePasswordShouldDelegateToRepository() {
+    when(userRepository.changePassword("john.doe", "newPassword")).thenReturn(1);
+
     authenticationService.changePassword("john.doe", "newPassword");
 
     verify(userRepository).changePassword("john.doe", "newPassword");
   }
 
   @Test
+  void changePasswordShouldThrowExceptionWhenUserDoesNotExist() {
+    when(userRepository.changePassword("missing", "newPassword")).thenReturn(0);
+
+    Assertions.assertThatThrownBy(
+            () -> authenticationService.changePassword("missing", "newPassword"))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("User not found: missing");
+  }
+
+  @Test
   void changeUserStatusShouldDelegateToRepository() {
+    when(userRepository.changeStatus("profile.name1")).thenReturn(1);
+
     authenticationService.changeUserStatus("profile.name1");
 
     verify(userRepository).changeStatus("profile.name1");
   }
 
+  @Test
+  void changeUserStatusShouldThrowExceptionWhenUserDoesNotExist() {
+    when(userRepository.changeStatus("missing")).thenReturn(0);
+
+    Assertions.assertThatThrownBy(() -> authenticationService.changeUserStatus("missing"))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("User not found: missing");
+    verify(userRepository, never()).changeStatus(0L, false);
+  }
 }

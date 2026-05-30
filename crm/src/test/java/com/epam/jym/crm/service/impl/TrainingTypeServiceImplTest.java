@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.entity.TrainingType;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.TrainingTypeRepository;
 import com.epam.jym.crm.service.TrainingTypeService;
 import java.util.List;
@@ -43,7 +44,7 @@ class TrainingTypeServiceImplTest {
     when(trainingTypeRepository.findById(404L)).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> trainingTypeService.getType(404L))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Training type not found by id: 404");
   }
 
@@ -69,7 +70,7 @@ class TrainingTypeServiceImplTest {
         .thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> trainingTypeServiceImpl.getTypeIfValid(typeDto))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Training type not found by id: 404 and name: Unknown");
   }
 

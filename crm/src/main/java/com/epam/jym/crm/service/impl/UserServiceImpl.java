@@ -2,6 +2,8 @@ package com.epam.jym.crm.service.impl;
 
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.exception.InvalidRequestException;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.UserRepository;
 import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.PasswordGeneratorUtil;
@@ -29,11 +31,11 @@ public class UserServiceImpl implements UserService {
   public User register(UserCreateDto userDto) {
     if (userDto == null) {
       log.warn("Registration failed: user is null");
-      throw new IllegalArgumentException("profile must not be null");
+      throw new InvalidRequestException("profile must not be null");
     }
     if (userDto.firstName() == null || userDto.lastName() == null) {
       log.warn("Registration failed: first name or last name is null");
-      throw new IllegalArgumentException("firstName and lastName must not be null");
+      throw new InvalidRequestException("firstName and lastName must not be null");
     }
 
     User user = new User();
@@ -66,13 +68,19 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public void changePassword(String username, String newPassword) {
-    userRepo.changePassword(username, newPassword);
+    int updatedRows = userRepo.changePassword(username, newPassword);
+    if (updatedRows == 0) {
+      throw new ResourceNotFoundException("User not found: " + username);
+    }
   }
 
   @Transactional
   @Override
   public void changeUserStatus(String username) {
-    userRepo.changeStatus(username);
+    int updatedRows = userRepo.changeStatus(username);
+    if (updatedRows == 0) {
+      throw new ResourceNotFoundException("User not found: " + username);
+    }
   }
 
   @Transactional

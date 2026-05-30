@@ -7,6 +7,7 @@ import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.facade.CrmFacade;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +33,7 @@ public class TrainingController {
   @PostMapping
   @ResponseStatus(HttpStatus.OK)
   public void createTraining(
-      @RequestBody TrainingCreateDto trainingDto,
+      @Valid @RequestBody TrainingCreateDto trainingDto,
       @RequestHeader("Authorization") String userCredentials) {
     crmFacade.createTraining(parse(userCredentials), trainingDto);
   }

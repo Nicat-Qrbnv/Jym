@@ -14,6 +14,8 @@ import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.exception.InvalidRequestException;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
@@ -71,7 +73,7 @@ class TraineeServiceImplTest {
   @Test
   void createTraineeShouldThrowExceptionWhenDtoIsNull() {
     Assertions.assertThatThrownBy(() -> traineeService.createTrainee(null))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("traineeDto must not be null");
 
     verifyNoInteractions(traineeRepository, trainerService, userService);
@@ -108,7 +110,7 @@ class TraineeServiceImplTest {
         .thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.updateTraineeProfile("missing", traineeDto))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainee not found: missing");
 
     verifyNoInteractions(userService);
@@ -117,7 +119,7 @@ class TraineeServiceImplTest {
   @Test
   void updateTraineeProfileShouldThrowExceptionWhenDtoIsNull() {
     Assertions.assertThatThrownBy(() -> traineeService.updateTraineeProfile("john.doe", null))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("traineeDto must not be null");
 
     verifyNoInteractions(traineeRepository, trainerService, userService);
@@ -143,7 +145,7 @@ class TraineeServiceImplTest {
     when(traineeRepository.findTraineeByUsername(username)).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.deleteTrainee(username))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainee not found: " + username);
 
     verifyNoInteractions(userService);
@@ -168,7 +170,7 @@ class TraineeServiceImplTest {
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.getTrainee(traineeId))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainee not found: " + traineeId);
   }
 
@@ -193,7 +195,7 @@ class TraineeServiceImplTest {
         .thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.getTraineeByUsername(username))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainee not found: " + username);
   }
 
@@ -265,7 +267,7 @@ class TraineeServiceImplTest {
 
     Assertions.assertThatThrownBy(
             () -> traineeService.updateTraineeTrainers(traineeUsername, List.of("trainer")))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainee not found: " + traineeUsername);
 
     verifyNoInteractions(trainerService, userService);

@@ -5,7 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.entity.User;
-import com.epam.jym.crm.exception.BadCredentialsException;
+import com.epam.jym.crm.exception.InvalidCredentialsException;
 import com.epam.jym.crm.repository.UserRepository;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
@@ -89,7 +89,7 @@ class AuthenticationServiceImplTest {
 
   private void assertBadCredentials(CredentialsDto credentials) {
     Assertions.assertThatThrownBy(() -> authenticationService.authenticate(credentials))
-        .isInstanceOf(BadCredentialsException.class)
+        .isInstanceOf(InvalidCredentialsException.class)
         .hasMessage("Invalid username or password");
   }
 

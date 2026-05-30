@@ -16,6 +16,9 @@ import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.exception.BusinessRuleViolationException;
+import com.epam.jym.crm.exception.InvalidRequestException;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.TrainingRepository;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
@@ -71,7 +74,7 @@ class TrainingServiceImplTest {
   @Test
   void createTrainingShouldThrowExceptionWhenDtoIsNull() {
     assertThatThrownBy(() -> trainingService.createTraining(null))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("trainingDto must not be null");
 
     verifyNoInteractions(traineeService, trainerService, trainingRepository);
@@ -84,7 +87,7 @@ class TrainingServiceImplTest {
             "Java Basics", "john.doe", "john.doe", LocalDate.of(2026, 5, 8), 60);
 
     assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(BusinessRuleViolationException.class)
         .hasMessage("Trainee and trainer cannot be the same person");
 
     verifyNoInteractions(traineeService, trainerService, trainingRepository);
@@ -95,10 +98,10 @@ class TrainingServiceImplTest {
     TrainingCreateDto trainingDto = createTrainingCreateDto();
 
     when(traineeService.getTraineeByUsername("john.doe"))
-        .thenThrow(new IllegalArgumentException("Trainee not found: john.doe"));
+        .thenThrow(new ResourceNotFoundException("Trainee not found: john.doe"));
 
     assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainee not found: john.doe");
 
     verifyNoInteractions(trainerService, trainingRepository);
@@ -111,10 +114,10 @@ class TrainingServiceImplTest {
 
     when(traineeService.getTraineeByUsername("john.doe")).thenReturn(trainee);
     when(trainerService.getTrainerByUsername("jane.doe"))
-        .thenThrow(new IllegalArgumentException("Trainer not found: jane.doe"));
+        .thenThrow(new ResourceNotFoundException("Trainer not found: jane.doe"));
 
     assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainer not found: jane.doe");
 
     verifyNoInteractions(trainingRepository);
@@ -173,7 +176,7 @@ class TrainingServiceImplTest {
             () ->
                 trainingService.getTraineeTrainings(
                     " ", new TraineeTrainingsCriteriaDto(null, null, null, null)))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("traineeUsername must not be blank");
 
     verifyNoInteractions(trainerService, trainingRepository);
@@ -226,7 +229,7 @@ class TrainingServiceImplTest {
             () ->
                 trainingService.getTrainerTrainings(
                     " ", new TrainerTrainingsCriteriaDto(null, null, null)))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("trainerUsername must not be blank");
 
     verifyNoInteractions(trainingRepository);

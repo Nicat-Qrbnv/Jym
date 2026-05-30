@@ -2,6 +2,7 @@ package com.epam.jym.crm.service.impl;
 
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.entity.TrainingType;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.TrainingTypeRepository;
 import com.epam.jym.crm.service.TrainingTypeService;
 import java.util.List;
@@ -22,7 +23,7 @@ public class TrainingTypeServiceImpl implements TrainingTypeService {
     return trainingTypeRepository
         .findById(typeId)
         .orElseThrow(
-            () -> new IllegalArgumentException("Training type not found by id: " + typeId));
+            () -> new ResourceNotFoundException("Training type not found by id: " + typeId));
   }
 
   @Override
@@ -31,7 +32,7 @@ public class TrainingTypeServiceImpl implements TrainingTypeService {
         .findMatchingType(typeDto.id(), typeDto.name())
         .orElseThrow(
             () ->
-                new IllegalArgumentException(
+                new ResourceNotFoundException(
                     "Training type not found by id: "
                         + typeDto.id()
                         + " and name: "

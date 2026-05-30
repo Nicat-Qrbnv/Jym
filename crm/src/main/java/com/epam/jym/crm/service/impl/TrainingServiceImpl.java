@@ -4,6 +4,8 @@ import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.entity.Training;
+import com.epam.jym.crm.exception.BusinessRuleViolationException;
+import com.epam.jym.crm.exception.InvalidRequestException;
 import com.epam.jym.crm.repository.TrainingRepository;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
@@ -31,10 +33,10 @@ public class TrainingServiceImpl implements TrainingService {
   @Override
   public Training createTraining(TrainingCreateDto trainingDto) {
     if (trainingDto == null) {
-      throw new IllegalArgumentException("trainingDto must not be null");
+      throw new InvalidRequestException("trainingDto must not be null");
     }
     if (Objects.equals(trainingDto.traineeUsername(), trainingDto.trainerUsername())) {
-      throw new IllegalArgumentException("Trainee and trainer cannot be the same person");
+      throw new BusinessRuleViolationException("Trainee and trainer cannot be the same person");
     }
 
     Training training = new Training();
@@ -52,7 +54,7 @@ public class TrainingServiceImpl implements TrainingService {
   public List<Training> getTraineeTrainings(
       String traineeUsername, TraineeTrainingsCriteriaDto criteria) {
     if (traineeUsername == null || traineeUsername.isBlank()) {
-      throw new IllegalArgumentException("traineeUsername must not be blank");
+      throw new InvalidRequestException("traineeUsername must not be blank");
     }
 
     LocalDate fromDate = null;
@@ -75,7 +77,7 @@ public class TrainingServiceImpl implements TrainingService {
   public List<Training> getTrainerTrainings(
       String trainerUsername, TrainerTrainingsCriteriaDto criteria) {
     if (trainerUsername == null || trainerUsername.isBlank()) {
-      throw new IllegalArgumentException("trainerUsername must not be blank");
+      throw new InvalidRequestException("trainerUsername must not be blank");
     }
     List<Training> trainerTrainings;
     if (criteria == null) {
