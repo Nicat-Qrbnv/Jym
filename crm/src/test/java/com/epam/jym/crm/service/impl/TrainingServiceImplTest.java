@@ -83,8 +83,7 @@ class TrainingServiceImplTest {
   @Test
   void createTrainingShouldThrowExceptionWhenTraineeAndTrainerAreSameUser() {
     TrainingCreateDto trainingDto =
-        new TrainingCreateDto(
-            "Java Basics", "john.doe", "john.doe", LocalDate.of(2026, 5, 8), 60);
+        new TrainingCreateDto("Java Basics", "john.doe", "john.doe", LocalDate.of(2026, 5, 8), 60);
 
     assertThatThrownBy(() -> trainingService.createTraining(trainingDto))
         .isInstanceOf(BusinessRuleViolationException.class)
@@ -144,8 +143,7 @@ class TrainingServiceImplTest {
 
   @Test
   void getTraineeTrainingsShouldTreatBlankOptionalCriteriaAsNoOptionalFilters() {
-    TraineeTrainingsCriteriaDto criteria =
-        new TraineeTrainingsCriteriaDto(null, null, " ", "\t");
+    TraineeTrainingsCriteriaDto criteria = new TraineeTrainingsCriteriaDto(null, null, " ", "\t");
     Training training = createTraining();
 
     when(trainerService.searchTrainersByName(null)).thenReturn(List.of());
@@ -243,8 +241,7 @@ class TrainingServiceImplTest {
     return createTraining(1L, type, trainee, trainer);
   }
 
-  private Training createTraining(
-      Long id, TrainingType type, Trainee trainee, Trainer trainer) {
+  private Training createTraining(Long id, TrainingType type, Trainee trainee, Trainer trainer) {
     Training training = new Training();
     training.setId(id);
     training.setName("Java Basics");

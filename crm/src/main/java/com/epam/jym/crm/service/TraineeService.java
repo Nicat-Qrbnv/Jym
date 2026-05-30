@@ -5,6 +5,7 @@ import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import java.util.List;
+import java.util.Set;
 import org.jspecify.annotations.NonNull;
 
 public interface TraineeService {
@@ -19,5 +20,5 @@ public interface TraineeService {
 
   @NonNull Trainee getTraineeByUsername(String username);
 
-  List<Trainer> updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames);
+  Set<Trainer> updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames);
 }

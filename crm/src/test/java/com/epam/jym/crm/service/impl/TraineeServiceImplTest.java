@@ -23,6 +23,7 @@ import com.epam.jym.crm.service.UserService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -106,8 +107,7 @@ class TraineeServiceImplTest {
     TraineeUpdateDto traineeDto =
         new TraineeUpdateDto(new UserDto("Jane", "Smith", true), null, null);
 
-    when(traineeRepository.findTraineeByUsername("missing"))
-        .thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeByUsername("missing")).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.updateTraineeProfile("missing", traineeDto))
         .isInstanceOf(ResourceNotFoundException.class)
@@ -179,8 +179,7 @@ class TraineeServiceImplTest {
     String username = "john.doe";
     Trainee trainee = createTrainee(10L, createUser(1L, username));
 
-    when(traineeRepository.findTraineeByUsername(username))
-        .thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeByUsername(username)).thenReturn(Optional.of(trainee));
 
     Trainee result = traineeService.getTraineeByUsername(username);
 
@@ -191,8 +190,7 @@ class TraineeServiceImplTest {
   void getTraineeByUsernameShouldThrowExceptionWhenTraineeDoesNotExist() {
     String username = "missing";
 
-    when(traineeRepository.findTraineeByUsername(username))
-        .thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeByUsername(username)).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.getTraineeByUsername(username))
         .isInstanceOf(ResourceNotFoundException.class)
@@ -208,17 +206,18 @@ class TraineeServiceImplTest {
     Trainer secondTrainer =
         createTrainer(2L, createUser(3L, "second.trainer"), createTrainingType(2L, "Fitness"));
 
-    when(traineeRepository.findTraineeByUsername(traineeUsername))
-        .thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
     when(trainerService.getTrainersByUsernames(List.of("first.trainer", "second.trainer")))
         .thenReturn(List.of(firstTrainer, secondTrainer));
+    when(traineeRepository.save(trainee)).thenReturn(trainee);
 
-    List<Trainer> result =
+    Set<Trainer> result =
         traineeService.updateTraineeTrainers(
             traineeUsername, List.of("first.trainer", "second.trainer"));
 
-    Assertions.assertThat(result).containsExactly(firstTrainer, secondTrainer);
-    Assertions.assertThat(trainee.getTrainers()).containsExactly(firstTrainer, secondTrainer);
+    Assertions.assertThat(result).containsExactlyInAnyOrder(firstTrainer, secondTrainer);
+    Assertions.assertThat(trainee.getTrainers())
+        .containsExactlyInAnyOrder(firstTrainer, secondTrainer);
     verify(traineeRepository).save(trainee);
   }
 
@@ -226,13 +225,12 @@ class TraineeServiceImplTest {
   void updateTraineeTrainersShouldClearTrainerListWhenTrainerUsernamesAreEmpty() {
     String traineeUsername = "john.doe";
     Trainee trainee = createTrainee(10L, createUser(1L, traineeUsername));
-    trainee.setTrainers(List.of(createTrainer(1L, createUser(2L, "first.trainer"), null)));
+    trainee.setTrainers(Set.of(createTrainer(1L, createUser(2L, "first.trainer"), null)));
 
-    when(traineeRepository.findTraineeByUsername(traineeUsername))
-        .thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
     when(traineeRepository.save(trainee)).thenReturn(trainee);
 
-    List<Trainer> result = traineeService.updateTraineeTrainers(traineeUsername, List.of());
+    Set<Trainer> result = traineeService.updateTraineeTrainers(traineeUsername, List.of());
 
     Assertions.assertThat(result).isEmpty();
     Assertions.assertThat(trainee.getTrainers()).isEmpty();
@@ -246,13 +244,12 @@ class TraineeServiceImplTest {
     Trainee trainee = createTrainee(10L, createUser(1L, traineeUsername));
     Trainer retainedTrainer = createTrainer(1L, createUser(2L, "retained.trainer"), null);
     Trainee savedTrainee = createTrainee(10L, createUser(1L, traineeUsername));
-    savedTrainee.setTrainers(List.of(retainedTrainer));
+    savedTrainee.setTrainers(Set.of(retainedTrainer));
 
-    when(traineeRepository.findTraineeByUsername(traineeUsername))
-        .thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
     when(traineeRepository.save(trainee)).thenReturn(savedTrainee);
 
-    List<Trainer> result = traineeService.updateTraineeTrainers(traineeUsername, List.of());
+    Set<Trainer> result = traineeService.updateTraineeTrainers(traineeUsername, List.of());
 
     Assertions.assertThat(result).containsExactly(retainedTrainer);
     verifyNoInteractions(trainerService);
@@ -262,8 +259,7 @@ class TraineeServiceImplTest {
   void updateTraineeTrainersShouldThrowExceptionWhenTraineeDoesNotExist() {
     String traineeUsername = "missing";
 
-    when(traineeRepository.findTraineeByUsername(traineeUsername))
-        .thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeByUsername(traineeUsername)).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(
             () -> traineeService.updateTraineeTrainers(traineeUsername, List.of("trainer")))

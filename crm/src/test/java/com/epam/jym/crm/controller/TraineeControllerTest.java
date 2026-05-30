@@ -66,8 +66,7 @@ class TraineeControllerTest {
   @Test
   void getNotAssignedActiveTrainersShouldReturnUnauthorizedWhenCredentialsAreInvalid()
       throws Exception {
-    when(crmFacade.getNotAssignedActiveTrainers(
-            new CredentialsDto("admin", "wrong"), "john.doe"))
+    when(crmFacade.getNotAssignedActiveTrainers(new CredentialsDto("admin", "wrong"), "john.doe"))
         .thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
     mockMvc

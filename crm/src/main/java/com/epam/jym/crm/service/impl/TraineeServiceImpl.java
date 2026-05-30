@@ -11,7 +11,9 @@ import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.UserService;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -96,19 +98,16 @@ public class TraineeServiceImpl implements TraineeService {
 
   @Transactional
   @Override
-  public List<Trainer> updateTraineeTrainers(
-      String traineeUsername, List<String> trainerUsernames) {
+  public Set<Trainer> updateTraineeTrainers(String traineeUsername, List<String> trainerUsernames) {
     Trainee trainee = getTraineeByUsername(traineeUsername);
     if (trainerUsernames.isEmpty()) {
-      trainee.setTrainers(List.of());
+      trainee.setTrainers(Set.of());
       trainee = traineeRepo.save(trainee);
       return trainee.getTrainers();
     }
 
     List<Trainer> trainers = trainerService.getTrainersByUsernames(trainerUsernames);
-    trainee.setTrainers(trainers);
-    traineeRepo.save(trainee);
-
-    return trainers;
+    trainee.setTrainers(new HashSet<>(trainers));
+    return traineeRepo.save(trainee).getTrainers();
   }
 }

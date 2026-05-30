@@ -10,9 +10,9 @@ import java.lang.annotation.Target;
 /**
  * Marks a class or method for operation-level logging.
  *
- * <p>When placed on a class, every Spring AOP-intercepted method in that class is logged by
- * {@link OperationLoggingAspect}. When placed on a method, only that method is logged. The optional
- * value is used as a custom operation name or class-level operation prefix in log messages.
+ * <p>When placed on a class, every Spring AOP-intercepted method in that class is logged by {@link
+ * OperationLoggingAspect}. When placed on a method, only that method is logged. The optional value
+ * is used as a custom operation name or class-level operation prefix in log messages.
  */
 @Target({TYPE, METHOD})
 @Retention(RUNTIME)

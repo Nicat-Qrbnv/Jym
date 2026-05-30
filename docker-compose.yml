@@ -23,7 +23,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/crm
       SEED_DATA_LOCATION: classpath:data/seed-data.json
     ports:
-      - "8010:8010"
+      - "8020:8020"
     depends_on:
       - postgres
 

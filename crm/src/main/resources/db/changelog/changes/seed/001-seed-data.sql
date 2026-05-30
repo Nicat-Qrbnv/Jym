@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset nicat:006-seed-data
-INSERT INTO training_types (id, name)
+INSERT INTO training_types (id, type_name)
 VALUES (1, 'Technical'),
        (2, 'Non-technical');
 

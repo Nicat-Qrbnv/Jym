@@ -23,7 +23,7 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
       WHERE traineeUser.username = :traineeUsername
         AND (:fromDate IS NULL OR training.scheduledDate >= :fromDate)
         AND (:toDate IS NULL OR training.scheduledDate <= :toDate)
-        AND (ARRAY_LENGTH(:trainers) = 0 OR trainer.id IN :trainers)
+        AND (:trainerIdsPresent = FALSE OR trainer.id IN :trainers)
         AND (:trainingType IS NULL OR type.name = :trainingType)
       """)
   List<Training> findTraineeTrainings(
