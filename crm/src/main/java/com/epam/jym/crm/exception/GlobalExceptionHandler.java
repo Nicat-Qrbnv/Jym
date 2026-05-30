@@ -1,8 +1,11 @@
 package com.epam.jym.crm.exception;
 
+import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
+
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import java.util.stream.Collectors;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -30,10 +33,7 @@ public class GlobalExceptionHandler {
     return problem(HttpStatus.BAD_REQUEST, resolveBadRequestMessage(exception));
   }
 
-  @ExceptionHandler({
-    InvalidCredentialsException.class,
-    MissingRequestHeaderException.class
-  })
+  @ExceptionHandler({InvalidCredentialsException.class, MissingRequestHeaderException.class})
   public ProblemDetail handleUnauthorized(Exception exception) {
     return problem(HttpStatus.UNAUTHORIZED, exception.getMessage());
   }
@@ -41,6 +41,10 @@ public class GlobalExceptionHandler {
   private ProblemDetail problem(HttpStatus status, String detail) {
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
     problemDetail.setType(URI.create("about:blank"));
+    String transactionId = MDC.get(TRANSACTION_ID_MDC_KEY);
+    if (transactionId != null) {
+      problemDetail.setProperty(TRANSACTION_ID_MDC_KEY, transactionId);
+    }
     return problemDetail;
   }
 

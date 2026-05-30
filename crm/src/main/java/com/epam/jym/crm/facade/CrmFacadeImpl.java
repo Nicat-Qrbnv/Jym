@@ -19,6 +19,7 @@ import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
+import com.epam.jym.crm.logging.LogOperation;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @Authenticated
+@LogOperation("CrmFacade")
 public class CrmFacadeImpl implements CrmFacade {
 
   private final TraineeService traineeService;
