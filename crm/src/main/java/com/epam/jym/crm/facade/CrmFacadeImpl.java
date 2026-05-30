@@ -151,11 +151,11 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public TrainerDto selectTrainerByUsername(CredentialsDto credentials, String username) {
-    log.debug("Facade request: select trainer by username={}", username);
+  public TrainerProfileDto getTrainerProfile(CredentialsDto credentials, String username) {
+    log.debug("Facade request: get trainer profile by username={}", username);
     Trainer trainer = trainerService.getTrainerByUsername(username);
-    log.debug("Facade completed: selected trainer by username={}", username);
-    return trainerMapper.toTrainerDto(trainer);
+    log.debug("Facade completed: selected trainer profile by username={}", username);
+    return trainerMapper.toTrainerProfileDto(trainer);
   }
 
   @Override

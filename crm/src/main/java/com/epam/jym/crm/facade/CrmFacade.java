@@ -45,7 +45,7 @@ public interface CrmFacade {
 
   TrainerDto selectTrainer(CredentialsDto credentials, Long trainerId);
 
-  TrainerDto selectTrainerByUsername(CredentialsDto credentials, String username);
+  TrainerProfileDto getTrainerProfile(CredentialsDto credentials, String username);
 
   List<TrainerDto> selectAllTrainers(CredentialsDto credentials);
 

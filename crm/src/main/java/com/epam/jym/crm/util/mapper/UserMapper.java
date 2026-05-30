@@ -2,6 +2,7 @@ package com.epam.jym.crm.util.mapper;
 
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.UserDto;
+import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -16,5 +17,9 @@ public class UserMapper {
 
   public UserDto toUserDto(User user) {
     return new UserDto(user.getFirstName(), user.getLastName(), user.isActive());
+  }
+
+  public UserProfileDto toUserProfileDto(User user) {
+    return new UserProfileDto(user.getUsername(), user.getFirstName(), user.getLastName());
   }
 }

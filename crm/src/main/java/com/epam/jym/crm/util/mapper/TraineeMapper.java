@@ -1,8 +1,8 @@
 package com.epam.jym.crm.util.mapper;
 
-import com.epam.jym.crm.dto.trainee.TraineeDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.User;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TraineeMapper {
   private final UserMapper userMapper;
+
   @Setter(onMethod_ = {@Autowired})
   private TrainerMapper trainerMapper;
 
@@ -39,14 +40,7 @@ public class TraineeMapper {
     return trainers.stream().map(trainerMapper::toTrainerDto).toList();
   }
 
-  public TraineeDto toTraineeDto(Trainee source) {
-    User user = source.getUser();
-    return new TraineeDto(
-        user.getUsername(),
-        user.getFirstName(),
-        user.getLastName(),
-        source.getDateOfBirth(),
-        source.getAddress()
-    );
+  public UserProfileDto toTraineeDto(Trainee source) {
+    return userMapper.toUserProfileDto(source.getUser());
   }
 }

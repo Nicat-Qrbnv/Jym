@@ -1,6 +1,6 @@
 package com.epam.jym.crm.util.mapper;
 
-import com.epam.jym.crm.dto.trainee.TraineeDto;
+import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.entity.Trainee;
@@ -33,7 +33,7 @@ public class TrainerMapper {
         toTraineeDtos(source.getTrainees()));
   }
 
-  private List<TraineeDto> toTraineeDtos(List<Trainee> trainees) {
+  private List<UserProfileDto> toTraineeDtos(List<Trainee> trainees) {
     if (trainees == null) {
       return List.of();
     }
@@ -43,10 +43,7 @@ public class TrainerMapper {
   public TrainerDto toTrainerDto(Trainer trainer) {
     User user = trainer.getUser();
     TrainingType specialization = trainer.getSpecialization();
-    return new TrainerDto(
-        user.getUsername(),
-        user.getFirstName(),
-        user.getLastName(),
+    return new TrainerDto(userMapper.toUserProfileDto(user),
         specialization == null ? null : specialization.getName());
   }
 }

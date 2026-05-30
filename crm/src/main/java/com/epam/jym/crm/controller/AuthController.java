@@ -22,14 +22,14 @@ public class AuthController {
 
   @GetMapping("/login")
   @ResponseStatus(HttpStatus.OK)
-  public void login(@RequestHeader("user-credentials") String userCredentials) {
+  public void login(@RequestHeader("Authorization") String userCredentials) {
     crmFacade.login(parse(userCredentials));
   }
 
   @PutMapping("/change-password")
   @ResponseStatus(HttpStatus.OK)
   public void changeLogin(
-      @RequestHeader("user-credentials") String userCredentials, @NotBlank String newPassword) {
+      @RequestHeader("Authorization") String userCredentials, @NotBlank String newPassword) {
     crmFacade.changeLogin(parse(userCredentials), newPassword);
   }
 }

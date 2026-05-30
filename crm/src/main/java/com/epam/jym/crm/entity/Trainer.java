@@ -6,11 +6,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -42,6 +45,10 @@ public class Trainer {
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "specialization_id", nullable = false)
   private TrainingType specialization;
+
+  @ToString.Exclude
+  @ManyToMany(mappedBy = "trainers")
+  private List<Trainee> trainees = new ArrayList<>();
 
   @ToString.Include
   @Transient

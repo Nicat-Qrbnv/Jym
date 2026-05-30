@@ -2,14 +2,20 @@ package com.epam.jym.crm.controller;
 
 import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
+import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,11 +36,18 @@ public class TrainerController {
     return crmFacade.createTrainer(request);
   }
 
+  @GetMapping
+  @ResponseStatus(HttpStatus.OK)
+  public TrainerProfileDto getProfile(
+      @NotBlank @RequestParam String username,
+      @RequestHeader("Authorization") String userCredentials) {
+    return crmFacade.getTrainerProfile(parse(userCredentials), username);
+  }
   @PatchMapping("/change-status")
   @ResponseStatus(HttpStatus.OK)
   public void updateStatus(
       @Valid @RequestParam String username,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     crmFacade.changeUserStatus(parse(userCredentials), username);
   }
 }

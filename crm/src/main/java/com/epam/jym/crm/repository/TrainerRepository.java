@@ -10,7 +10,23 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
-  Optional<Trainer> findByUserUsername(String username);
+  @Query(
+      """
+          SELECT t
+          FROM Trainer t
+          LEFT JOIN FETCH User u
+          WHERE u.username IN (:usernames)
+          """)
+  List<Trainer> findByUsernames(List<String> usernames);
+
+  @Query(
+      """
+          SELECT t
+          FROM Trainer t
+          LEFT JOIN FETCH User u
+          WHERE u.username = :username
+          """)
+  Optional<Trainer> findByUsername(String username);
 
   @Query(
       """
@@ -27,9 +43,9 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
   @Query(
       """
-          SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
+          SELECT t.id
           FROM Trainer t
-          WHERE t.user.id = :userId
+          WHERE LOWER(t.user.username) LIKE LOWER(:name)
           """)
-  boolean userHasTrainerProfile(Long userId);
+  List<Long> findIdsByNameContaining(String name);
 }

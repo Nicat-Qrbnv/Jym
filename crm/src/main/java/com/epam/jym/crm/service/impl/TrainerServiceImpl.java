@@ -4,7 +4,6 @@ import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.User;
-import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingTypeService;
@@ -23,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class TrainerServiceImpl implements TrainerService {
 
   private final TrainerRepository trainerRepo;
-  private final TraineeRepository traineeRepo;
   private final UserService userService;
   private final TrainingTypeService trainingTypeService;
 
@@ -34,7 +32,7 @@ public class TrainerServiceImpl implements TrainerService {
       throw new IllegalArgumentException("trainerDto must not be null");
     }
 
-    User user = userService.register(trainerDto.userDto());
+    User user = userService.register(trainerDto.profile());
     Trainer trainer = new Trainer();
     trainer.setUser(user);
     trainer.setSpecialization(trainingTypeService.getType(trainerDto.specializationId()));
@@ -59,17 +57,12 @@ public class TrainerServiceImpl implements TrainerService {
   @Override
   public Trainer getTrainerByUsername(String username) {
     return trainerRepo
-        .findByUserUsername(username)
+        .findByUsername(username)
         .orElseThrow(
             () -> {
               log.warn("Trainer not found by username: {}", username);
               return new IllegalArgumentException("Trainer not found: " + username);
             });
-  }
-
-  @Override
-  public List<Trainer> getAllTrainers() {
-    return trainerRepo.findAll();
   }
 
   @Override
@@ -80,6 +73,14 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     return trainerRepo.findTrainersNotAssignedToTrainee(traineeUsername);
+  }
+
+  @Override
+  public List<Long> searchTrainersByName(String name) {
+    if (name != null && !name.isBlank()) {
+      return trainerRepo.findIdsByNameContaining('%' + name + '%');
+    }
+    return List.of();
   }
 
   @Override
@@ -94,9 +95,9 @@ public class TrainerServiceImpl implements TrainerService {
   }
 
   @Override
-  public List<Trainer> getTrainersByIds(List<Long> trainerIds) {
-    if (trainerIds != null && !trainerIds.isEmpty()) {
-      return trainerRepo.findAllById(trainerIds);
+  public List<Trainer> getTrainersByUsernames(List<String> usernames) {
+    if (usernames != null && !usernames.isEmpty()) {
+      return trainerRepo.findByUsernames(usernames);
     }
     return List.of();
   }

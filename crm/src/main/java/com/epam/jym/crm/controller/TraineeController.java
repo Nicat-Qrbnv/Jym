@@ -48,7 +48,7 @@ public class TraineeController {
   @ResponseStatus(HttpStatus.OK)
   public TraineeProfileDto getProfile(
       @NotBlank @RequestParam String username,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getTraineeProfile(parse(userCredentials), username);
   }
 
@@ -56,7 +56,7 @@ public class TraineeController {
   @ResponseStatus(HttpStatus.OK)
   public List<TrainerDto> getNotAssignedActiveTrainers(
       @NotBlank @RequestParam String username,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getNotAssignedActiveTrainers(parse(userCredentials), username);
   }
 
@@ -70,7 +70,7 @@ public class TraineeController {
           LocalDate periodTo,
       @RequestParam(required = false) String trainerName,
       @RequestParam(required = false) String trainingType,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     TraineeTrainingsCriteriaDto criteria =
         new TraineeTrainingsCriteriaDto(periodFrom, periodTo, trainerName, trainingType);
     return crmFacade.getTraineeTrainings(parse(userCredentials), username, criteria);
@@ -81,7 +81,7 @@ public class TraineeController {
   public TraineeProfileDto updateProfile(
       @RequestParam @NotBlank @Size(max = 310) String username,
       @Valid @RequestBody TraineeUpdateDto request,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.updateTraineeProfile(parse(userCredentials), username, request);
   }
 
@@ -89,7 +89,7 @@ public class TraineeController {
   @ResponseStatus(HttpStatus.OK)
   public void updateStatus(
       @Valid @RequestParam String username,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     crmFacade.changeUserStatus(parse(userCredentials), username);
   }
 
@@ -98,7 +98,7 @@ public class TraineeController {
   public List<TrainerDto> updateTrainers(
       @RequestParam @NotBlank @Size(max = 310) String traineeUsername,
       @RequestBody @NotNull List<@NotBlank @Size(max = 310) String> trainerUsernames,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.updateTraineeTrainers(parse(userCredentials), traineeUsername, trainerUsernames);
   }
 
@@ -106,7 +106,7 @@ public class TraineeController {
   @ResponseStatus(HttpStatus.OK)
   public void deleteProfile(
       @NotBlank @RequestParam String username,
-      @RequestHeader("user-credentials") String userCredentials) {
+      @RequestHeader("Authorization") String userCredentials) {
     crmFacade.deleteTrainee(parse(userCredentials), username);
   }
 }

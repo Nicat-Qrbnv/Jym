@@ -1,6 +1,6 @@
 package com.epam.jym.crm.auth;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;

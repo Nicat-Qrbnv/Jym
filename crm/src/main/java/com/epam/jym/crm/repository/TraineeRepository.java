@@ -13,7 +13,7 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
       """
           SELECT t
           FROM Trainee t
-          LEFT JOIN FETCH User u ON t.user.id = u.id
+          LEFT JOIN FETCH User u
           WHERE u.username = :username
           """)
   Optional<Trainee> findTraineeByUsername(String username);

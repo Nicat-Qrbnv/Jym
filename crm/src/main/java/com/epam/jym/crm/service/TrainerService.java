@@ -16,9 +16,9 @@ public interface TrainerService {
 
   Trainer getTrainerByUsername(String username);
 
-  List<Trainer> getAllTrainers();
-
-  List<Trainer> getTrainersByIds(List<Long> trainerIds);
+  List<Trainer> getTrainersByUsernames(List<String> usernames);
 
   List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername);
+
+  List<Long> searchTrainersByName(String name);
 }

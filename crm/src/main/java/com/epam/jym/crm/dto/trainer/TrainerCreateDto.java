@@ -6,4 +6,4 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record TrainerCreateDto(
-    @NotNull @Valid UserCreateDto userDto, @NotNull @Positive Long specializationId) {}
+    @NotNull @Valid UserCreateDto profile, @NotNull @Positive Long specializationId) {}
