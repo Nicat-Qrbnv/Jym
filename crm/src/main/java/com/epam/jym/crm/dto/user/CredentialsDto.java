@@ -1,4 +1,4 @@
-package com.epam.jym.crm.dto.auth;
+package com.epam.jym.crm.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
 

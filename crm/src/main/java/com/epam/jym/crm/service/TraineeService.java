@@ -11,9 +11,7 @@ public interface TraineeService {
 
   Trainee createTrainee(TraineeCreateDto traineeDto);
 
-  Trainee updateTrainee(Long traineeId, TraineeUpdateDto traineeDto);
-
-  void deleteTrainee(Long traineeId);
+  Trainee updateTraineeProfile(String username, TraineeUpdateDto traineeDto);
 
   void deleteTrainee(String username);
 

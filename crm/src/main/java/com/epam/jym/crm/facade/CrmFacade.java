@@ -2,10 +2,10 @@ package com.epam.jym.crm.facade;
 
 import com.epam.jym.crm.auth.Authenticated;
 import com.epam.jym.crm.auth.SkipAuthentication;
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
-import com.epam.jym.crm.dto.trainee.TraineeProfileUpdateDto;
+import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
@@ -26,8 +26,8 @@ public interface CrmFacade {
   @SkipAuthentication
   CredentialsDto createTrainee(TraineeCreateDto traineeDto);
 
-  TraineeDto updateTrainee(CredentialsDto credentials, Long traineeId, TraineeUpdateDto traineeDto);
-
+  TraineeProfileDto updateTraineeProfile(
+      CredentialsDto credentials, String username, TraineeUpdateDto traineeDto);
 
   void changeUserStatus(CredentialsDto credentials, String username);
 

@@ -1,6 +1,6 @@
 package com.epam.jym.crm.util;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.exception.BadCredentialsException;
 
 public class CredentialsHeaderParser {

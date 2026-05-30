@@ -2,10 +2,10 @@ package com.epam.jym.crm.facade;
 
 import com.epam.jym.crm.auth.Authenticated;
 import com.epam.jym.crm.auth.SkipAuthentication;
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
-import com.epam.jym.crm.dto.trainee.TraineeProfileUpdateDto;
+import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
@@ -73,17 +73,16 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public TraineeDto updateTrainee(
-      CredentialsDto credentials, Long traineeId, TraineeUpdateDto traineeDto) {
-    log.debug("Facade request: update trainee with id={}", traineeId);
-    Trainee trainee = traineeService.updateTrainee(traineeId, traineeDto);
+  public TraineeProfileDto updateTraineeProfile(
+      CredentialsDto credentials, String username, TraineeUpdateDto traineeDto) {
+    log.debug("Facade request: update trainee profile with username={}", username);
+    Trainee trainee = traineeService.updateTraineeProfile(username, traineeDto);
     log.info(
-        "Facade completed: updated trainee with id={} username={}",
+        "Facade completed: updated trainee profile with id={} username={}",
         trainee.getId(),
         trainee.getUsername());
-    return traineeMapper.toTraineeDto(trainee);
+    return traineeMapper.toTraineeProfileDto(trainee);
   }
-
 
   @Override
   public void changeUserStatus(CredentialsDto credentials, String username) {

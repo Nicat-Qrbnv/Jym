@@ -1,7 +1,6 @@
 package com.epam.jym.crm.util.mapper;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
-import com.epam.jym.crm.dto.user.UserCreateDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.entity.User;
 import org.springframework.stereotype.Component;

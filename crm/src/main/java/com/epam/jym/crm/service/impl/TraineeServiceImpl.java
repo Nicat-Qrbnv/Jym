@@ -46,23 +46,20 @@ public class TraineeServiceImpl implements TraineeService {
 
   @Transactional
   @Override
-  public Trainee updateTrainee(Long traineeId, TraineeUpdateDto traineeDto) {
+  public Trainee updateTraineeProfile(String username, TraineeUpdateDto traineeDto) {
     if (traineeDto == null) {
       throw new IllegalArgumentException("traineeDto must not be null");
     }
 
-    Trainee trainee = getTrainee(traineeId);
+    Trainee trainee = getTraineeByUsername(username);
+    User user = trainee.getUser();
+    user.setFirstName(traineeDto.user().firstName());
+    user.setLastName(traineeDto.user().lastName());
+    user.setActive(traineeDto.user().isActive());
     trainee.setDateOfBirth(traineeDto.dateOfBirth());
     trainee.setAddress(traineeDto.address());
-    trainee = traineeRepo.save(trainee);
 
-    return trainee;
-  }
-
-  @Transactional
-  @Override
-  public void deleteTrainee(Long traineeId) {
-    traineeRepo.deleteById(traineeId);
+    return traineeRepo.save(trainee);
   }
 
   @Transactional
