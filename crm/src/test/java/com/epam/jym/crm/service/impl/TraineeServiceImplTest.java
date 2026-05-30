@@ -3,11 +3,13 @@ package com.epam.jym.crm.service.impl;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
+import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.TrainingType;
@@ -49,10 +51,10 @@ class TraineeServiceImplTest {
   @Test
   void createTraineeShouldRegisterUserSaveProfileAndReturnEntity() {
     TraineeCreateDto traineeDto = createTraineeCreateDto();
-    User user = createUser(1L, "john.doe");
-    Trainee savedTrainee = createTrainee(10L, user);
+    User profile = createUser(1L, "john.doe");
+    Trainee savedTrainee = createTrainee(10L, profile);
 
-    when(userService.register(traineeDto.userDto())).thenReturn(user);
+    when(userService.register(traineeDto.profile())).thenReturn(profile);
     when(traineeRepository.save(any(Trainee.class))).thenReturn(savedTrainee);
 
     Trainee result = traineeService.createTrainee(traineeDto);
@@ -60,71 +62,85 @@ class TraineeServiceImplTest {
     Assertions.assertThat(result).isSameAs(savedTrainee);
     ArgumentCaptor<Trainee> traineeCaptor = ArgumentCaptor.forClass(Trainee.class);
     verify(traineeRepository).save(traineeCaptor.capture());
-    Assertions.assertThat(traineeCaptor.getValue().getUser()).isSameAs(user);
+    Assertions.assertThat(traineeCaptor.getValue().getUser()).isSameAs(profile);
     Assertions.assertThat(traineeCaptor.getValue().getDateOfBirth())
         .isEqualTo(traineeDto.dateOfBirth());
     Assertions.assertThat(traineeCaptor.getValue().getAddress()).isEqualTo(traineeDto.address());
   }
 
   @Test
-  void updateTraineeShouldUpdateBirthDateAndAddress() {
-    Long traineeId = 10L;
-    final TraineeUpdateDto traineeDto = createTraineeUpdateDto();
-    Trainee existingTrainee = createTrainee(traineeId, createUser(1L, "john.doe"));
-    existingTrainee.setDateOfBirth(LocalDate.of(1999, 12, 31));
-    existingTrainee.setAddress("Old address");
+  void createTraineeShouldThrowExceptionWhenDtoIsNull() {
+    Assertions.assertThatThrownBy(() -> traineeService.createTrainee(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("traineeDto must not be null");
 
-    when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(existingTrainee));
+    verifyNoInteractions(traineeRepository, trainerService, userService);
+  }
+
+  @Test
+  void updateTraineeProfileShouldUpdateUserAndTraineeFields() {
+    TraineeUpdateDto traineeDto =
+        new TraineeUpdateDto(
+            new UserDto("Jane", "Smith", false), LocalDate.of(1995, 5, 5), "New address");
+    Trainee existingTrainee = createTrainee(10L, createUser(1L, "john.doe"));
+
+    when(traineeRepository.findTraineeByUsername("john.doe"))
+        .thenReturn(Optional.of(existingTrainee));
     when(traineeRepository.save(existingTrainee)).thenReturn(existingTrainee);
 
-    Trainee result = traineeService.updateTrainee(traineeId, traineeDto);
+    Trainee result = traineeService.updateTraineeProfile("john.doe", traineeDto);
 
     Assertions.assertThat(result).isSameAs(existingTrainee);
-    Assertions.assertThat(existingTrainee.getDateOfBirth()).isEqualTo(traineeDto.dateOfBirth());
-    Assertions.assertThat(existingTrainee.getAddress()).isEqualTo(traineeDto.address());
+    Assertions.assertThat(existingTrainee.getUser().getFirstName()).isEqualTo("Jane");
+    Assertions.assertThat(existingTrainee.getUser().getLastName()).isEqualTo("Smith");
+    Assertions.assertThat(existingTrainee.getUser().isActive()).isFalse();
+    Assertions.assertThat(existingTrainee.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 5, 5));
+    Assertions.assertThat(existingTrainee.getAddress()).isEqualTo("New address");
     verify(traineeRepository).save(existingTrainee);
   }
 
   @Test
-  void updateTraineeShouldThrowExceptionWhenTraineeDoesNotExist() {
-    Long traineeId = 404L;
-    TraineeUpdateDto traineeDto = createTraineeUpdateDto();
+  void updateTraineeProfileShouldThrowExceptionWhenTraineeDoesNotExist() {
+    TraineeUpdateDto traineeDto =
+        new TraineeUpdateDto(new UserDto("Jane", "Smith", true), null, null);
 
-    when(traineeRepository.findById(traineeId)).thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeByUsername("missing"))
+        .thenReturn(Optional.empty());
 
-    Assertions.assertThatThrownBy(() -> traineeService.updateTrainee(traineeId, traineeDto))
+    Assertions.assertThatThrownBy(() -> traineeService.updateTraineeProfile("missing", traineeDto))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Trainee not found: " + traineeId);
+        .hasMessage("Trainee not found: missing");
 
     verifyNoInteractions(userService);
   }
 
   @Test
-  void deleteTraineeShouldDeleteById() {
-    Long traineeId = 10L;
+  void updateTraineeProfileShouldThrowExceptionWhenDtoIsNull() {
+    Assertions.assertThatThrownBy(() -> traineeService.updateTraineeProfile("john.doe", null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("traineeDto must not be null");
 
-    traineeService.deleteTrainee(traineeId);
-
-    verify(traineeRepository).deleteById(traineeId);
+    verifyNoInteractions(traineeRepository, trainerService, userService);
   }
 
   @Test
-  void deleteTraineeShouldDeleteByUsername() {
+  void deleteTraineeShouldDeleteEntityAndDeactivateUser() {
     String username = "john.doe";
     Trainee trainee = createTrainee(10L, createUser(1L, username));
 
-    when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeByUsername(username)).thenReturn(Optional.of(trainee));
 
     traineeService.deleteTrainee(username);
 
     verify(traineeRepository).delete(trainee);
+    verify(userService).deactivateUser(1L);
   }
 
   @Test
   void deleteTraineeShouldThrowExceptionWhenUsernameDoesNotExist() {
     String username = "missing";
 
-    when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeByUsername(username)).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.deleteTrainee(username))
         .isInstanceOf(IllegalArgumentException.class)
@@ -161,7 +177,8 @@ class TraineeServiceImplTest {
     String username = "john.doe";
     Trainee trainee = createTrainee(10L, createUser(1L, username));
 
-    when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeByUsername(username))
+        .thenReturn(Optional.of(trainee));
 
     Trainee result = traineeService.getTraineeByUsername(username);
 
@@ -172,7 +189,8 @@ class TraineeServiceImplTest {
   void getTraineeByUsernameShouldThrowExceptionWhenTraineeDoesNotExist() {
     String username = "missing";
 
-    when(traineeRepository.findByUserUsername(username)).thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeByUsername(username))
+        .thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.getTraineeByUsername(username))
         .isInstanceOf(IllegalArgumentException.class)
@@ -180,36 +198,22 @@ class TraineeServiceImplTest {
   }
 
   @Test
-  void getAllTraineesShouldReturnEntities() {
-    Trainee firstTrainee = createTrainee(1L, createUser(1L, "first.trainee"));
-    Trainee secondTrainee = createTrainee(2L, createUser(2L, "second.trainee"));
-
-    when(traineeRepository.findAll()).thenReturn(List.of(firstTrainee, secondTrainee));
-
-    List<Trainee> result = traineeService.getAllTrainees();
-
-    Assertions.assertThat(result).containsExactly(firstTrainee, secondTrainee);
-  }
-
-  @Test
   void updateTraineeTrainersShouldReplaceTrainerListAndReturnEntities() {
-    Long traineeId = 10L;
-    Long firstTrainerId = 1L;
-    Long secondTrainerId = 2L;
-    Trainee trainee = createTrainee(traineeId, createUser(1L, "john.doe"));
+    String traineeUsername = "john.doe";
+    Trainee trainee = createTrainee(10L, createUser(1L, traineeUsername));
     Trainer firstTrainer =
-        createTrainer(
-            firstTrainerId, createUser(2L, "first.trainer"), createTrainingType(1L, "Yoga"));
+        createTrainer(1L, createUser(2L, "first.trainer"), createTrainingType(1L, "Yoga"));
     Trainer secondTrainer =
-        createTrainer(
-            secondTrainerId, createUser(3L, "second.trainer"), createTrainingType(2L, "Fitness"));
+        createTrainer(2L, createUser(3L, "second.trainer"), createTrainingType(2L, "Fitness"));
 
-    when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
-    when(trainerService.getTrainersByIds(List.of(firstTrainerId, secondTrainerId)))
+    when(traineeRepository.findTraineeByUsername(traineeUsername))
+        .thenReturn(Optional.of(trainee));
+    when(trainerService.getTrainersByUsernames(List.of("first.trainer", "second.trainer")))
         .thenReturn(List.of(firstTrainer, secondTrainer));
 
     List<Trainer> result =
-        traineeService.updateTraineeTrainers(traineeId, List.of(firstTrainerId, secondTrainerId));
+        traineeService.updateTraineeTrainers(
+            traineeUsername, List.of("first.trainer", "second.trainer"));
 
     Assertions.assertThat(result).containsExactly(firstTrainer, secondTrainer);
     Assertions.assertThat(trainee.getTrainers()).containsExactly(firstTrainer, secondTrainer);
@@ -217,14 +221,16 @@ class TraineeServiceImplTest {
   }
 
   @Test
-  void updateTraineeTrainersShouldClearTrainerListWhenTrainerIdsAreEmpty() {
-    Long traineeId = 10L;
-    Trainee trainee = createTrainee(traineeId, createUser(1L, "john.doe"));
+  void updateTraineeTrainersShouldClearTrainerListWhenTrainerUsernamesAreEmpty() {
+    String traineeUsername = "john.doe";
+    Trainee trainee = createTrainee(10L, createUser(1L, traineeUsername));
     trainee.setTrainers(List.of(createTrainer(1L, createUser(2L, "first.trainer"), null)));
 
-    when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeByUsername(traineeUsername))
+        .thenReturn(Optional.of(trainee));
+    when(traineeRepository.save(trainee)).thenReturn(trainee);
 
-    List<Trainer> result = traineeService.updateTraineeTrainers(traineeId, List.of());
+    List<Trainer> result = traineeService.updateTraineeTrainers(traineeUsername, List.of());
 
     Assertions.assertThat(result).isEmpty();
     Assertions.assertThat(trainee.getTrainers()).isEmpty();
@@ -233,43 +239,63 @@ class TraineeServiceImplTest {
   }
 
   @Test
-  void updateTraineeTrainersShouldThrowExceptionWhenTraineeDoesNotExist() {
-    Long traineeId = 404L;
+  void updateTraineeTrainersShouldReturnSavedEmptyTrainerListWhenRepositoryAdjustsEntity() {
+    String traineeUsername = "john.doe";
+    Trainee trainee = createTrainee(10L, createUser(1L, traineeUsername));
+    Trainer retainedTrainer = createTrainer(1L, createUser(2L, "retained.trainer"), null);
+    Trainee savedTrainee = createTrainee(10L, createUser(1L, traineeUsername));
+    savedTrainee.setTrainers(List.of(retainedTrainer));
 
-    when(traineeRepository.findById(traineeId)).thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeByUsername(traineeUsername))
+        .thenReturn(Optional.of(trainee));
+    when(traineeRepository.save(trainee)).thenReturn(savedTrainee);
 
-    Assertions.assertThatThrownBy(
-            () -> traineeService.updateTraineeTrainers(traineeId, List.of(1L)))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Trainee not found: " + traineeId);
+    List<Trainer> result = traineeService.updateTraineeTrainers(traineeUsername, List.of());
 
-    verifyNoInteractions(trainerService, userService);
+    Assertions.assertThat(result).containsExactly(retainedTrainer);
+    verifyNoInteractions(trainerService);
   }
 
-  private Trainee createTrainee(Long id, User user) {
+  @Test
+  void updateTraineeTrainersShouldThrowExceptionWhenTraineeDoesNotExist() {
+    String traineeUsername = "missing";
+
+    when(traineeRepository.findTraineeByUsername(traineeUsername))
+        .thenReturn(Optional.empty());
+
+    Assertions.assertThatThrownBy(
+            () -> traineeService.updateTraineeTrainers(traineeUsername, List.of("trainer")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Trainee not found: " + traineeUsername);
+
+    verifyNoInteractions(trainerService, userService);
+    verifyNoMoreInteractions(traineeRepository);
+  }
+
+  private Trainee createTrainee(Long id, User profile) {
     Trainee trainee = new Trainee();
     trainee.setId(id);
-    trainee.setUser(user);
+    trainee.setUser(profile);
     trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
     trainee.setAddress("Baku");
     return trainee;
   }
 
   private User createUser(Long id, String username) {
-    User user = new User();
-    user.setId(id);
-    user.setFirstName("John");
-    user.setLastName("Doe");
-    user.setUsername(username);
-    user.setPassword("password");
-    user.setActive(true);
-    return user;
+    User profile = new User();
+    profile.setId(id);
+    profile.setFirstName("John");
+    profile.setLastName("Doe");
+    profile.setUsername(username);
+    profile.setPassword("password");
+    profile.setActive(true);
+    return profile;
   }
 
-  private Trainer createTrainer(Long id, User user, TrainingType specialization) {
+  private Trainer createTrainer(Long id, User profile, TrainingType specialization) {
     Trainer trainer = new Trainer();
     trainer.setId(id);
-    trainer.setUser(user);
+    trainer.setUser(profile);
     trainer.setSpecialization(specialization);
     return trainer;
   }
@@ -283,9 +309,5 @@ class TraineeServiceImplTest {
 
   private TraineeCreateDto createTraineeCreateDto() {
     return new TraineeCreateDto(new UserCreateDto("John", "Doe"), LocalDate.of(2000, 1, 1), "Baku");
-  }
-
-  private TraineeUpdateDto createTraineeUpdateDto() {
-    return new TraineeUpdateDto(LocalDate.of(2000, 1, 1), "Baku");
   }
 }

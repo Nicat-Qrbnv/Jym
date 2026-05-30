@@ -7,6 +7,6 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record TraineeCreateDto(
-    @NotNull @Valid UserCreateDto userDto,
+    @NotNull @Valid UserCreateDto profile,
     LocalDate dateOfBirth,
     @Size(max = 255) String address) {}

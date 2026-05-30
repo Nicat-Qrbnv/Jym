@@ -33,7 +33,7 @@ public class TraineeServiceImpl implements TraineeService {
       throw new IllegalArgumentException("traineeDto must not be null");
     }
 
-    User user = userService.register(traineeDto.userDto());
+    User user = userService.register(traineeDto.profile());
     Trainee trainee = new Trainee();
     trainee.setUser(user);
     trainee.setDateOfBirth(traineeDto.dateOfBirth());
