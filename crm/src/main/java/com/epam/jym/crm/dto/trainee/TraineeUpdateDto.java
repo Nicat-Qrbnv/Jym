@@ -7,6 +7,4 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record TraineeUpdateDto(
-    @NotNull @Valid UserDto user,
-    LocalDate dateOfBirth,
-    @Size(max = 255) String address) {}
+    @NotNull @Valid UserDto user, LocalDate dateOfBirth, @Size(max = 255) String address) {}

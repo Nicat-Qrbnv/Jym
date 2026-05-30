@@ -9,10 +9,11 @@ import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
-import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
-import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainingCreateDto;
+import com.epam.jym.crm.dto.training.TrainingDto;
+import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import java.util.List;
 
@@ -48,11 +49,13 @@ public interface CrmFacade {
 
   List<TrainerDto> getNotAssignedActiveTrainers(CredentialsDto credentials, String traineeUsername);
 
-  List<TrainingDto> getAllTrainings(CredentialsDto credentials);
-
   List<TrainingDto> getTraineeTrainings(
       CredentialsDto credentials, String traineeUsername, TraineeTrainingsCriteriaDto criteria);
 
   List<TrainingDto> getTrainerTrainings(
       CredentialsDto credentials, String trainerUsername, TrainerTrainingsCriteriaDto criteria);
+
+  List<TrainingTypeDto> getTrainingTypes();
+
+  void createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto);
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -51,4 +52,9 @@ public class User {
 
   @Column(name = "is_active", nullable = false)
   private boolean isActive;
+
+  @Transient
+  public String getFullName() {
+    return firstName + " " + lastName;
+  }
 }

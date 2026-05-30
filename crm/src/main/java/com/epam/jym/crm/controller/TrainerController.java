@@ -2,16 +2,14 @@ package com.epam.jym.crm.controller;
 
 import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 
-import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +43,7 @@ public class TrainerController {
       @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getTrainerProfile(parse(userCredentials), username);
   }
+
   @PutMapping
   @ResponseStatus(HttpStatus.OK)
   public TrainerProfileDto updateProfile(

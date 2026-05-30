@@ -6,7 +6,4 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record TraineeProfileDto(
-    UserDto user,
-    LocalDate dateOfBirth,
-    String address,
-    List<TrainerDto> trainers) {}
+    UserDto user, LocalDate dateOfBirth, String address, List<TrainerDto> trainers) {}

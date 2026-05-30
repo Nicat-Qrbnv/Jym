@@ -2,7 +2,6 @@ package com.epam.jym.crm.facade;
 
 import com.epam.jym.crm.auth.Authenticated;
 import com.epam.jym.crm.auth.SkipAuthentication;
-import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
@@ -10,10 +9,12 @@ import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
-import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
-import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainingCreateDto;
+import com.epam.jym.crm.dto.training.TrainingDto;
+import com.epam.jym.crm.dto.training.TrainingTypeDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
@@ -26,6 +27,7 @@ import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.mapper.TraineeMapper;
 import com.epam.jym.crm.util.mapper.TrainerMapper;
 import com.epam.jym.crm.util.mapper.TrainingMapper;
+import com.epam.jym.crm.util.mapper.TrainingTypeMapper;
 import com.epam.jym.crm.util.mapper.UserMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class CrmFacadeImpl implements CrmFacade {
   private final TrainerMapper trainerMapper;
   private final UserMapper userMapper;
   private final TrainingMapper trainingMapper;
+  private final TrainingTypeMapper trainingTypeMapper;
 
   @Override
   @SkipAuthentication
@@ -111,7 +114,8 @@ public class CrmFacadeImpl implements CrmFacade {
   public List<TrainerDto> updateTraineeTrainers(
       CredentialsDto credentials, String traineeUsername, List<String> trainerUsernames) {
     log.debug("Facade request: update trainee trainers with trainee username={}", traineeUsername);
-    List<Trainer> trainers = traineeService.updateTraineeTrainers(traineeUsername, trainerUsernames);
+    List<Trainer> trainers =
+        traineeService.updateTraineeTrainers(traineeUsername, trainerUsernames);
     log.info(
         "Facade completed: updated {} trainers for trainee username={}",
         trainers.size(),
@@ -166,14 +170,6 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public List<TrainingDto> getAllTrainings(CredentialsDto credentials) {
-    log.debug("Facade request: select all trainings");
-    List<Training> trainings = trainingService.getAllTrainings();
-    log.debug("Facade completed: selected {} trainings", trainings.size());
-    return trainings.stream().map(trainingMapper::getTrainingDto).toList();
-  }
-
-  @Override
   public List<TrainingDto> getTraineeTrainings(
       CredentialsDto credentials, String traineeUsername, TraineeTrainingsCriteriaDto criteria) {
     log.debug("Facade request: select trainings for trainee username={}", traineeUsername);
@@ -182,7 +178,9 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: selected {} trainings for trainee username={}",
         trainings.size(),
         traineeUsername);
-    return trainings.stream().map(trainingMapper::getTrainingDto).toList();
+    return trainings.stream()
+        .map(t -> trainingMapper.toTrainingDto(t, t.getTrainee().getUser()))
+        .toList();
   }
 
   @Override
@@ -194,6 +192,27 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: selected {} trainings for trainer username={}",
         trainings.size(),
         trainerUsername);
-    return trainings.stream().map(trainingMapper::getTrainingDto).toList();
+    return trainings.stream()
+        .map(t -> trainingMapper.toTrainingDto(t, t.getTrainer().getUser()))
+        .toList();
+  }
+
+  @Override
+  @SkipAuthentication
+  public List<TrainingTypeDto> getTrainingTypes() {
+    log.debug("Facade request: select all training types");
+    List<TrainingType> trainingTypes = trainingTypeService.getAllTypes();
+    log.debug("Facade completed: selected {} training types", trainingTypes.size());
+    return trainingTypes.stream().map(trainingTypeMapper::toTrainingTypeDto).toList();
+  }
+
+  @Override
+  public void createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto) {
+    log.debug("Facade request: create training");
+    Training training = trainingService.createTraining(trainingDto);
+    log.info(
+        "Facade completed: created training with id={} trainee username={}",
+        training.getId(),
+        training.getTrainee().getUsername());
   }
 }

@@ -10,10 +10,6 @@ public interface TrainingService {
 
   Training createTraining(TrainingCreateDto trainingDto);
 
-  Training getTraining(Long trainingId);
-
-  List<Training> getAllTrainings();
-
   List<Training> getTraineeTrainings(String traineeUsername, TraineeTrainingsCriteriaDto criteria);
 
   List<Training> getTrainerTrainings(String trainerUsername, TrainerTrainingsCriteriaDto criteria);

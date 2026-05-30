@@ -2,22 +2,18 @@ package com.epam.jym.crm.controller;
 
 import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 
-import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainer.TrainerDto;
-import com.epam.jym.crm.dto.training.TraineeTrainingDto;
-import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,22 +56,6 @@ public class TraineeController {
     return crmFacade.getNotAssignedActiveTrainers(parse(userCredentials), username);
   }
 
-  @GetMapping("/trainings")
-  @ResponseStatus(HttpStatus.OK)
-  public List<TraineeTrainingDto> getTrainings(
-      @NotBlank @RequestParam String username,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate periodFrom,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate periodTo,
-      @RequestParam(required = false) String trainerName,
-      @RequestParam(required = false) String trainingType,
-      @RequestHeader("Authorization") String userCredentials) {
-    TraineeTrainingsCriteriaDto criteria =
-        new TraineeTrainingsCriteriaDto(periodFrom, periodTo, trainerName, trainingType);
-    return crmFacade.getTraineeTrainings(parse(userCredentials), username, criteria);
-  }
-
   @PutMapping
   @ResponseStatus(HttpStatus.OK)
   public TraineeProfileDto updateProfile(
@@ -99,7 +79,8 @@ public class TraineeController {
       @RequestParam @NotBlank @Size(max = 310) String traineeUsername,
       @RequestBody @NotNull List<@NotBlank @Size(max = 310) String> trainerUsernames,
       @RequestHeader("Authorization") String userCredentials) {
-    return crmFacade.updateTraineeTrainers(parse(userCredentials), traineeUsername, trainerUsernames);
+    return crmFacade.updateTraineeTrainers(
+        parse(userCredentials), traineeUsername, trainerUsernames);
   }
 
   @DeleteMapping

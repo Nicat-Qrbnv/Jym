@@ -1,3 +1,7 @@
 package com.epam.jym.crm.dto.training;
 
-public record TrainingTypeDto(Long id, String name) {}
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+public record TrainingTypeDto(@NotNull @Positive Long id, @NotBlank String name) {}
