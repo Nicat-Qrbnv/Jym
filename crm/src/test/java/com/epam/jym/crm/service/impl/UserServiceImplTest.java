@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
-import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,9 +34,10 @@ class UserServiceImplTest {
 
   @Test
   void registerShouldCreateUserSaveAndReturnRegisteredUser() {
-    UserCreateDto userDto = new UserCreateDto("John", "Doe");
+    UserCreateDto profile = new UserCreateDto("John", "Doe");
 
     when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(0);
+
     when(userRepository.save(any(User.class)))
         .thenAnswer(
             invocation -> {
@@ -46,7 +46,7 @@ class UserServiceImplTest {
               return user;
             });
 
-    User registeredUser = authenticationService.register(userDto);
+    User registeredUser = authenticationService.register(profile);
 
     Assertions.assertThat(registeredUser.getId()).isEqualTo(10L);
     Assertions.assertThat(registeredUser.getFirstName()).isEqualTo("John");
@@ -66,12 +66,12 @@ class UserServiceImplTest {
 
   @Test
   void registerShouldAddSuffixWhenUsernameAlreadyExists() {
-    UserCreateDto userDto = new UserCreateDto("John", "Doe");
+    UserCreateDto profile = new UserCreateDto("John", "Doe");
 
     when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(2);
     when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    User registeredUser = authenticationService.register(userDto);
+    User registeredUser = authenticationService.register(profile);
 
     Assertions.assertThat(registeredUser.getUsername()).isEqualTo("John.Doe2");
     Assertions.assertThat(registeredUser.getPassword()).hasSize(PASSWORD_LENGTH);
@@ -82,16 +82,16 @@ class UserServiceImplTest {
   void registerShouldThrowExceptionWhenUserIsNull() {
     Assertions.assertThatThrownBy(() -> authenticationService.register(null))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("user must not be null");
+        .hasMessage("profile must not be null");
 
     verifyNoInteractions(userRepository);
   }
 
   @Test
   void registerShouldThrowExceptionWhenFirstNameIsNull() {
-    UserCreateDto userDto = new UserCreateDto(null, "Doe");
+    UserCreateDto profile = new UserCreateDto(null, "Doe");
 
-    Assertions.assertThatThrownBy(() -> authenticationService.register(userDto))
+    Assertions.assertThatThrownBy(() -> authenticationService.register(profile))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("firstName and lastName must not be null");
 
@@ -100,9 +100,9 @@ class UserServiceImplTest {
 
   @Test
   void registerShouldThrowExceptionWhenLastNameIsNull() {
-    UserCreateDto userDto = new UserCreateDto("John", null);
+    UserCreateDto profile = new UserCreateDto("John", null);
 
-    Assertions.assertThatThrownBy(() -> authenticationService.register(userDto))
+    Assertions.assertThatThrownBy(() -> authenticationService.register(profile))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("firstName and lastName must not be null");
 
@@ -111,47 +111,16 @@ class UserServiceImplTest {
 
   @Test
   void changePasswordShouldDelegateToRepository() {
-    authenticationService.changePassword(10L, "newPassword");
+    authenticationService.changePassword("john.doe", "newPassword");
 
-    verify(userRepository).changePassword(10L, "newPassword");
+    verify(userRepository).changePassword("john.doe", "newPassword");
   }
 
   @Test
   void changeUserStatusShouldDelegateToRepository() {
-    authenticationService.changeUserStatus(10L);
+    authenticationService.changeUserStatus("profile.name1");
 
-    verify(userRepository).changeStatus(10L);
-  }
-
-  @Test
-  void getUserShouldReturnUserWhenExists() {
-    User user = createUser();
-
-    when(userRepository.findById(10L)).thenReturn(Optional.of(user));
-
-    User result = authenticationService.getUser(10L);
-
-    Assertions.assertThat(result).isSameAs(user);
-  }
-
-  @Test
-  void getUserShouldThrowExceptionWhenUserDoesNotExist() {
-    when(userRepository.findById(404L)).thenReturn(Optional.empty());
-
-    Assertions.assertThatThrownBy(() -> authenticationService.getUser(404L))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("User not found: 404");
-  }
-
-  private User createUser() {
-    User user = new User();
-    user.setId(10L);
-    user.setFirstName("John");
-    user.setLastName("Doe");
-    user.setUsername("John.Doe");
-    user.setPassword("password");
-    user.setActive(true);
-    return user;
+    verify(userRepository).changeStatus("profile.name1");
   }
 
 }

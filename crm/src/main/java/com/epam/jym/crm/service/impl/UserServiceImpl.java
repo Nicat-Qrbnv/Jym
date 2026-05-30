@@ -29,7 +29,11 @@ public class UserServiceImpl implements UserService {
   public User register(UserCreateDto userDto) {
     if (userDto == null) {
       log.warn("Registration failed: user is null");
-      throw new IllegalArgumentException("user must not be null");
+      throw new IllegalArgumentException("profile must not be null");
+    }
+    if (userDto.firstName() == null || userDto.lastName() == null) {
+      log.warn("Registration failed: first name or last name is null");
+      throw new IllegalArgumentException("firstName and lastName must not be null");
     }
 
     User user = new User();
