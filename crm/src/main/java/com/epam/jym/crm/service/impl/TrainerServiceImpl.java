@@ -4,6 +4,7 @@ import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingTypeService;
@@ -24,6 +25,7 @@ public class TrainerServiceImpl implements TrainerService {
   private final TrainerRepository trainerRepo;
   private final UserService userService;
   private final TrainingTypeService trainingTypeService;
+  private final TraineeRepository traineeRepo;
 
   @Transactional
   @Override
@@ -69,7 +71,7 @@ public class TrainerServiceImpl implements TrainerService {
 
   @Override
   public List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername) {
-    if (traineeRepo.findByUserUsername(traineeUsername).isEmpty()) {
+    if (!traineeRepo.existsByUsername(traineeUsername)) {
       log.warn("Trainee not found by username: {}", traineeUsername);
       throw new IllegalArgumentException("Trainee not found: " + traineeUsername);
     }

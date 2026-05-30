@@ -46,14 +46,7 @@ public interface CrmFacade {
 
   TrainerProfileDto getTrainerProfile(CredentialsDto credentials, String username);
 
-  List<TrainerDto> selectAllTrainers(CredentialsDto credentials);
-
-  List<TrainerDto> selectTrainersNotAssignedToTrainee(
-      CredentialsDto credentials, String traineeUsername);
-
-  TrainingDto createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto);
-
-  TrainingDto getTraining(CredentialsDto credentials, Long trainingId);
+  List<TrainerDto> getNotAssignedActiveTrainers(CredentialsDto credentials, String traineeUsername);
 
   List<TrainingDto> getAllTrainings(CredentialsDto credentials);
 

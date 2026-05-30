@@ -17,4 +17,13 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
           WHERE u.username = :username
           """)
   Optional<Trainee> findTraineeByUsername(String username);
+
+  @Query(
+      """
+          SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
+          FROM Trainee t
+          LEFT JOIN User u
+          WHERE u.username = :traineeUsername
+          """)
+  boolean existsByUsername(String traineeUsername);
 }

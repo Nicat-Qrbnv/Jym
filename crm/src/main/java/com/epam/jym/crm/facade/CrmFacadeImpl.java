@@ -152,43 +152,17 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public List<TrainerDto> selectAllTrainers(CredentialsDto credentials) {
-    log.debug("Facade request: select all trainers");
-    List<Trainer> trainers = trainerService.getAllTrainers();
-    log.debug("Facade completed: selected {} trainers", trainers.size());
-    return trainerMapper.toTrainerDtoList(trainers);
-  }
-
-  @Override
-  public List<TrainerDto> selectTrainersNotAssignedToTrainee(
+  public List<TrainerDto> getNotAssignedActiveTrainers(
       CredentialsDto credentials, String traineeUsername) {
     log.debug(
-        "Facade request: select trainers not assigned to trainee username={}", traineeUsername);
+        "Facade request: get not assigned active trainers for trainee username={}",
+        traineeUsername);
     List<Trainer> trainers = trainerService.getTrainersNotAssignedToTrainee(traineeUsername);
     log.debug(
-        "Facade completed: selected {} trainers not assigned to trainee username={}",
+        "Facade completed: selected {} not assigned active trainers for trainee username={}",
         trainers.size(),
         traineeUsername);
-    return trainerMapper.toTrainerDtoList(trainers);
-  }
-
-  @Override
-  public TrainingDto createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto) {
-    log.debug("Facade request: create training");
-    Training training = trainingService.createTraining(trainingDto);
-    log.info(
-        "Facade completed: created training with id={} name={}",
-        training.getId(),
-        training.getName());
-    return trainingMapper.getTrainingDto(training);
-  }
-
-  @Override
-  public TrainingDto getTraining(CredentialsDto credentials, Long trainingId) {
-    log.debug("Facade request: select training with id={}", trainingId);
-    Training training = trainingService.getTraining(trainingId);
-    log.debug("Facade completed: selected training with id={}", trainingId);
-    return trainingMapper.getTrainingDto(training);
+    return traineeMapper.toTrainerDtos(trainers);
   }
 
   @Override
