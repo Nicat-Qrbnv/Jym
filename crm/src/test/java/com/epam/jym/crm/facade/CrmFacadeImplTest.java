@@ -7,7 +7,9 @@ import static org.mockito.Mockito.when;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
@@ -20,15 +22,14 @@ import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.service.TraineeService;
+import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
 import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
-import com.epam.jym.crm.util.mapper.TraineeMapper;
-import com.epam.jym.crm.util.mapper.TrainingMapper;
-import com.epam.jym.crm.util.mapper.TrainingTypeMapper;
-import com.epam.jym.crm.util.mapper.UserMapper;
+import com.epam.jym.crm.util.mapper.core.CrmMapper;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,13 +42,11 @@ class CrmFacadeImplTest {
   private static final CredentialsDto CREDENTIALS = new CredentialsDto("john.doe", "password");
 
   @Mock private TraineeService traineeService;
+  @Mock private TrainerService trainerService;
   @Mock private TrainingService trainingService;
   @Mock private TrainingTypeService trainingTypeService;
   @Mock private UserService userService;
-  @Mock private TraineeMapper traineeMapper;
-  @Mock private UserMapper userMapper;
-  @Mock private TrainingMapper trainingMapper;
-  @Mock private TrainingTypeMapper trainingTypeMapper;
+  @Mock private CrmMapper crmMapper;
 
   @InjectMocks private CrmFacadeImpl crmFacade;
 
@@ -59,12 +58,12 @@ class CrmFacadeImplTest {
     Trainee trainee = createTrainee(user);
 
     when(traineeService.createTrainee(createDto)).thenReturn(trainee);
-    when(userMapper.toCredentialsDto(user)).thenReturn(CREDENTIALS);
+    when(crmMapper.map(user, CredentialsDto.class)).thenReturn(CREDENTIALS);
 
     CredentialsDto result = crmFacade.createTrainee(createDto);
 
     assertThat(result).isSameAs(CREDENTIALS);
-    verify(userMapper).toCredentialsDto(user);
+    verify(crmMapper).map(user, CredentialsDto.class);
   }
 
   @Test
@@ -77,14 +76,13 @@ class CrmFacadeImplTest {
   @Test
   void updateTraineeProfileShouldDelegateByUsernameAndMapUpdatedTrainee() {
     UserDto userDto = new UserDto("John", "Doe", true);
-    TraineeUpdateDto updateDto =
-        new TraineeUpdateDto(userDto, LocalDate.of(1990, 1, 1), "Main st");
+    TraineeUpdateDto updateDto = new TraineeUpdateDto(userDto, LocalDate.of(1990, 1, 1), "Main st");
     Trainee trainee = createTrainee(createUser("john.doe", "password", "John"));
     TraineeProfileDto profileDto =
         new TraineeProfileDto(userDto, updateDto.dateOfBirth(), "Main st", List.of());
 
     when(traineeService.updateTraineeProfile("john.doe", updateDto)).thenReturn(trainee);
-    when(traineeMapper.toTraineeProfileDto(trainee)).thenReturn(profileDto);
+    when(crmMapper.map(trainee, TraineeProfileDto.class)).thenReturn(profileDto);
 
     TraineeProfileDto result = crmFacade.updateTraineeProfile(CREDENTIALS, "john.doe", updateDto);
 
@@ -92,40 +90,46 @@ class CrmFacadeImplTest {
   }
 
   @Test
-  void getTraineeTrainingsShouldMapTrainingWithTrainerUser() {
+  void getTraineeTrainingsShouldMapTrainingResults() {
     TraineeTrainingsCriteriaDto criteria =
         new TraineeTrainingsCriteriaDto(null, null, "Jane Doe", "Fitness");
     User trainerUser = createUser("jane.doe", "password", "Jane");
     User traineeUser = createUser("john.doe", "password", "John");
     Training training = createTraining(traineeUser, trainerUser);
     TrainingDto trainingDto =
-        new TrainingDto("Core Basics", LocalDate.of(2026, 5, 8), "Fitness", 60, "Jane Doe");
+        new TrainingDto("Core Basics", LocalDate.of(2026, 5, 8), "Fitness", 60);
+    TraineeTrainingDto traineeTrainingDto = new TraineeTrainingDto("Jane Doe", trainingDto);
 
     when(trainingService.getTraineeTrainings("john.doe", criteria)).thenReturn(List.of(training));
-    when(trainingMapper.toTrainingDto(training, trainerUser)).thenReturn(trainingDto);
+    when(crmMapper.mapCollection(List.of(training), TraineeTrainingDto.class))
+        .thenReturn(Stream.of(traineeTrainingDto));
 
-    List<TrainingDto> result = crmFacade.getTraineeTrainings(CREDENTIALS, "john.doe", criteria);
+    List<TraineeTrainingDto> result =
+        crmFacade.getTraineeTrainings(CREDENTIALS, "john.doe", criteria);
 
-    assertThat(result).containsExactly(trainingDto);
-    verify(trainingMapper).toTrainingDto(training, trainerUser);
+    assertThat(result).containsExactly(traineeTrainingDto);
+    verify(crmMapper).mapCollection(List.of(training), TraineeTrainingDto.class);
   }
 
   @Test
-  void getTrainerTrainingsShouldMapTrainingWithTraineeUser() {
+  void getTrainerTrainingsShouldMapTrainingResults() {
     TrainerTrainingsCriteriaDto criteria = new TrainerTrainingsCriteriaDto(null, null, "John Doe");
     User traineeUser = createUser("john.doe", "password", "John");
     User trainerUser = createUser("jane.doe", "password", "Jane");
     Training training = createTraining(traineeUser, trainerUser);
     TrainingDto trainingDto =
-        new TrainingDto("Core Basics", LocalDate.of(2026, 5, 8), "Fitness", 60, "John Doe");
+        new TrainingDto("Core Basics", LocalDate.of(2026, 5, 8), "Fitness", 60);
+    TrainerTrainingDto trainerTrainingDto = new TrainerTrainingDto("John Doe", trainingDto);
 
     when(trainingService.getTrainerTrainings("jane.doe", criteria)).thenReturn(List.of(training));
-    when(trainingMapper.toTrainingDto(training, traineeUser)).thenReturn(trainingDto);
+    when(crmMapper.mapCollection(List.of(training), TrainerTrainingDto.class))
+        .thenReturn(Stream.of(trainerTrainingDto));
 
-    List<TrainingDto> result = crmFacade.getTrainerTrainings(CREDENTIALS, "jane.doe", criteria);
+    List<TrainerTrainingDto> result =
+        crmFacade.getTrainerTrainings(CREDENTIALS, "jane.doe", criteria);
 
-    assertThat(result).containsExactly(trainingDto);
-    verify(trainingMapper).toTrainingDto(training, traineeUser);
+    assertThat(result).containsExactly(trainerTrainingDto);
+    verify(crmMapper).mapCollection(List.of(training), TrainerTrainingDto.class);
   }
 
   @Test
@@ -136,8 +140,8 @@ class CrmFacadeImplTest {
     TrainingTypeDto yogaDto = new TrainingTypeDto(2L, "Yoga");
 
     when(trainingTypeService.getAllTypes()).thenReturn(List.of(fitness, yoga));
-    when(trainingTypeMapper.toTrainingTypeDto(fitness)).thenReturn(fitnessDto);
-    when(trainingTypeMapper.toTrainingTypeDto(yoga)).thenReturn(yogaDto);
+    when(crmMapper.mapCollection(List.of(fitness, yoga), TrainingTypeDto.class))
+        .thenReturn(Stream.of(fitnessDto, yogaDto));
 
     List<TrainingTypeDto> result = crmFacade.getTrainingTypes();
 

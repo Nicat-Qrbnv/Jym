@@ -1,10 +1,3 @@
 package com.epam.jym.crm.dto.training;
 
-import java.time.LocalDate;
-
-public record TraineeTrainingDto(
-    String trainingName,
-    LocalDate trainingDate,
-    String trainingType,
-    int trainingDuration,
-    String traineeName) {}
+public record TraineeTrainingDto(String traineeFullName, TrainingDto training) {}

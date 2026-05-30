@@ -2,10 +2,11 @@ package com.epam.jym.crm.controller;
 
 import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 
+import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
-import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,12 +42,10 @@ public class TrainingController {
 
   @GetMapping("/trainer")
   @ResponseStatus(HttpStatus.OK)
-  public List<TrainingDto> getTrainings(
+  public List<TrainerTrainingDto> getTrainings(
       @NotBlank @RequestParam String username,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate periodFrom,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate periodTo,
+      @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate periodFrom,
+      @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate periodTo,
       @RequestParam(required = false) String traineeName,
       @RequestHeader("Authorization") String userCredentials) {
     TrainerTrainingsCriteriaDto criteria =
@@ -55,12 +55,10 @@ public class TrainingController {
 
   @GetMapping("/trainee")
   @ResponseStatus(HttpStatus.OK)
-  public List<TrainingDto> getTrainings(
+  public List<TraineeTrainingDto> getTrainings(
       @NotBlank @RequestParam String username,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate periodFrom,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate periodTo,
+      @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate periodFrom,
+      @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate periodTo,
       @RequestParam(required = false) String trainerName,
       @RequestParam(required = false) String trainingType,
       @RequestHeader("Authorization") String userCredentials) {
