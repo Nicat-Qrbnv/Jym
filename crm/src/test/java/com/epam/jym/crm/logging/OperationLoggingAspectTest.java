@@ -3,6 +3,8 @@ package com.epam.jym.crm.logging;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.epam.jym.crm.aspect.logging.LogOperation;
+import com.epam.jym.crm.aspect.logging.OperationLoggingAspect;
 import java.lang.reflect.Method;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;

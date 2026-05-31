@@ -1,4 +1,4 @@
-package com.epam.jym.crm.logging;
+package com.epam.jym.crm.aspect.logging;
 
 public final class TransactionLoggingConstants {
 

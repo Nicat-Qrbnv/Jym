@@ -1,4 +1,4 @@
-package com.epam.jym.crm.auth;
+package com.epam.jym.crm.aspect.auth;
 
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.exception.InvalidCredentialsException;
@@ -17,10 +17,10 @@ public class AuthenticationAspect {
 
   private final AuthenticationService authenticationService;
 
-  @Pointcut("@within(com.epam.jym.crm.auth.Authenticated)")
+  @Pointcut("@within(com.epam.jym.crm.aspect.auth.Authenticated)")
   public void authenticatedMethods() {}
 
-  @Pointcut("@annotation(com.epam.jym.crm.auth.SkipAuthentication)")
+  @Pointcut("@annotation(com.epam.jym.crm.aspect.auth.SkipAuthentication)")
   public void skipAuthenticationMethods() {}
 
   @Around("authenticatedMethods() && !skipAuthenticationMethods())")

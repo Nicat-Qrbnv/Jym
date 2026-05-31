@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.epam.jym.crm.aspect.auth.AuthenticationAspect;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.exception.InvalidCredentialsException;
 import com.epam.jym.crm.service.AuthenticationService;

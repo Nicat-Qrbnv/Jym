@@ -1,7 +1,7 @@
-package com.epam.jym.crm.logging;
+package com.epam.jym.crm.aspect.logging;
 
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_HEADER;
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
+import static com.epam.jym.crm.aspect.logging.TransactionLoggingConstants.TRANSACTION_ID_HEADER;
+import static com.epam.jym.crm.aspect.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

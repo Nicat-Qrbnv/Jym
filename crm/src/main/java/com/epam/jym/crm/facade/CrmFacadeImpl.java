@@ -1,7 +1,7 @@
 package com.epam.jym.crm.facade;
 
-import com.epam.jym.crm.auth.Authenticated;
-import com.epam.jym.crm.auth.SkipAuthentication;
+import com.epam.jym.crm.aspect.auth.Authenticated;
+import com.epam.jym.crm.aspect.auth.SkipAuthentication;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
@@ -20,7 +20,7 @@ import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
-import com.epam.jym.crm.logging.LogOperation;
+import com.epam.jym.crm.aspect.logging.LogOperation;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;

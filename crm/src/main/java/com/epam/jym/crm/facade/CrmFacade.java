@@ -1,7 +1,7 @@
 package com.epam.jym.crm.facade;
 
-import com.epam.jym.crm.auth.Authenticated;
-import com.epam.jym.crm.auth.SkipAuthentication;
+import com.epam.jym.crm.aspect.auth.Authenticated;
+import com.epam.jym.crm.aspect.auth.SkipAuthentication;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;

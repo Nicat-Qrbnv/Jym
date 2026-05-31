@@ -1,6 +1,6 @@
 package com.epam.jym.crm.exception;
 
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
+import static com.epam.jym.crm.aspect.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
 
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
