@@ -5,10 +5,12 @@ import com.epam.jym.crm.aspect.auth.SkipAuthentication;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
-import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
@@ -73,7 +75,7 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public TraineeProfileDto updateTraineeProfile(
+  public UpdatedTraineeProfileDto updateTraineeProfile(
       CredentialsDto credentials, String username, TraineeUpdateDto traineeDto) {
     log.debug("Facade request: update trainee profile with username={}", username);
     Trainee trainee = traineeService.updateTraineeProfile(username, traineeDto);
@@ -81,7 +83,7 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: updated trainee profile with id={} username={}",
         trainee.getId(),
         trainee.getUsername());
-    return crmMapper.map(trainee, TraineeProfileDto.class);
+    return crmMapper.map(trainee, UpdatedTraineeProfileDto.class);
   }
 
   @Override
@@ -107,7 +109,7 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public List<TrainerDto> updateTraineeTrainers(
+  public List<TrainerSummaryDto> updateTraineeTrainers(
       CredentialsDto credentials, String traineeUsername, List<String> trainerUsernames) {
     log.debug("Facade request: update trainee trainers with trainee username={}", traineeUsername);
     Set<Trainer> trainers = traineeService.updateTraineeTrainers(traineeUsername, trainerUsernames);
@@ -115,7 +117,7 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: updated {} trainers for trainee username={}",
         trainers.size(),
         traineeUsername);
-    return crmMapper.mapCollection(trainers, TrainerDto.class).toList();
+    return crmMapper.mapCollection(trainers, TrainerSummaryDto.class).toList();
   }
 
   @Override
@@ -131,7 +133,7 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public TrainerProfileDto updateTrainerProfile(
+  public UpdatedTrainerProfileDto updateTrainerProfile(
       CredentialsDto credentials, String username, TrainerUpdateDto trainerDto) {
     log.debug("Facade request: update trainer profile with username={}", username);
     Trainer trainer = trainerService.updateTrainerProfile(username, trainerDto);
@@ -139,7 +141,7 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: updated trainer profile with id={} username={}",
         trainer.getId(),
         trainer.getUsername());
-    return crmMapper.map(trainer, TrainerProfileDto.class);
+    return crmMapper.map(trainer, UpdatedTrainerProfileDto.class);
   }
 
   @Override
@@ -151,7 +153,7 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public List<TrainerDto> getNotAssignedActiveTrainers(
+  public List<TrainerSummaryDto> getNotAssignedActiveTrainers(
       CredentialsDto credentials, String traineeUsername) {
     log.debug(
         "Facade request: get not assigned active trainers for trainee username={}",
@@ -161,7 +163,7 @@ public class CrmFacadeImpl implements CrmFacade {
         "Facade completed: selected {} not assigned active trainers for trainee username={}",
         trainers.size(),
         traineeUsername);
-    return crmMapper.mapCollection(trainers, TrainerDto.class).toList();
+    return crmMapper.mapCollection(trainers, TrainerSummaryDto.class).toList();
   }
 
   @Override

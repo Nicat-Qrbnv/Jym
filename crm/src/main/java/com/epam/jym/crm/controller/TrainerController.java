@@ -5,6 +5,7 @@ import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import io.swagger.v3.oas.annotations.Operation;
@@ -98,7 +99,7 @@ public class TrainerController {
         @ApiResponse(
             responseCode = "200",
             description = "Trainer profile updated",
-            content = @Content(schema = @Schema(implementation = TrainerProfileDto.class))),
+            content = @Content(schema = @Schema(implementation = UpdatedTrainerProfileDto.class))),
         @ApiResponse(
             responseCode = "400",
             description = "Request data is invalid",
@@ -112,7 +113,7 @@ public class TrainerController {
             description = "Trainer was not found",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public TrainerProfileDto updateProfile(
+  public UpdatedTrainerProfileDto updateProfile(
       @Parameter(description = "Trainer username", required = true)
           @RequestParam
           @NotBlank

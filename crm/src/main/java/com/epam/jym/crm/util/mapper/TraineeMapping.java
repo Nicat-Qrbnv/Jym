@@ -1,7 +1,9 @@
 package com.epam.jym.crm.util.mapper;
 
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
-import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.trainee.TraineeSummaryDto;
+import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
 import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.entity.Trainee;
@@ -32,13 +34,13 @@ public class TraineeMapping {
             context.map(source.getUser(), UserDto.class),
             source.getDateOfBirth(),
             source.getAddress(),
-            context.mapCollection(source.getTrainers(), TrainerDto.class).toList());
+            context.mapCollection(source.getTrainers(), TrainerSummaryDto.class).toList());
       }
     };
   }
 
   @Bean
-  Mapper<Trainee, UserProfileDto> toProfileDto() {
+  Mapper<Trainee, TraineeSummaryDto> toProfileDto() {
     return new Mapper<>() {
       @Override
       public Class<Trainee> sourceType() {
@@ -46,13 +48,37 @@ public class TraineeMapping {
       }
 
       @Override
-      public Class<UserProfileDto> targetType() {
-        return UserProfileDto.class;
+      public Class<TraineeSummaryDto> targetType() {
+        return TraineeSummaryDto.class;
       }
 
       @Override
-      public UserProfileDto map(Trainee source, MappingContext context) {
-        return context.map(source.getUser(), UserProfileDto.class);
+      public TraineeSummaryDto map(Trainee source, MappingContext context) {
+        return new TraineeSummaryDto(context.map(source.getUser(), UserProfileDto.class));
+      }
+    };
+  }
+
+  @Bean
+  Mapper<Trainee, UpdatedTraineeProfileDto> toUpdatedTraineeProfileDto() {
+    return new Mapper<>() {
+      @Override
+      public Class<Trainee> sourceType() {
+        return Trainee.class;
+      }
+
+      @Override
+      public Class<UpdatedTraineeProfileDto> targetType() {
+        return UpdatedTraineeProfileDto.class;
+      }
+
+      @Override
+      public UpdatedTraineeProfileDto map(Trainee source, MappingContext context) {
+        return new UpdatedTraineeProfileDto(
+            context.map(source.getUser(), UserProfileDto.class),
+            source.getDateOfBirth(),
+            source.getAddress(),
+            context.mapCollection(source.getTrainers(), TrainerSummaryDto.class).toList());
       }
     };
   }

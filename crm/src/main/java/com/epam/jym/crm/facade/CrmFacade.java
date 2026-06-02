@@ -5,10 +5,12 @@ import com.epam.jym.crm.aspect.auth.SkipAuthentication;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
-import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
@@ -28,7 +30,7 @@ public interface CrmFacade {
   @SkipAuthentication
   CredentialsDto createTrainee(TraineeCreateDto traineeDto);
 
-  TraineeProfileDto updateTraineeProfile(
+  UpdatedTraineeProfileDto updateTraineeProfile(
       CredentialsDto credentials, String username, TraineeUpdateDto traineeDto);
 
   void changeUserStatus(CredentialsDto credentials, String username);
@@ -37,18 +39,18 @@ public interface CrmFacade {
 
   TraineeProfileDto getTraineeProfile(CredentialsDto credentials, String username);
 
-  List<TrainerDto> updateTraineeTrainers(
+  List<TrainerSummaryDto> updateTraineeTrainers(
       CredentialsDto credentials, String traineeUsername, List<String> trainerUsernames);
 
   @SkipAuthentication
   CredentialsDto createTrainer(TrainerCreateDto trainerDto);
 
-  TrainerProfileDto updateTrainerProfile(
+  UpdatedTrainerProfileDto updateTrainerProfile(
       CredentialsDto credentials, String username, TrainerUpdateDto trainerDto);
 
   TrainerProfileDto getTrainerProfile(CredentialsDto credentials, String username);
 
-  List<TrainerDto> getNotAssignedActiveTrainers(CredentialsDto credentials, String traineeUsername);
+  List<TrainerSummaryDto> getNotAssignedActiveTrainers(CredentialsDto credentials, String traineeUsername);
 
   List<TraineeTrainingDto> getTraineeTrainings(
       CredentialsDto credentials, String traineeUsername, TraineeTrainingsCriteriaDto criteria);

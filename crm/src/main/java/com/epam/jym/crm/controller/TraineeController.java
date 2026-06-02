@@ -5,7 +5,8 @@ import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
-import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import io.swagger.v3.oas.annotations.Operation;
@@ -107,7 +108,7 @@ public class TraineeController {
             description = "Trainers returned",
             content =
                 @Content(
-                    array = @ArraySchema(schema = @Schema(implementation = TrainerDto.class)))),
+                    array = @ArraySchema(schema = @Schema(implementation = TrainerSummaryDto.class)))),
         @ApiResponse(
             responseCode = "400",
             description = "Username is invalid",
@@ -121,7 +122,7 @@ public class TraineeController {
             description = "Trainee was not found",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public List<TrainerDto> getNotAssignedActiveTrainers(
+  public List<TrainerSummaryDto> getNotAssignedActiveTrainers(
       @Parameter(description = "Trainee username", required = true) @NotBlank @RequestParam
           String username,
       @RequestHeader("Authorization") String userCredentials) {
@@ -136,7 +137,7 @@ public class TraineeController {
         @ApiResponse(
             responseCode = "200",
             description = "Trainee profile updated",
-            content = @Content(schema = @Schema(implementation = TraineeProfileDto.class))),
+            content = @Content(schema = @Schema(implementation = UpdatedTraineeProfileDto.class))),
         @ApiResponse(
             responseCode = "400",
             description = "Request data is invalid",
@@ -150,7 +151,7 @@ public class TraineeController {
             description = "Trainee was not found",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public TraineeProfileDto updateProfile(
+  public UpdatedTraineeProfileDto updateProfile(
       @Parameter(description = "Trainee username", required = true)
           @RequestParam
           @NotBlank
@@ -202,7 +203,7 @@ public class TraineeController {
             description = "Assigned trainers updated",
             content =
                 @Content(
-                    array = @ArraySchema(schema = @Schema(implementation = TrainerDto.class)))),
+                    array = @ArraySchema(schema = @Schema(implementation = TrainerSummaryDto.class)))),
         @ApiResponse(
             responseCode = "400",
             description = "Request data is invalid",
@@ -216,7 +217,7 @@ public class TraineeController {
             description = "Trainee or trainer was not found",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public List<TrainerDto> updateTrainers(
+  public List<TrainerSummaryDto> updateTrainers(
       @Parameter(description = "Trainee username", required = true)
           @RequestParam
           @NotBlank

@@ -5,8 +5,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
-import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
@@ -16,13 +16,13 @@ import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.dto.user.UserDto;
+import com.epam.jym.crm.dto.user.UserProfileDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.service.TraineeService;
-import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
 import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
@@ -42,7 +42,6 @@ class CrmFacadeImplTest {
   private static final CredentialsDto CREDENTIALS = new CredentialsDto("john.doe", "password");
 
   @Mock private TraineeService traineeService;
-  @Mock private TrainerService trainerService;
   @Mock private TrainingService trainingService;
   @Mock private TrainingTypeService trainingTypeService;
   @Mock private UserService userService;
@@ -75,16 +74,19 @@ class CrmFacadeImplTest {
 
   @Test
   void updateTraineeProfileShouldDelegateByUsernameAndMapUpdatedTrainee() {
-    UserDto userDto = new UserDto("John", "Doe", true);
-    TraineeUpdateDto updateDto = new TraineeUpdateDto(userDto, LocalDate.of(1990, 1, 1), "Main st");
-    Trainee trainee = createTrainee(createUser("john.doe", "password", "John"));
-    TraineeProfileDto profileDto =
-        new TraineeProfileDto(userDto, updateDto.dateOfBirth(), "Main st", List.of());
+    var userDto = new UserDto("John", "Doe", true);
+    var updateDto = new TraineeUpdateDto(userDto, LocalDate.of(1990, 1, 1), "Main st");
+    var trainee = createTrainee(createUser("john.doe", "password", "John"));
+
+    var userProfileDto = new UserProfileDto("John.Doe", "John", "Doe");
+    var profileDto =
+        new UpdatedTraineeProfileDto(userProfileDto, updateDto.dateOfBirth(), "Main st", List.of());
 
     when(traineeService.updateTraineeProfile("john.doe", updateDto)).thenReturn(trainee);
-    when(crmMapper.map(trainee, TraineeProfileDto.class)).thenReturn(profileDto);
+    when(crmMapper.map(trainee, UpdatedTraineeProfileDto.class)).thenReturn(profileDto);
 
-    TraineeProfileDto result = crmFacade.updateTraineeProfile(CREDENTIALS, "john.doe", updateDto);
+    UpdatedTraineeProfileDto result =
+        crmFacade.updateTraineeProfile(CREDENTIALS, "john.doe", updateDto);
 
     assertThat(result).isSameAs(profileDto);
   }
