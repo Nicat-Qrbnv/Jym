@@ -164,7 +164,7 @@ public class TraineeController {
 
   @PatchMapping("/change-status")
   @ResponseStatus(HttpStatus.OK)
-  @Operation(summary = "Change trainee status", description = "Toggles the trainee active status.")
+  @Operation(summary = "Change trainee status", description = "Updates the trainee active status.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -185,10 +185,15 @@ public class TraineeController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public void updateStatus(
-      @Parameter(description = "Trainee username", required = true) @Valid @RequestParam
+      @Parameter(description = "Trainee username", required = true)
+          @RequestParam
+          @NotBlank
+          @Size(max = 310)
           String username,
+      @Parameter(description = "Whether the trainee status should be changed", required = true) @RequestParam
+          boolean isActive,
       @RequestHeader("Authorization") String userCredentials) {
-    crmFacade.changeUserStatus(parse(userCredentials), username);
+    crmFacade.changeUserStatus(parse(userCredentials), username, isActive);
   }
 
   @PutMapping("/trainers")

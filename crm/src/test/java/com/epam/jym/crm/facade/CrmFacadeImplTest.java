@@ -117,9 +117,9 @@ class CrmFacadeImplTest {
 
   @Test
   void changeUserStatusShouldDelegateByUsername() {
-    crmFacade.changeUserStatus(CREDENTIALS, "john.doe");
+    crmFacade.changeUserStatus(CREDENTIALS, "john.doe", false);
 
-    verify(userService).changeUserStatus("john.doe");
+    verify(userService).changeUserStatus("john.doe", false);
   }
 
   @Test

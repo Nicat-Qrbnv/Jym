@@ -33,7 +33,7 @@ public interface CrmFacade {
   UpdatedTraineeProfileDto updateTraineeProfile(
       CredentialsDto credentials, String username, TraineeUpdateDto traineeDto);
 
-  void changeUserStatus(CredentialsDto credentials, String username);
+  void changeUserStatus(CredentialsDto credentials, String username, boolean isActive);
 
   void deleteTrainee(CredentialsDto credentials, String username);
 

@@ -76,10 +76,21 @@ class TrainerControllerTest {
         .perform(
             patch("/api/v1/trainers/change-status")
                 .param("username", "jane.doe")
+                .param("isActive", "true")
                 .header("Authorization", "admin:password"))
         .andExpect(status().isOk());
 
-    verify(crmFacade).changeUserStatus(new CredentialsDto("admin", "password"), "jane.doe");
+    verify(crmFacade).changeUserStatus(new CredentialsDto("admin", "password"), "jane.doe", true);
+  }
+
+  @Test
+  void updateStatusShouldReturnBadRequestWhenIsActiveIsMissing() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/v1/trainers/change-status")
+                .param("username", "jane.doe")
+                .header("Authorization", "admin:password"))
+        .andExpect(status().isBadRequest());
   }
 
   @Test

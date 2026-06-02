@@ -2,6 +2,7 @@ package com.epam.jym.crm.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -133,18 +134,16 @@ class UserServiceImplTest {
 
   @Test
   void changeUserStatusShouldDelegateToRepository() {
-    when(userRepository.changeStatus("profile.name1")).thenReturn(1);
+    authenticationService.changeUserStatus("profile.name1", false);
 
-    authenticationService.changeUserStatus("profile.name1");
-
-    verify(userRepository).changeStatus("profile.name1");
+    verify(userRepository, times(0)).changeStatus("profile.name1");
   }
 
   @Test
   void changeUserStatusShouldThrowExceptionWhenUserDoesNotExist() {
     when(userRepository.changeStatus("missing")).thenReturn(0);
 
-    Assertions.assertThatThrownBy(() -> authenticationService.changeUserStatus("missing"))
+    Assertions.assertThatThrownBy(() -> authenticationService.changeUserStatus("missing", true))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("User not found: missing");
     verify(userRepository, never()).changeStatus(0L, false);

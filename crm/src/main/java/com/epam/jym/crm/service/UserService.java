@@ -9,7 +9,7 @@ public interface UserService {
 
   void changePassword(String username, String newPassword);
 
-  void changeUserStatus(String username);
+  void changeUserStatus(String username, boolean isActive);
 
   void deactivateUser(Long userId);
 }

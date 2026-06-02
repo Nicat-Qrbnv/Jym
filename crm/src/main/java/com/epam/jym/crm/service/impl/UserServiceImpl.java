@@ -76,10 +76,12 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public void changeUserStatus(String username) {
-    int updatedRows = userRepo.changeStatus(username);
-    if (updatedRows == 0) {
-      throw new ResourceNotFoundException("User not found: " + username);
+  public void changeUserStatus(String username, boolean isActive) {
+    if (isActive) {
+      int updatedRows = userRepo.changeStatus(username);
+      if (updatedRows == 0) {
+        throw new ResourceNotFoundException("User not found: " + username);
+      }
     }
   }
 

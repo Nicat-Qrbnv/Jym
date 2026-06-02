@@ -126,7 +126,7 @@ public class TrainerController {
 
   @PatchMapping("/change-status")
   @ResponseStatus(HttpStatus.OK)
-  @Operation(summary = "Change trainer status", description = "Toggles the trainer active status.")
+  @Operation(summary = "Change trainer status", description = "Updates the trainer active status.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -147,9 +147,14 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public void updateStatus(
-      @Parameter(description = "Trainer username", required = true) @Valid @RequestParam
+      @Parameter(description = "Trainer username", required = true)
+          @RequestParam
+          @NotBlank
+          @Size(max = 310)
           String username,
+      @Parameter(description = "Whether the trainer status should be changed", required = true) @RequestParam
+          boolean isActive,
       @RequestHeader("Authorization") String userCredentials) {
-    crmFacade.changeUserStatus(parse(userCredentials), username);
+    crmFacade.changeUserStatus(parse(userCredentials), username, isActive);
   }
 }

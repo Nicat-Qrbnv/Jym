@@ -2,13 +2,14 @@ package com.epam.jym.crm.facade;
 
 import com.epam.jym.crm.aspect.auth.Authenticated;
 import com.epam.jym.crm.aspect.auth.SkipAuthentication;
+import com.epam.jym.crm.aspect.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
-import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
@@ -22,7 +23,6 @@ import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
-import com.epam.jym.crm.aspect.logging.LogOperation;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
@@ -87,9 +87,9 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public void changeUserStatus(CredentialsDto credentials, String username) {
+  public void changeUserStatus(CredentialsDto credentials, String username, boolean isActive) {
     log.debug("Facade request: update user status with username={}", username);
-    userService.changeUserStatus(username);
+    userService.changeUserStatus(username, isActive);
     log.info("Facade completed: updated user status with username={}", username);
   }
 
