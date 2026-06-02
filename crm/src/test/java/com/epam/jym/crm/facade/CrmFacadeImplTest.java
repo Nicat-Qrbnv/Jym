@@ -2,15 +2,23 @@ package com.epam.jym.crm.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
+import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
+import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
+import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
@@ -23,11 +31,13 @@ import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.service.TraineeService;
+import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
 import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.mapper.core.CrmMapper;
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -42,6 +52,7 @@ class CrmFacadeImplTest {
   private static final CredentialsDto CREDENTIALS = new CredentialsDto("john.doe", "password");
 
   @Mock private TraineeService traineeService;
+  @Mock private TrainerService trainerService;
   @Mock private TrainingService trainingService;
   @Mock private TrainingTypeService trainingTypeService;
   @Mock private UserService userService;
@@ -73,6 +84,19 @@ class CrmFacadeImplTest {
   }
 
   @Test
+  void loginShouldNotDelegateToServices() {
+    crmFacade.login(CREDENTIALS);
+
+    verifyNoInteractions(
+        traineeService,
+        trainerService,
+        trainingService,
+        trainingTypeService,
+        userService,
+        crmMapper);
+  }
+
+  @Test
   void updateTraineeProfileShouldDelegateByUsernameAndMapUpdatedTrainee() {
     var userDto = new UserDto("John", "Doe", true);
     var updateDto = new TraineeUpdateDto(userDto, LocalDate.of(1990, 1, 1), "Main st");
@@ -89,6 +113,122 @@ class CrmFacadeImplTest {
         crmFacade.updateTraineeProfile(CREDENTIALS, "john.doe", updateDto);
 
     assertThat(result).isSameAs(profileDto);
+  }
+
+  @Test
+  void changeUserStatusShouldDelegateByUsername() {
+    crmFacade.changeUserStatus(CREDENTIALS, "john.doe");
+
+    verify(userService).changeUserStatus("john.doe");
+  }
+
+  @Test
+  void deleteTraineeShouldDelegateByUsername() {
+    crmFacade.deleteTrainee(CREDENTIALS, "john.doe");
+
+    verify(traineeService).deleteTrainee("john.doe");
+  }
+
+  @Test
+  void getTraineeProfileShouldGetTraineeByUsernameAndMapProfile() {
+    Trainee trainee = createTrainee(createUser("john.doe", "password", "John"));
+    TraineeProfileDto profileDto =
+        new TraineeProfileDto(new UserDto("John", "Doe", true), null, null, List.of());
+
+    when(traineeService.getTraineeByUsername("john.doe")).thenReturn(trainee);
+    when(crmMapper.map(trainee, TraineeProfileDto.class)).thenReturn(profileDto);
+
+    TraineeProfileDto result = crmFacade.getTraineeProfile(CREDENTIALS, "john.doe");
+
+    assertThat(result).isSameAs(profileDto);
+  }
+
+  @Test
+  void updateTraineeTrainersShouldDelegateAndMapUpdatedTrainers() {
+    Trainer firstTrainer = createTrainer(createUser("jane.doe", "password", "Jane"));
+    Trainer secondTrainer = createTrainer(createUser("kate.doe", "password", "Kate"));
+    TrainerSummaryDto firstDto = createTrainerSummaryDto("jane.doe", "Jane");
+    TrainerSummaryDto secondDto = createTrainerSummaryDto("kate.doe", "Kate");
+    List<String> trainerUsernames = List.of("jane.doe", "kate.doe");
+    var trainers = new LinkedHashSet<>(List.of(firstTrainer, secondTrainer));
+
+    when(traineeService.updateTraineeTrainers("john.doe", trainerUsernames)).thenReturn(trainers);
+    when(crmMapper.mapCollection(trainers, TrainerSummaryDto.class))
+        .thenReturn(Stream.of(firstDto, secondDto));
+
+    List<TrainerSummaryDto> result =
+        crmFacade.updateTraineeTrainers(CREDENTIALS, "john.doe", trainerUsernames);
+
+    assertThat(result).containsExactly(firstDto, secondDto);
+  }
+
+  @Test
+  void createTrainerShouldReturnCredentialsFromCreatedUser() {
+    TrainingTypeDto specialization = new TrainingTypeDto(1L, "Fitness");
+    TrainerCreateDto createDto =
+        new TrainerCreateDto(new UserCreateDto("Jane", "Doe"), specialization);
+    User user = createUser("jane.doe", "generated-password", "Jane");
+    Trainer trainer = createTrainer(user);
+
+    when(trainerService.createTrainer(createDto)).thenReturn(trainer);
+    when(crmMapper.map(user, CredentialsDto.class)).thenReturn(CREDENTIALS);
+
+    CredentialsDto result = crmFacade.createTrainer(createDto);
+
+    assertThat(result).isSameAs(CREDENTIALS);
+    verify(crmMapper).map(user, CredentialsDto.class);
+  }
+
+  @Test
+  void updateTrainerProfileShouldDelegateByUsernameAndMapUpdatedTrainer() {
+    TrainingTypeDto specialization = new TrainingTypeDto(1L, "Fitness");
+    TrainerUpdateDto updateDto =
+        new TrainerUpdateDto(new UserDto("Jane", "Doe", true), specialization);
+    Trainer trainer = createTrainer(createUser("jane.doe", "password", "Jane"));
+    UpdatedTrainerProfileDto profileDto =
+        new UpdatedTrainerProfileDto(
+            new UserProfileDto("jane.doe", "Jane", "Doe"), specialization, List.of());
+
+    when(trainerService.updateTrainerProfile("jane.doe", updateDto)).thenReturn(trainer);
+    when(crmMapper.map(trainer, UpdatedTrainerProfileDto.class)).thenReturn(profileDto);
+
+    UpdatedTrainerProfileDto result =
+        crmFacade.updateTrainerProfile(CREDENTIALS, "jane.doe", updateDto);
+
+    assertThat(result).isSameAs(profileDto);
+  }
+
+  @Test
+  void getTrainerProfileShouldGetTrainerByUsernameAndMapProfile() {
+    TrainingTypeDto specialization = new TrainingTypeDto(1L, "Fitness");
+    Trainer trainer = createTrainer(createUser("jane.doe", "password", "Jane"));
+    TrainerProfileDto profileDto =
+        new TrainerProfileDto(new UserDto("Jane", "Doe", true), specialization, List.of());
+
+    when(trainerService.getTrainerByUsername("jane.doe")).thenReturn(trainer);
+    when(crmMapper.map(trainer, TrainerProfileDto.class)).thenReturn(profileDto);
+
+    TrainerProfileDto result = crmFacade.getTrainerProfile(CREDENTIALS, "jane.doe");
+
+    assertThat(result).isSameAs(profileDto);
+  }
+
+  @Test
+  void getNotAssignedActiveTrainersShouldMapServiceResults() {
+    Trainer firstTrainer = createTrainer(createUser("jane.doe", "password", "Jane"));
+    Trainer secondTrainer = createTrainer(createUser("kate.doe", "password", "Kate"));
+    TrainerSummaryDto firstDto = createTrainerSummaryDto("jane.doe", "Jane");
+    TrainerSummaryDto secondDto = createTrainerSummaryDto("kate.doe", "Kate");
+    List<Trainer> trainers = List.of(firstTrainer, secondTrainer);
+
+    when(trainerService.getTrainersNotAssignedToTrainee("john.doe")).thenReturn(trainers);
+    when(crmMapper.mapCollection(trainers, TrainerSummaryDto.class))
+        .thenReturn(Stream.of(firstDto, secondDto));
+
+    List<TrainerSummaryDto> result =
+        crmFacade.getNotAssignedActiveTrainers(CREDENTIALS, "john.doe");
+
+    assertThat(result).containsExactly(firstDto, secondDto);
   }
 
   @Test
@@ -150,6 +290,22 @@ class CrmFacadeImplTest {
     assertThat(result).containsExactly(fitnessDto, yogaDto);
   }
 
+  @Test
+  void createTrainingShouldDelegateToTrainingService() {
+    TrainingCreateDto createDto =
+        new TrainingCreateDto(
+            "Core Basics", "john.doe", "jane.doe", LocalDate.of(2026, 5, 8), 60);
+    User traineeUser = createUser("john.doe", "password", "John");
+    User trainerUser = createUser("jane.doe", "password", "Jane");
+    Training training = createTraining(traineeUser, trainerUser);
+
+    when(trainingService.createTraining(createDto)).thenReturn(training);
+
+    crmFacade.createTraining(CREDENTIALS, createDto);
+
+    verify(trainingService).createTraining(createDto);
+  }
+
   private Training createTraining(User traineeUser, User trainerUser) {
     Training training = new Training();
     training.setName("Core Basics");
@@ -189,5 +345,10 @@ class CrmFacadeImplTest {
     type.setId(id);
     type.setName(name);
     return type;
+  }
+
+  private TrainerSummaryDto createTrainerSummaryDto(String username, String firstName) {
+    return new TrainerSummaryDto(
+        new UserProfileDto(username, firstName, "Doe"), new TrainingTypeDto(1L, "Fitness"));
   }
 }

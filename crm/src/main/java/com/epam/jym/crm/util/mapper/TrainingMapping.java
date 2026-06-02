@@ -50,7 +50,7 @@ public class TrainingMapping {
 
       public TraineeTrainingDto map(Training source, MappingContext context) {
         return new TraineeTrainingDto(
-            source.getTrainee().getUser().getFullName(), context.map(source, TrainingDto.class));
+            source.getTrainer().getUser().getFullName(), context.map(source, TrainingDto.class));
       }
     };
   }
@@ -71,7 +71,7 @@ public class TrainingMapping {
       @Override
       public TrainerTrainingDto map(Training source, MappingContext context) {
         return new TrainerTrainingDto(
-            source.getTrainer().getUser().getFullName(), context.map(source, TrainingDto.class));
+            source.getTrainee().getUser().getFullName(), context.map(source, TrainingDto.class));
       }
     };
   }
