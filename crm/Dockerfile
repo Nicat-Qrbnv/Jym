@@ -17,7 +17,7 @@ WORKDIR /app
 
 COPY --from=build /app/crm/target/crm-0.0.1-SNAPSHOT.jar app.jar
 
-EXPOSE 8010
+EXPOSE 8020
 
 ENV DB_USERNAME=postgres
 ENV DB_PASSWORD=postgres

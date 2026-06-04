@@ -1,14 +1,10 @@
 package com.epam.jym.crm.dto.training;
 
-import com.epam.jym.crm.dto.trainee.TraineeDto;
-import com.epam.jym.crm.dto.trainer.TrainerDto;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 
 public record TrainingDto(
-    Long id,
-    String name,
-    TrainingTypeDto type,
-    TraineeDto trainee,
-    TrainerDto trainer,
-    LocalDate date,
-    int durationInMinutes) {}
+    @Schema(example = "Strength training") String trainingName,
+    @Schema(example = "2026-06-01") LocalDate trainingDate,
+    @Schema(example = "Strength") String trainingType,
+    @Schema(example = "60") int trainingDuration) {}

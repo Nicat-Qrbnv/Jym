@@ -3,32 +3,32 @@ package com.epam.jym.crm.service.impl;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
-import com.epam.jym.crm.dto.trainer.TrainerDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
-import com.epam.jym.crm.entity.Trainee;
+import com.epam.jym.crm.dto.user.UserCreateDto;
+import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.exception.InvalidRequestException;
+import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.TraineeRepository;
 import com.epam.jym.crm.repository.TrainerRepository;
 import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerServiceImplTest {
@@ -41,258 +41,237 @@ class TrainerServiceImplTest {
 
   @Mock private TrainingTypeService trainingTypeService;
 
-  @Mock private ModelMapper modelMapper;
-
   @InjectMocks private TrainerServiceImpl trainerService;
 
-  @BeforeEach
-  public void setUp() {
-    trainerService.setMapper(modelMapper);
-  }
-
   @Test
-  void createTrainerShouldLoadUserAndSpecializationSaveProfileAndReturnDto() {
+  void createTrainerShouldRegisterUserResolveSpecializationSaveProfileAndReturnEntity() {
     TrainerCreateDto trainerDto = createTrainerCreateDto();
-    User user = createUser(1L, "john.doe");
+    User profile = createUser(1L, "john.doe");
     TrainingType specialization = createTrainingType(2L, "Fitness");
-    Trainer savedTrainer = createTrainer(10L, user, specialization);
-    TrainerDto savedTrainerDto = createTrainerDto(10L, "john.doe");
+    Trainer savedTrainer = createTrainer(10L, profile, specialization);
 
-    when(trainerRepository.userHasTrainerProfile(1L)).thenReturn(false);
-    when(userService.getUser(1L)).thenReturn(user);
-    when(trainingTypeService.getType(2L)).thenReturn(specialization);
+    when(userService.register(trainerDto.profile())).thenReturn(profile);
+    when(trainingTypeService.getTypeIfValid(trainerDto.specialization()))
+        .thenReturn(specialization);
     when(trainerRepository.save(any(Trainer.class))).thenReturn(savedTrainer);
-    when(modelMapper.map(savedTrainer, TrainerDto.class)).thenReturn(savedTrainerDto);
 
-    TrainerDto result = trainerService.createTrainer(trainerDto);
+    Trainer result = trainerService.createTrainer(trainerDto);
 
-    Assertions.assertThat(result).isSameAs(savedTrainerDto);
+    Assertions.assertThat(result).isSameAs(savedTrainer);
     ArgumentCaptor<Trainer> trainerCaptor = ArgumentCaptor.forClass(Trainer.class);
     verify(trainerRepository).save(trainerCaptor.capture());
-    Assertions.assertThat(trainerCaptor.getValue().getUser()).isSameAs(user);
+    Assertions.assertThat(trainerCaptor.getValue().getUser()).isSameAs(profile);
     Assertions.assertThat(trainerCaptor.getValue().getSpecialization()).isSameAs(specialization);
   }
 
   @Test
-  void createTrainerShouldThrowExceptionWhenUserAlreadyHasTrainerProfile() {
-    TrainerCreateDto trainerDto = createTrainerCreateDto();
+  void createTrainerShouldThrowExceptionWhenDtoIsNull() {
+    Assertions.assertThatThrownBy(() -> trainerService.createTrainer(null))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("trainerDto must not be null");
 
-    when(trainerRepository.userHasTrainerProfile(1L)).thenReturn(true);
-
-    Assertions.assertThatThrownBy(() -> trainerService.createTrainer(trainerDto))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("User already has a trainer profile: 1");
-
-    verifyNoInteractions(userService, trainingTypeService, modelMapper);
+    verifyNoInteractions(trainerRepository, traineeRepository, userService, trainingTypeService);
   }
 
   @Test
   void createTrainerShouldThrowExceptionWhenSpecializationDoesNotExist() {
     TrainerCreateDto trainerDto = createTrainerCreateDto();
-    User user = createUser(1L, "john.doe");
+    User profile = createUser(1L, "john.doe");
 
-    when(trainerRepository.userHasTrainerProfile(1L)).thenReturn(false);
-    when(userService.getUser(1L)).thenReturn(user);
-    when(trainingTypeService.getType(2L))
-        .thenThrow(new IllegalArgumentException("Training type not found: 2"));
+    when(userService.register(trainerDto.profile())).thenReturn(profile);
+    when(trainingTypeService.getTypeIfValid(trainerDto.specialization()))
+        .thenThrow(new ResourceNotFoundException("Training type not found: 2"));
 
     Assertions.assertThatThrownBy(() -> trainerService.createTrainer(trainerDto))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Training type not found: 2");
 
-    verifyNoInteractions(modelMapper);
+    verifyNoMoreInteractions(trainerRepository);
   }
 
   @Test
-  void updateTrainerShouldUpdateSpecialization() {
-    Long trainerId = 10L;
+  void updateTrainerProfileShouldUpdateUserFieldsAndKeepSpecialization() {
+    String username = "john.doe";
     TrainerUpdateDto trainerDto = createTrainerUpdateDto();
-    TrainingType oldSpecialization = createTrainingType(1L, "Yoga");
-    TrainingType newSpecialization = createTrainingType(2L, "Fitness");
-    Trainer existingTrainer =
-        createTrainer(trainerId, createUser(1L, "john.doe"), oldSpecialization);
-    TrainerDto savedTrainerDto = createTrainerDto(trainerId, "John.Doe");
+    TrainingType existingSpecialization = createTrainingType(2L, "Fitness");
+    Trainer existingTrainer = createTrainer(10L, createUser(1L, username), existingSpecialization);
 
-    when(trainerRepository.findById(trainerId)).thenReturn(Optional.of(existingTrainer));
-    when(trainingTypeService.getType(2L)).thenReturn(newSpecialization);
+    when(trainerRepository.findByUsername(username)).thenReturn(Optional.of(existingTrainer));
     when(trainerRepository.save(existingTrainer)).thenReturn(existingTrainer);
-    when(modelMapper.map(existingTrainer, TrainerDto.class)).thenReturn(savedTrainerDto);
 
-    TrainerDto result = trainerService.updateTrainer(trainerId, trainerDto);
+    Trainer result = trainerService.updateTrainerProfile(username, trainerDto);
 
-    Assertions.assertThat(result).isSameAs(savedTrainerDto);
-    Assertions.assertThat(existingTrainer.getSpecialization()).isSameAs(newSpecialization);
+    Assertions.assertThat(result).isSameAs(existingTrainer);
+    Assertions.assertThat(existingTrainer.getUser().getFirstName()).isEqualTo("Jane");
+    Assertions.assertThat(existingTrainer.getUser().getLastName()).isEqualTo("Smith");
+    Assertions.assertThat(existingTrainer.getUser().isActive()).isFalse();
+    Assertions.assertThat(existingTrainer.getSpecialization()).isSameAs(existingSpecialization);
     verify(trainerRepository).save(existingTrainer);
+    verifyNoInteractions(trainingTypeService, userService, traineeRepository);
   }
 
   @Test
-  void updateTrainerShouldThrowExceptionWhenSpecializationDoesNotExist() {
-    Long trainerId = 10L;
-    TrainerUpdateDto trainerDto = createTrainerUpdateDto();
-    Trainer existingTrainer =
-        createTrainer(trainerId, createUser(1L, "john.doe"), createTrainingType(1L, "Yoga"));
+  void updateTrainerProfileShouldThrowExceptionWhenDtoIsNull() {
+    Assertions.assertThatThrownBy(() -> trainerService.updateTrainerProfile("john.doe", null))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("trainerDto must not be null");
 
-    when(trainerRepository.findById(trainerId)).thenReturn(Optional.of(existingTrainer));
-    when(trainingTypeService.getType(2L))
-        .thenThrow(new IllegalArgumentException("Training type not found: 2"));
-
-    Assertions.assertThatThrownBy(() -> trainerService.updateTrainer(trainerId, trainerDto))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Training type not found: 2");
-
-    verifyNoInteractions(modelMapper);
+    verifyNoInteractions(trainerRepository, traineeRepository, userService, trainingTypeService);
   }
 
   @Test
-  void updateTrainerShouldThrowExceptionWhenTrainerDoesNotExist() {
-    Long trainerId = 404L;
+  void updateTrainerProfileShouldThrowExceptionWhenTrainerDoesNotExist() {
+    String username = "missing";
     TrainerUpdateDto trainerDto = createTrainerUpdateDto();
 
-    when(trainerRepository.findById(trainerId)).thenReturn(Optional.empty());
+    when(trainerRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-    Assertions.assertThatThrownBy(() -> trainerService.updateTrainer(trainerId, trainerDto))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Trainer not found by id: " + trainerId);
+    Assertions.assertThatThrownBy(() -> trainerService.updateTrainerProfile(username, trainerDto))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("Trainer not found: " + username);
 
-    verifyNoInteractions(userService, trainingTypeService, modelMapper);
+    verifyNoMoreInteractions(trainerRepository);
+    verifyNoInteractions(userService, trainingTypeService, traineeRepository);
   }
 
   @Test
-  void selectTrainerShouldReturnMappedDtoWhenTrainerExists() {
+  void getTrainerShouldReturnEntityWhenTrainerExists() {
     Long trainerId = 10L;
     Trainer trainer =
         createTrainer(trainerId, createUser(1L, "john.doe"), createTrainingType(2L, "Fitness"));
-    TrainerDto trainerDto = createTrainerDto(trainerId, "john.doe");
 
     when(trainerRepository.findById(trainerId)).thenReturn(Optional.of(trainer));
-    when(modelMapper.map(trainer, TrainerDto.class)).thenReturn(trainerDto);
 
-    TrainerDto result = trainerService.selectTrainer(trainerId);
+    Trainer result = trainerService.getTrainer(trainerId);
 
-    Assertions.assertThat(result).isSameAs(trainerDto);
+    Assertions.assertThat(result).isSameAs(trainer);
   }
 
   @Test
-  void selectTrainerShouldThrowExceptionWhenTrainerDoesNotExist() {
+  void getTrainerShouldThrowExceptionWhenTrainerDoesNotExist() {
     Long trainerId = 404L;
 
     when(trainerRepository.findById(trainerId)).thenReturn(Optional.empty());
 
-    Assertions.assertThatThrownBy(() -> trainerService.selectTrainer(trainerId))
-        .isInstanceOf(IllegalArgumentException.class)
+    Assertions.assertThatThrownBy(() -> trainerService.getTrainer(trainerId))
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainer not found by id: " + trainerId);
-
-    verifyNoInteractions(modelMapper);
   }
 
   @Test
-  void getTrainerByUsernameShouldReturnMappedDtoWhenTrainerExists() {
+  void getTrainerByUsernameShouldReturnEntityWhenTrainerExists() {
     String username = "john.doe";
     Trainer trainer =
         createTrainer(10L, createUser(1L, username), createTrainingType(2L, "Fitness"));
-    TrainerDto trainerDto = createTrainerDto(10L, username);
 
-    when(trainerRepository.findByUserUsername(username)).thenReturn(Optional.of(trainer));
-    when(modelMapper.map(trainer, TrainerDto.class)).thenReturn(trainerDto);
+    when(trainerRepository.findByUsername(username)).thenReturn(Optional.of(trainer));
 
-    TrainerDto result = trainerService.getTrainerByUsername(username);
+    Trainer result = trainerService.getTrainerByUsername(username);
 
-    Assertions.assertThat(result).isSameAs(trainerDto);
+    Assertions.assertThat(result).isSameAs(trainer);
   }
 
   @Test
   void getTrainerByUsernameShouldThrowExceptionWhenTrainerDoesNotExist() {
     String username = "missing";
 
-    when(trainerRepository.findByUserUsername(username)).thenReturn(Optional.empty());
+    when(trainerRepository.findByUsername(username)).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> trainerService.getTrainerByUsername(username))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainer not found: " + username);
-
-    verifyNoInteractions(modelMapper);
   }
 
   @Test
-  void getAllTrainersShouldReturnMappedDtos() {
+  void getTrainersByUsernamesShouldReturnEntitiesWhenUsernamesProvided() {
+    List<String> usernames = List.of("first.trainer", "second.trainer");
     Trainer firstTrainer =
         createTrainer(1L, createUser(1L, "first.trainer"), createTrainingType(2L, "Fitness"));
     Trainer secondTrainer =
-        createTrainer(2L, createUser(2L, "second.trainer"), createTrainingType(2L, "Fitness"));
-    TrainerDto firstDto = createTrainerDto(1L, "first.trainer");
-    TrainerDto secondDto = createTrainerDto(2L, "second.trainer");
+        createTrainer(2L, createUser(2L, "second.trainer"), createTrainingType(3L, "Yoga"));
 
-    when(trainerRepository.findAll()).thenReturn(List.of(firstTrainer, secondTrainer));
-    when(modelMapper.map(firstTrainer, TrainerDto.class)).thenReturn(firstDto);
-    when(modelMapper.map(secondTrainer, TrainerDto.class)).thenReturn(secondDto);
+    when(trainerRepository.findByUsernames(usernames))
+        .thenReturn(List.of(firstTrainer, secondTrainer));
 
-    List<TrainerDto> result = trainerService.getAllTrainers();
+    List<Trainer> result = trainerService.getTrainersByUsernames(usernames);
 
-    Assertions.assertThat(result).containsExactly(firstDto, secondDto);
+    Assertions.assertThat(result).containsExactly(firstTrainer, secondTrainer);
   }
 
   @Test
-  void selectTrainersNotAssignedToTraineeShouldReturnMappedDtos() {
+  void getTrainersByUsernamesShouldReturnEmptyListWhenUsernamesAreNullOrEmpty() {
+    Assertions.assertThat(trainerService.getTrainersByUsernames(null)).isEmpty();
+    Assertions.assertThat(trainerService.getTrainersByUsernames(List.of())).isEmpty();
+
+    verifyNoInteractions(trainerRepository, traineeRepository, userService, trainingTypeService);
+  }
+
+  @Test
+  void getTrainersNotAssignedToTraineeShouldReturnEntitiesWhenTraineeExists() {
     String traineeUsername = "john.doe";
-    Trainee trainee = createTrainee(createUser(1L, traineeUsername));
     Trainer firstTrainer =
         createTrainer(1L, createUser(2L, "first.trainer"), createTrainingType(2L, "Fitness"));
     Trainer secondTrainer =
         createTrainer(2L, createUser(3L, "second.trainer"), createTrainingType(3L, "Yoga"));
-    TrainerDto firstDto = createTrainerDto(1L, "first.trainer");
-    TrainerDto secondDto = createTrainerDto(2L, "second.trainer");
 
-    when(traineeRepository.findByUserUsername(traineeUsername)).thenReturn(Optional.of(trainee));
+    when(traineeRepository.existsByUsername(traineeUsername)).thenReturn(true);
     when(trainerRepository.findTrainersNotAssignedToTrainee(traineeUsername))
         .thenReturn(List.of(firstTrainer, secondTrainer));
-    when(modelMapper.map(firstTrainer, TrainerDto.class)).thenReturn(firstDto);
-    when(modelMapper.map(secondTrainer, TrainerDto.class)).thenReturn(secondDto);
 
-    List<TrainerDto> result = trainerService.selectTrainersNotAssignedToTrainee(traineeUsername);
+    List<Trainer> result = trainerService.getTrainersNotAssignedToTrainee(traineeUsername);
 
-    Assertions.assertThat(result).containsExactly(firstDto, secondDto);
+    Assertions.assertThat(result).containsExactly(firstTrainer, secondTrainer);
   }
 
   @Test
-  void selectTrainersNotAssignedToTraineeShouldThrowExceptionWhenTraineeDoesNotExist() {
+  void getTrainersNotAssignedToTraineeShouldThrowExceptionWhenTraineeDoesNotExist() {
     String traineeUsername = "missing";
 
-    when(traineeRepository.findByUserUsername(traineeUsername)).thenReturn(Optional.empty());
+    when(traineeRepository.existsByUsername(traineeUsername)).thenReturn(false);
 
     Assertions.assertThatThrownBy(
-            () -> trainerService.selectTrainersNotAssignedToTrainee(traineeUsername))
-        .isInstanceOf(IllegalArgumentException.class)
+            () -> trainerService.getTrainersNotAssignedToTrainee(traineeUsername))
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Trainee not found: " + traineeUsername);
 
-    verifyNoInteractions(userService, trainingTypeService, modelMapper);
+    verifyNoInteractions(userService, trainingTypeService);
+    verifyNoMoreInteractions(trainerRepository);
   }
 
-  private Trainee createTrainee(User user) {
-    Trainee trainee = new Trainee();
-    trainee.setId(10L);
-    trainee.setUser(user);
-    trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
-    trainee.setAddress("Baku");
-    return trainee;
+  @Test
+  void searchTrainersByNameShouldReturnMatchingTrainerIds() {
+    when(trainerRepository.findIdsByNameContaining("%john%")).thenReturn(List.of(1L, 2L));
+
+    List<Long> result = trainerService.searchTrainersByName("john");
+
+    Assertions.assertThat(result).containsExactly(1L, 2L);
   }
 
-  private Trainer createTrainer(Long id, User user, TrainingType specialization) {
+  @Test
+  void searchTrainersByNameShouldReturnEmptyListWhenNameIsNullOrBlank() {
+    Assertions.assertThat(trainerService.searchTrainersByName(null)).isEmpty();
+    Assertions.assertThat(trainerService.searchTrainersByName(" ")).isEmpty();
+
+    verifyNoInteractions(trainerRepository, traineeRepository, userService, trainingTypeService);
+  }
+
+  private Trainer createTrainer(Long id, User profile, TrainingType specialization) {
     Trainer trainer = new Trainer();
     trainer.setId(id);
-    trainer.setUser(user);
+    trainer.setUser(profile);
     trainer.setSpecialization(specialization);
     return trainer;
   }
 
   private User createUser(Long id, String username) {
-    User user = new User();
-    user.setId(id);
-    user.setFirstName("John");
-    user.setLastName("Doe");
-    user.setUsername(username);
-    user.setPassword("password");
-    user.setActive(true);
-    return user;
+    User profile = new User();
+    profile.setId(id);
+    profile.setFirstName("John");
+    profile.setLastName("Doe");
+    profile.setUsername(username);
+    profile.setPassword("password");
+    profile.setActive(true);
+    return profile;
   }
 
   private TrainingType createTrainingType(Long id, String name) {
@@ -302,15 +281,13 @@ class TrainerServiceImplTest {
     return trainingType;
   }
 
-  private TrainerDto createTrainerDto(Long id, String username) {
-    return new TrainerDto(id, 1L, username, new TrainingTypeDto(2L, "Fitness"));
-  }
-
   private TrainerCreateDto createTrainerCreateDto() {
-    return new TrainerCreateDto(1L, 2L);
+    return new TrainerCreateDto(
+        new UserCreateDto("John", "Doe"), new TrainingTypeDto(2L, "Fitness"));
   }
 
   private TrainerUpdateDto createTrainerUpdateDto() {
-    return new TrainerUpdateDto(2L);
+    return new TrainerUpdateDto(
+        new UserDto("Jane", "Smith", false), new TrainingTypeDto(2L, "Fitness"));
   }
 }

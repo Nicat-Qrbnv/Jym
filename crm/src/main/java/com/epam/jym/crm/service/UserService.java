@@ -1,16 +1,15 @@
 package com.epam.jym.crm.service;
 
-import com.epam.jym.crm.dto.user.RegisteredUserDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 
 public interface UserService {
 
-  RegisteredUserDto register(UserCreateDto user);
+  User register(UserCreateDto user);
 
-  void changePassword(Long userId, String newPassword);
+  void changePassword(String username, String newPassword);
 
-  void changeUserStatus(Long userId);
+  void changeUserStatus(String username, boolean isActive);
 
-  User getUser(Long userId);
+  void deactivateUser(Long userId);
 }

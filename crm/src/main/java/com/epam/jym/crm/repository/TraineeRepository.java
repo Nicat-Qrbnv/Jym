@@ -9,13 +9,21 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TraineeRepository extends JpaRepository<Trainee, Long> {
 
-  Optional<Trainee> findByUserUsername(String username);
+  @Query(
+      """
+          SELECT t
+          FROM Trainee t
+          LEFT JOIN FETCH t.user u
+          WHERE u.username = :username
+          """)
+  Optional<Trainee> findTraineeByUsername(String username);
 
   @Query(
       """
           SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
           FROM Trainee t
-          WHERE t.user.id = :userId
+          LEFT JOIN t.user u
+          WHERE u.username = :traineeUsername
           """)
-  boolean userHasTraineeProfile(Long userId);
+  boolean existsByUsername(String traineeUsername);
 }

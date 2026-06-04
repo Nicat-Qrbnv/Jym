@@ -1,8 +1,8 @@
 package com.epam.jym.crm.service.impl;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.entity.User;
-import com.epam.jym.crm.exception.BadCredentialsException;
+import com.epam.jym.crm.exception.InvalidCredentialsException;
 import com.epam.jym.crm.repository.UserRepository;
 import com.epam.jym.crm.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +25,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       throw failAuthentication(credentials == null ? "null" : credentials.username());
     }
 
-    User foundUser = userRepository.findByUsername(credentials.username())
-        .orElseThrow(() -> failAuthentication(credentials.username()));
+    User foundUser =
+        userRepository
+            .findByUsername(credentials.username())
+            .orElseThrow(() -> failAuthentication(credentials.username()));
 
     boolean passwordMatches = credentials.password().equals(foundUser.getPassword());
 
@@ -37,8 +39,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     log.info("Authentication successful for username= {}", credentials.username());
   }
 
-  private BadCredentialsException failAuthentication(String username) {
+  private InvalidCredentialsException failAuthentication(String username) {
     log.warn("Authentication failed for user= {}", username);
-    return new BadCredentialsException("Invalid username or password");
+    return new InvalidCredentialsException("Invalid username or password");
   }
 }

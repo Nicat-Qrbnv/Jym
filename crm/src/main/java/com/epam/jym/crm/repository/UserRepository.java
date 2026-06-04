@@ -21,15 +21,24 @@ public interface UserRepository extends JpaRepository<User, Long> {
   Optional<User> findByUsername(String username);
 
   @Modifying
-  @Query("UPDATE User u SET u.password = :newPassword WHERE u.id = :userId")
-  void changePassword(Long userId, String newPassword);
+  @Query("UPDATE User u SET u.password = :newPassword WHERE u.username = :username")
+  int changePassword(String username, String newPassword);
 
   @Modifying
   @Query(
       """
           UPDATE User u
           SET u.isActive = CASE WHEN u.isActive THEN FALSE ELSE TRUE END
+          WHERE u.username = :username
+          """)
+  int changeStatus(String username);
+
+  @Modifying
+  @Query(
+      """
+          UPDATE User u
+          SET u.isActive = :isActive
           WHERE u.id = :userId
           """)
-  void changeStatus(Long userId);
+  void changeStatus(Long userId, Boolean isActive);
 }

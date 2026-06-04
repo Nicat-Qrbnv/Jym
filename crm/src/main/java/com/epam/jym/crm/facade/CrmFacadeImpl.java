@@ -1,22 +1,36 @@
 package com.epam.jym.crm.facade;
 
-import com.epam.jym.crm.auth.Authenticated;
-import com.epam.jym.crm.auth.SkipAuthentication;
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.aspect.auth.Authenticated;
+import com.epam.jym.crm.aspect.auth.SkipAuthentication;
+import com.epam.jym.crm.aspect.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
-import com.epam.jym.crm.dto.trainee.TraineeDto;
+import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
+import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
-import com.epam.jym.crm.dto.trainer.TrainerDto;
+import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
+import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
+import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
+import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
-import com.epam.jym.crm.dto.training.TrainingDto;
+import com.epam.jym.crm.dto.training.TrainingTypeDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
+import com.epam.jym.crm.entity.Trainee;
+import com.epam.jym.crm.entity.Trainer;
+import com.epam.jym.crm.entity.Training;
+import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
+import com.epam.jym.crm.service.TrainingTypeService;
+import com.epam.jym.crm.service.UserService;
+import com.epam.jym.crm.util.mapper.core.CrmMapper;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,132 +39,173 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @Authenticated
+@LogOperation("CrmFacade")
 public class CrmFacadeImpl implements CrmFacade {
 
   private final TraineeService traineeService;
   private final TrainerService trainerService;
   private final TrainingService trainingService;
+  private final TrainingTypeService trainingTypeService;
+  private final UserService userService;
+  private final CrmMapper crmMapper;
 
   @Override
   @SkipAuthentication
-  public TraineeDto createTrainee(TraineeCreateDto traineeDto) {
+  public CredentialsDto createTrainee(TraineeCreateDto traineeDto) {
     log.debug("Facade request: create trainee");
-    return traineeService.createTrainee(traineeDto);
+    Trainee trainee = traineeService.createTrainee(traineeDto);
+    log.info(
+        "Facade completed: created trainee with id={} username={}",
+        trainee.getId(),
+        trainee.getUsername());
+    return crmMapper.map(trainee.getUser(), CredentialsDto.class);
   }
 
   @Override
-  public TraineeDto updateTrainee(
-      CredentialsDto credentials, Long traineeId, TraineeUpdateDto traineeDto) {
-    log.debug("Facade request: update trainee with id={}", traineeId);
-    return traineeService.updateTrainee(traineeId, traineeDto);
+  public void login(CredentialsDto credentials) {
+    log.debug("Facade request: login username={}", credentials.username());
+    log.info("Facade completed: login username={}", credentials.username());
   }
 
   @Override
-  public void deleteTrainee(CredentialsDto credentials, Long traineeId) {
-    log.debug("Facade request: delete trainee with id={}", traineeId);
-    traineeService.deleteTrainee(traineeId);
+  public void changeLogin(CredentialsDto credentials, String newPassword) {
+    log.debug("Facade request: change login username={}", credentials.username());
+    userService.changePassword(credentials.username(), newPassword);
+    log.info("Facade completed: changed login username={}", credentials.username());
+  }
+
+  @Override
+  public UpdatedTraineeProfileDto updateTraineeProfile(
+      CredentialsDto credentials, String username, TraineeUpdateDto traineeDto) {
+    log.debug("Facade request: update trainee profile with username={}", username);
+    Trainee trainee = traineeService.updateTraineeProfile(username, traineeDto);
+    log.info(
+        "Facade completed: updated trainee profile with id={} username={}",
+        trainee.getId(),
+        trainee.getUsername());
+    return crmMapper.map(trainee, UpdatedTraineeProfileDto.class);
+  }
+
+  @Override
+  public void changeUserStatus(CredentialsDto credentials, String username, boolean isActive) {
+    log.debug("Facade request: update user status with username={}", username);
+    userService.changeUserStatus(username, isActive);
+    log.info("Facade completed: updated user status with username={}", username);
   }
 
   @Override
   public void deleteTrainee(CredentialsDto credentials, String username) {
     log.debug("Facade request: delete trainee with username={}", username);
     traineeService.deleteTrainee(username);
+    log.info("Facade completed: deleted trainee with username={}", username);
   }
 
   @Override
-  public TraineeDto getTraineeById(CredentialsDto credentials, Long traineeId) {
-    log.debug("Facade request: get trainee with id={}", traineeId);
-    return traineeService.getTraineeById(traineeId);
+  public TraineeProfileDto getTraineeProfile(CredentialsDto credentials, String username) {
+    log.debug("Facade request: get trainee profile by username={}", username);
+    Trainee trainee = traineeService.getTraineeByUsername(username);
+    log.debug("Facade completed: selected trainee profile by username={}", username);
+    return crmMapper.map(trainee, TraineeProfileDto.class);
   }
 
   @Override
-  public TraineeDto getTraineeByUsername(CredentialsDto credentials, String username) {
-    log.debug("Facade request: get trainee by username={}", username);
-    return traineeService.getTraineeByUsername(username);
-  }
-
-  @Override
-  public List<TraineeDto> getAllTrainees(CredentialsDto credentials) {
-    log.debug("Facade request: get all trainees");
-    return traineeService.getAllTrainees();
-  }
-
-  @Override
-  public List<TrainerDto> updateTraineeTrainers(
-      CredentialsDto credentials, Long traineeId, List<Long> trainerIds) {
-    log.debug("Facade request: update trainee trainers with trainee id={}", traineeId);
-    return traineeService.updateTraineeTrainers(traineeId, trainerIds);
+  public List<TrainerSummaryDto> updateTraineeTrainers(
+      CredentialsDto credentials, String traineeUsername, List<String> trainerUsernames) {
+    log.debug("Facade request: update trainee trainers with trainee username={}", traineeUsername);
+    Set<Trainer> trainers = traineeService.updateTraineeTrainers(traineeUsername, trainerUsernames);
+    log.info(
+        "Facade completed: updated {} trainers for trainee username={}",
+        trainers.size(),
+        traineeUsername);
+    return crmMapper.mapCollection(trainers, TrainerSummaryDto.class).toList();
   }
 
   @Override
   @SkipAuthentication
-  public TrainerDto createTrainer(TrainerCreateDto trainerDto) {
+  public CredentialsDto createTrainer(TrainerCreateDto trainerDto) {
     log.debug("Facade request: create trainer");
-    return trainerService.createTrainer(trainerDto);
+    Trainer trainer = trainerService.createTrainer(trainerDto);
+    log.info(
+        "Facade completed: created trainer with id={} username={}",
+        trainer.getId(),
+        trainer.getUsername());
+    return crmMapper.map(trainer.getUser(), CredentialsDto.class);
   }
 
   @Override
-  public TrainerDto updateTrainer(
-      CredentialsDto credentials, Long trainerId, TrainerUpdateDto trainerDto) {
-    log.debug("Facade request: update trainer with id={}", trainerId);
-    return trainerService.updateTrainer(trainerId, trainerDto);
+  public UpdatedTrainerProfileDto updateTrainerProfile(
+      CredentialsDto credentials, String username, TrainerUpdateDto trainerDto) {
+    log.debug("Facade request: update trainer profile with username={}", username);
+    Trainer trainer = trainerService.updateTrainerProfile(username, trainerDto);
+    log.info(
+        "Facade completed: updated trainer profile with id={} username={}",
+        trainer.getId(),
+        trainer.getUsername());
+    return crmMapper.map(trainer, UpdatedTrainerProfileDto.class);
   }
 
   @Override
-  public TrainerDto selectTrainer(CredentialsDto credentials, Long trainerId) {
-    log.debug("Facade request: select trainer with id={}", trainerId);
-    return trainerService.selectTrainer(trainerId);
+  public TrainerProfileDto getTrainerProfile(CredentialsDto credentials, String username) {
+    log.debug("Facade request: get trainer profile by username={}", username);
+    Trainer trainer = trainerService.getTrainerByUsername(username);
+    log.debug("Facade completed: selected trainer profile by username={}", username);
+    return crmMapper.map(trainer, TrainerProfileDto.class);
   }
 
   @Override
-  public TrainerDto selectTrainerByUsername(CredentialsDto credentials, String username) {
-    log.debug("Facade request: select trainer by username={}", username);
-    return trainerService.getTrainerByUsername(username);
-  }
-
-  @Override
-  public List<TrainerDto> selectAllTrainers(CredentialsDto credentials) {
-    log.debug("Facade request: select all trainers");
-    return trainerService.getAllTrainers();
-  }
-
-  @Override
-  public List<TrainerDto> selectTrainersNotAssignedToTrainee(
+  public List<TrainerSummaryDto> getNotAssignedActiveTrainers(
       CredentialsDto credentials, String traineeUsername) {
     log.debug(
-        "Facade request: select trainers not assigned to trainee username={}", traineeUsername);
-    return trainerService.selectTrainersNotAssignedToTrainee(traineeUsername);
+        "Facade request: get not assigned active trainers for trainee username={}",
+        traineeUsername);
+    List<Trainer> trainers = trainerService.getTrainersNotAssignedToTrainee(traineeUsername);
+    log.debug(
+        "Facade completed: selected {} not assigned active trainers for trainee username={}",
+        trainers.size(),
+        traineeUsername);
+    return crmMapper.mapCollection(trainers, TrainerSummaryDto.class).toList();
   }
 
   @Override
-  public TrainingDto createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto) {
-    log.debug("Facade request: create training");
-    return trainingService.createTraining(trainingDto);
-  }
-
-  @Override
-  public TrainingDto getTraining(CredentialsDto credentials, Long trainingId) {
-    log.debug("Facade request: select training with id={}", trainingId);
-    return trainingService.getTraining(trainingId);
-  }
-
-  @Override
-  public List<TrainingDto> getAllTrainings(CredentialsDto credentials) {
-    log.debug("Facade request: select all trainings");
-    return trainingService.getAllTrainings();
-  }
-
-  @Override
-  public List<TrainingDto> getTraineeTrainings(
+  public List<TraineeTrainingDto> getTraineeTrainings(
       CredentialsDto credentials, String traineeUsername, TraineeTrainingsCriteriaDto criteria) {
     log.debug("Facade request: select trainings for trainee username={}", traineeUsername);
-    return trainingService.getTraineeTrainings(traineeUsername, criteria);
+    List<Training> trainings = trainingService.getTraineeTrainings(traineeUsername, criteria);
+    log.debug(
+        "Facade completed: selected {} trainings for trainee username={}",
+        trainings.size(),
+        traineeUsername);
+    return crmMapper.mapCollection(trainings, TraineeTrainingDto.class).toList();
   }
 
   @Override
-  public List<TrainingDto> getTrainerTrainings(
+  public List<TrainerTrainingDto> getTrainerTrainings(
       CredentialsDto credentials, String trainerUsername, TrainerTrainingsCriteriaDto criteria) {
     log.debug("Facade request: select trainings for trainer username={}", trainerUsername);
-    return trainingService.getTrainerTrainings(trainerUsername, criteria);
+    List<Training> trainings = trainingService.getTrainerTrainings(trainerUsername, criteria);
+    log.debug(
+        "Facade completed: selected {} trainings for trainer username={}",
+        trainings.size(),
+        trainerUsername);
+    return crmMapper.mapCollection(trainings, TrainerTrainingDto.class).toList();
+  }
+
+  @Override
+  @SkipAuthentication
+  public List<TrainingTypeDto> getTrainingTypes() {
+    log.debug("Facade request: select all training types");
+    List<TrainingType> trainingTypes = trainingTypeService.getAllTypes();
+    log.debug("Facade completed: selected {} training types", trainingTypes.size());
+    return crmMapper.mapCollection(trainingTypes, TrainingTypeDto.class).toList();
+  }
+
+  @Override
+  public void createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto) {
+    log.debug("Facade request: create training");
+    Training training = trainingService.createTraining(trainingDto);
+    log.info(
+        "Facade completed: created training with id={} trainee username={}",
+        training.getId(),
+        training.getTrainee().getUsername());
   }
 }

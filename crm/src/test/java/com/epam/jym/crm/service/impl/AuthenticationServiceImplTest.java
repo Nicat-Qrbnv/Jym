@@ -3,9 +3,9 @@ package com.epam.jym.crm.service.impl;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.entity.User;
-import com.epam.jym.crm.exception.BadCredentialsException;
+import com.epam.jym.crm.exception.InvalidCredentialsException;
 import com.epam.jym.crm.repository.UserRepository;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;
@@ -25,10 +25,10 @@ class AuthenticationServiceImplTest {
   @Test
   void authenticateShouldSucceedWhenCredentialsAreValid() {
     CredentialsDto credentials = new CredentialsDto("john.doe", "password");
-    User user = createUser(true);
-    user.setId(10L);
+    User profile = createUser(true);
+    profile.setId(10L);
 
-    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(profile));
 
     Assertions.assertThatCode(() -> authenticationService.authenticate(credentials))
         .doesNotThrowAnyException();
@@ -70,9 +70,9 @@ class AuthenticationServiceImplTest {
   @Test
   void authenticateShouldThrowWhenPasswordHasTypo() {
     CredentialsDto credentials = new CredentialsDto("john.doe", "passwrod");
-    User user = createUser(true);
+    User profile = createUser(true);
 
-    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(profile));
 
     assertBadCredentials(credentials);
   }
@@ -80,24 +80,24 @@ class AuthenticationServiceImplTest {
   @Test
   void authenticateShouldThrowWhenUserIsInactive() {
     CredentialsDto credentials = new CredentialsDto("john.doe", "password");
-    User user = createUser(false);
+    User profile = createUser(false);
 
-    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(profile));
 
     assertBadCredentials(credentials);
   }
 
   private void assertBadCredentials(CredentialsDto credentials) {
     Assertions.assertThatThrownBy(() -> authenticationService.authenticate(credentials))
-        .isInstanceOf(BadCredentialsException.class)
+        .isInstanceOf(InvalidCredentialsException.class)
         .hasMessage("Invalid username or password");
   }
 
   private User createUser(boolean active) {
-    User user = new User();
-    user.setUsername("john.doe");
-    user.setPassword("password");
-    user.setActive(active);
-    return user;
+    User profile = new User();
+    profile.setUsername("john.doe");
+    profile.setPassword("password");
+    profile.setActive(active);
+    return profile;
   }
 }

@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset nicat:006-seed-data
-INSERT INTO training_types (id, name)
+INSERT INTO training_types (id, type_name)
 VALUES (1, 'Technical'),
        (2, 'Non-technical');
 
@@ -35,7 +35,8 @@ VALUES (1, 9, 1),
        (3, 11, 1),
        (4, 12, 2);
 
-INSERT INTO trainings (id, name, training_type_id, trainee_id, trainer_id, scheduled_date, duration_in_minutes)
+INSERT INTO trainings (id, name, training_type_id, trainee_id, trainer_id, scheduled_date,
+                       duration_in_minutes)
 VALUES (1, 'Java Basics', 1, 1, 1, '2026-01-12', 60),
        (2, 'Spring Boot Fundamentals', 1, 2, 1, '2026-01-15', 90),
        (3, 'Presentation Skills', 2, 3, 2, '2026-01-19', 60),
@@ -45,11 +46,16 @@ VALUES (1, 'Java Basics', 1, 1, 1, '2026-01-12', 60),
        (7, 'Business Communication', 2, 7, 4, '2026-02-02', 60),
        (8, 'Conflict Management', 2, 8, 4, '2026-02-05', 75);
 
-ALTER TABLE training_types ALTER COLUMN id RESTART WITH 3;
-ALTER TABLE users ALTER COLUMN id RESTART WITH 13;
-ALTER TABLE trainees ALTER COLUMN id RESTART WITH 9;
-ALTER TABLE trainers ALTER COLUMN id RESTART WITH 5;
-ALTER TABLE trainings ALTER COLUMN id RESTART WITH 9;
+ALTER TABLE training_types
+    ALTER COLUMN id RESTART WITH 3;
+ALTER TABLE users
+    ALTER COLUMN id RESTART WITH 13;
+ALTER TABLE trainees
+    ALTER COLUMN id RESTART WITH 9;
+ALTER TABLE trainers
+    ALTER COLUMN id RESTART WITH 5;
+ALTER TABLE trainings
+    ALTER COLUMN id RESTART WITH 9;
 
 --rollback DELETE FROM trainings WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8);
 --rollback DELETE FROM trainers WHERE id IN (1, 2, 3, 4);

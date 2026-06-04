@@ -15,34 +15,34 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
       """
       SELECT training
       FROM Training training
-      JOIN training.trainee trainee
-      JOIN trainee.user traineeUser
-      JOIN training.trainer trainer
-      JOIN trainer.user trainerUser
-      JOIN training.type type
+      JOIN FETCH training.trainee trainee
+      JOIN FETCH trainee.user traineeUser
+      JOIN FETCH training.trainer trainer
+      JOIN FETCH trainer.user trainerUser
+      JOIN FETCH training.type type
       WHERE traineeUser.username = :traineeUsername
         AND (:fromDate IS NULL OR training.scheduledDate >= :fromDate)
         AND (:toDate IS NULL OR training.scheduledDate <= :toDate)
-        AND (:trainerName IS NULL
-          OR LOWER(CONCAT(trainerUser.firstName, ' ', trainerUser.lastName))
-            LIKE LOWER(CONCAT('%', :trainerName, '%')))
+        AND (:trainerIdsPresent = FALSE OR trainer.id IN :trainers)
         AND (:trainingType IS NULL OR type.name = :trainingType)
       """)
   List<Training> findTraineeTrainings(
       @Param("traineeUsername") String traineeUsername,
       @Param("fromDate") LocalDate fromDate,
       @Param("toDate") LocalDate toDate,
-      @Param("trainerName") String trainerName,
+      @Param("trainerIdsPresent") boolean trainerIdsPresent,
+      @Param("trainers") List<Long> trainers,
       @Param("trainingType") String trainingType);
 
   @Query(
       """
       SELECT training
       FROM Training training
-      JOIN training.trainee trainee
-      JOIN trainee.user traineeUser
-      JOIN training.trainer trainer
-      JOIN trainer.user trainerUser
+      JOIN FETCH training.trainee trainee
+      JOIN FETCH trainee.user traineeUser
+      JOIN FETCH training.trainer trainer
+      JOIN FETCH trainer.user trainerUser
+      JOIN FETCH training.type type
       WHERE trainerUser.username = :trainerUsername
         AND (:fromDate IS NULL OR training.scheduledDate >= :fromDate)
         AND (:toDate IS NULL OR training.scheduledDate <= :toDate)

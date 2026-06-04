@@ -18,3 +18,11 @@ spring:
 security:
   password:
     length: 10
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [transactionId=%X{transactionId:-}] %logger{36} - %msg%n"
+
+springdoc:
+  swagger-ui:
+    path: /swagger

@@ -1,6 +1,7 @@
-package com.epam.jym.crm.auth;
+package com.epam.jym.crm.aspect.auth;
 
-import com.epam.jym.crm.dto.auth.CredentialsDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
+import com.epam.jym.crm.exception.InvalidCredentialsException;
 import com.epam.jym.crm.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -16,10 +17,10 @@ public class AuthenticationAspect {
 
   private final AuthenticationService authenticationService;
 
-  @Pointcut("@within(com.epam.jym.crm.auth.Authenticated)")
+  @Pointcut("@within(com.epam.jym.crm.aspect.auth.Authenticated)")
   public void authenticatedMethods() {}
 
-  @Pointcut("@annotation(com.epam.jym.crm.auth.SkipAuthentication)")
+  @Pointcut("@annotation(com.epam.jym.crm.aspect.auth.SkipAuthentication)")
   public void skipAuthenticationMethods() {}
 
   @Around("authenticatedMethods() && !skipAuthenticationMethods())")
@@ -35,6 +36,6 @@ public class AuthenticationAspect {
         return credentials;
       }
     }
-    throw new IllegalArgumentException("Credentials are required");
+    throw new InvalidCredentialsException("Credentials are required");
   }
 }
