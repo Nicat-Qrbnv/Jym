@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   Optional<User> findByUsername(String username);
 
+  long countByIsActiveTrue();
+
   @Modifying
   @Query("UPDATE User u SET u.password = :newPassword WHERE u.username = :username")
   int changePassword(String username, String newPassword);

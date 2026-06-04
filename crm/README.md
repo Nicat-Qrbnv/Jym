@@ -29,5 +29,45 @@ The CRM service exposes the following Spring Boot Actuator endpoints:
 
 - `/actuator/health`
 - `/actuator/info`
+- `/actuator/prometheus`
+- `/actuator/crm-metrics`
+- `/actuator/error-logs`
 - `/actuator/health/liveness`
 - `/actuator/health/readiness`
+
+CRM health group indicators:
+
+- `db`
+- `liquibaseMigration`
+
+With the `local` profile, custom health indicators are visible in:
+
+- `/actuator/health`
+- `/actuator/health/crm`
+
+Custom CRM metrics response:
+
+```json
+{
+  "activeUsers": 13,
+  "trainersBySpecialization": {
+    "Non-technical": 2,
+    "Technical": 2
+  }
+}
+```
+
+Error log summary response:
+
+```json
+{
+  "errorCount": 1,
+  "lastError": {
+    "timestamp": "2026-06-04T08:15:30Z",
+    "logger": "com.epam.jym.crm.service.impl.TrainingServiceImpl",
+    "message": "Failed to create training",
+    "exceptionClass": "java.lang.IllegalStateException",
+    "exceptionMessage": "Training type is not active"
+  }
+}
+```

@@ -14,3 +14,13 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      group:
+        crm:
+          show-details: never
+          show-components: never

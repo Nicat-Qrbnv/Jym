@@ -30,12 +30,19 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,crmmetrics,errorlogs
+      path-mapping:
+        crmmetrics: crm-metrics
+        errorlogs: error-logs
   endpoint:
     health:
       probes:
         enabled: true
       show-details: never
+      show-components: never
+      group:
+        crm:
+          include: db,liquibaseMigration
   info:
     env:
       enabled: true

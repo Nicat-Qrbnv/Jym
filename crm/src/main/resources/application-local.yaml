@@ -7,3 +7,13 @@ spring:
 logging:
   level:
     com.epam.jym.crm: DEBUG
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      group:
+        crm:
+          show-details: always
+          show-components: always
