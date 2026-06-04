@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/crm}
+
+logging:
+  level:
+    com.epam.jym.crm: DEBUG

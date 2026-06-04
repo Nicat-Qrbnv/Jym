@@ -21,7 +21,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_URL: jdbc:postgresql://postgres:5432/crm
-      SEED_DATA_LOCATION: classpath:data/seed-data.json
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
     ports:
       - "8020:8020"
     depends_on:

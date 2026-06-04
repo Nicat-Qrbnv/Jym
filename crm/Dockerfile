@@ -22,6 +22,6 @@ EXPOSE 8020
 ENV DB_USERNAME=postgres
 ENV DB_PASSWORD=postgres
 ENV DB_URL=jdbc:postgresql://postgres:5432/crm
-ENV SEED_DATA_LOCATION=classpath:data/seed-data.json
+ENV SPRING_PROFILES_ACTIVE=local
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

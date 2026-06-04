@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: ${DB_URL}
+
+logging:
+  level:
+    com.epam.jym.crm: INFO
