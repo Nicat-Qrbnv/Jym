@@ -54,9 +54,10 @@ public class UserServiceImpl implements UserService {
   }
 
   private String generateUsername(String firstName, String lastName) {
-    String baseUsername = firstName + "." + lastName;
+    String baseUsername = firstName.toLowerCase() + "." + lastName.toLowerCase();
 
-    Integer duplicates = userRepo.findNumberOfUsersWithSameName(baseUsername + '%');
+    String searchPattern = '^' + firstName + "\\." + lastName + "[0-9]*$";
+    Long duplicates = userRepo.findNumberOfUsersWithSameName(searchPattern.toLowerCase());
     log.debug("Found {} users with the same name", duplicates);
     return duplicates > 0 ? baseUsername + duplicates : baseUsername;
   }

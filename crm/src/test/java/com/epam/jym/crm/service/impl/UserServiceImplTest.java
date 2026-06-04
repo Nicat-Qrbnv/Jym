@@ -40,7 +40,7 @@ class UserServiceImplTest {
   void registerShouldCreateUserSaveAndReturnRegisteredUser() {
     UserCreateDto profile = new UserCreateDto("John", "Doe");
 
-    when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(0);
+    when(userRepository.findNumberOfUsersWithSameName("^john\\.doe[0-9]*$")).thenReturn(0L);
 
     when(userRepository.save(any(User.class)))
         .thenAnswer(
@@ -55,7 +55,7 @@ class UserServiceImplTest {
     Assertions.assertThat(registeredUser.getId()).isEqualTo(10L);
     Assertions.assertThat(registeredUser.getFirstName()).isEqualTo("John");
     Assertions.assertThat(registeredUser.getLastName()).isEqualTo("Doe");
-    Assertions.assertThat(registeredUser.getUsername()).isEqualTo("John.Doe");
+    Assertions.assertThat(registeredUser.getUsername()).isEqualTo("john.doe");
     Assertions.assertThat(registeredUser.getPassword()).hasSize(PASSWORD_LENGTH);
 
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -63,7 +63,7 @@ class UserServiceImplTest {
     User savedUser = userCaptor.getValue();
     Assertions.assertThat(savedUser.getFirstName()).isEqualTo("John");
     Assertions.assertThat(savedUser.getLastName()).isEqualTo("Doe");
-    Assertions.assertThat(savedUser.getUsername()).isEqualTo("John.Doe");
+    Assertions.assertThat(savedUser.getUsername()).isEqualTo("john.doe");
     Assertions.assertThat(savedUser.getPassword()).hasSize(PASSWORD_LENGTH);
     Assertions.assertThat(savedUser.isActive()).isTrue();
   }
@@ -72,12 +72,12 @@ class UserServiceImplTest {
   void registerShouldAddSuffixWhenUsernameAlreadyExists() {
     UserCreateDto profile = new UserCreateDto("John", "Doe");
 
-    when(userRepository.findNumberOfUsersWithSameName("John.Doe%")).thenReturn(2);
+    when(userRepository.findNumberOfUsersWithSameName("^john\\.doe[0-9]*$")).thenReturn(2L);
     when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     User registeredUser = authenticationService.register(profile);
 
-    Assertions.assertThat(registeredUser.getUsername()).isEqualTo("John.Doe2");
+    Assertions.assertThat(registeredUser.getUsername()).isEqualTo("john.doe2");
     Assertions.assertThat(registeredUser.getPassword()).hasSize(PASSWORD_LENGTH);
     verify(userRepository).save(any(User.class));
   }
