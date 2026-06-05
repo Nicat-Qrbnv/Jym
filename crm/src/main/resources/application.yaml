@@ -18,6 +18,10 @@ security:
   password:
     length: ${SECURITY_PASSWORD_LENGTH:10}
 
+app:
+  logging:
+    error-appender-name: errorLogAppender
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [transactionId=%X{transactionId:-}] %logger{36} - %msg%n"

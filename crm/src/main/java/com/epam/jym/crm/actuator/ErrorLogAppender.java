@@ -1,53 +1,47 @@
 package com.epam.jym.crm.actuator;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.AppenderBase;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-@Component
-public class ErrorLogAppender extends AppenderBase<ILoggingEvent>
-    implements InitializingBean, DisposableBean {
+public class ErrorLogAppender extends AppenderBase<ILoggingEvent> {
 
-  private static final String APPENDER_NAME = "errorLogRecorder";
-
-  private final ErrorLogRecorder errorLogRecorder;
-
-  private Logger rootLogger;
-
-  public ErrorLogAppender(ErrorLogRecorder errorLogRecorder) {
-    this.errorLogRecorder = errorLogRecorder;
-  }
-
-  @Override
-  public void afterPropertiesSet() {
-    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-    setContext(loggerContext);
-    setName(APPENDER_NAME);
-    start();
-
-    rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-    rootLogger.addAppender(this);
-  }
+  private final AtomicLong errorCount = new AtomicLong();
+  private final AtomicReference<ErrorLogEntry> lastError = new AtomicReference<>();
 
   @Override
   protected void append(ILoggingEvent event) {
-    if (Level.ERROR.equals(event.getLevel())) {
-      errorLogRecorder.record(event);
-    }
+    record(event);
   }
 
-  @Override
-  public void destroy() {
-    if (rootLogger != null) {
-      rootLogger.detachAppender(this);
-    }
-    stop();
+  public void record(ILoggingEvent event) {
+    errorCount.incrementAndGet();
+    var throwableProxy = event.getThrowableProxy();
+    lastError.set(
+        new ErrorLogEntry(
+            Instant.ofEpochMilli(event.getTimeStamp()),
+            event.getFormattedMessage(),
+            resolveExceptionClass(throwableProxy),
+            resolveExceptionMessage(throwableProxy)));
   }
+
+  public ErrorLogSummary summary() {
+    return new ErrorLogSummary(errorCount.get(), lastError.get());
+  }
+
+  private String resolveExceptionClass(IThrowableProxy throwableProxy) {
+    return throwableProxy == null ? null : throwableProxy.getClassName();
+  }
+
+  private String resolveExceptionMessage(IThrowableProxy throwableProxy) {
+    return throwableProxy == null ? null : throwableProxy.getMessage();
+  }
+
+  public record ErrorLogSummary(long errorCountSinceRestart, ErrorLogEntry lastError) {}
+
+  public record ErrorLogEntry(
+      Instant timestamp, String message, String exceptionClass, String exceptionMessage) {}
 }
