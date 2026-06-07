@@ -34,12 +34,18 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 @Slf4j
 public class TransactionLoggingFilter extends OncePerRequestFilter {
 
+  private static final String ACTUATOR_ENDPOINT_PREFIX = "/actuator";
   private static final int MAX_BODY_LOG_LENGTH = 2000;
   private static final Pattern SENSITIVE_JSON_FIELD_PATTERN =
       Pattern.compile(
           "(?i)(\"(?:password|newPassword|authorization|token)\"\\s*:\\s*\")([^\"]*)(\")");
   private static final Pattern SENSITIVE_CREDENTIAL_PATTERN =
       Pattern.compile("(?i)(password=|Authorization:|Bearer\\s+)([^\\s,;]+)");
+
+  @Override
+  protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+    return request.getRequestURI().startsWith(ACTUATOR_ENDPOINT_PREFIX);
+  }
 
   @Override
   protected void doFilterInternal(
