@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,7 +61,7 @@ public class TrainerController {
     return crmFacade.createTrainer(request);
   }
 
-  @GetMapping
+  @GetMapping("/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Get trainer profile",
@@ -85,13 +86,13 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public TrainerProfileDto getProfile(
-      @Parameter(description = "Trainer username", required = true) @NotBlank @RequestParam
+      @Parameter(description = "Trainer username", required = true) @NotBlank @PathVariable
           String username,
       @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getTrainerProfile(parse(userCredentials), username);
   }
 
-  @PutMapping
+  @PutMapping("/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(summary = "Update trainer profile", description = "Updates trainer profile details.")
   @ApiResponses(
@@ -115,7 +116,7 @@ public class TrainerController {
       })
   public UpdatedTrainerProfileDto updateProfile(
       @Parameter(description = "Trainer username", required = true)
-          @RequestParam
+          @PathVariable
           @NotBlank
           @Size(max = 310)
           String username,
@@ -124,7 +125,7 @@ public class TrainerController {
     return crmFacade.updateTrainerProfile(parse(userCredentials), username, request);
   }
 
-  @PatchMapping("/change-status")
+  @PatchMapping("/{username}/change-status")
   @ResponseStatus(HttpStatus.OK)
   @Operation(summary = "Change trainer status", description = "Updates the trainer active status.")
   @ApiResponses(
@@ -148,7 +149,7 @@ public class TrainerController {
       })
   public void updateStatus(
       @Parameter(description = "Trainer username", required = true)
-          @RequestParam
+          @PathVariable
           @NotBlank
           @Size(max = 310)
           String username,

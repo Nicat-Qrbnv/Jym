@@ -28,6 +28,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,7 +66,7 @@ public class TraineeController {
     return crmFacade.createTrainee(request);
   }
 
-  @GetMapping
+  @GetMapping("/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Get trainee profile",
@@ -90,13 +91,13 @@ public class TraineeController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public TraineeProfileDto getProfile(
-      @Parameter(description = "Trainee username", required = true) @NotBlank @RequestParam
+      @Parameter(description = "Trainee username", required = true) @NotBlank @PathVariable
           String username,
       @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getTraineeProfile(parse(userCredentials), username);
   }
 
-  @GetMapping("/not-assigned-trainers")
+  @GetMapping("/{username}/not-assigned-trainers")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Get unassigned active trainers",
@@ -123,13 +124,13 @@ public class TraineeController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public List<TrainerSummaryDto> getNotAssignedActiveTrainers(
-      @Parameter(description = "Trainee username", required = true) @NotBlank @RequestParam
+      @Parameter(description = "Trainee username", required = true) @NotBlank @PathVariable
           String username,
       @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getNotAssignedActiveTrainers(parse(userCredentials), username);
   }
 
-  @PutMapping
+  @PutMapping("/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(summary = "Update trainee profile", description = "Updates trainee profile details.")
   @ApiResponses(
@@ -153,7 +154,7 @@ public class TraineeController {
       })
   public UpdatedTraineeProfileDto updateProfile(
       @Parameter(description = "Trainee username", required = true)
-          @RequestParam
+          @PathVariable
           @NotBlank
           @Size(max = 310)
           String username,
@@ -162,7 +163,7 @@ public class TraineeController {
     return crmFacade.updateTraineeProfile(parse(userCredentials), username, request);
   }
 
-  @PatchMapping("/change-status")
+  @PatchMapping("/{username}/change-status")
   @ResponseStatus(HttpStatus.OK)
   @Operation(summary = "Change trainee status", description = "Updates the trainee active status.")
   @ApiResponses(
@@ -186,7 +187,7 @@ public class TraineeController {
       })
   public void updateStatus(
       @Parameter(description = "Trainee username", required = true)
-          @RequestParam
+          @PathVariable
           @NotBlank
           @Size(max = 310)
           String username,
@@ -196,7 +197,7 @@ public class TraineeController {
     crmFacade.changeUserStatus(parse(userCredentials), username, isActive);
   }
 
-  @PutMapping("/trainers")
+  @PutMapping("/{traineeUsername}/trainers")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Update trainee trainers",
@@ -224,7 +225,7 @@ public class TraineeController {
       })
   public List<TrainerSummaryDto> updateTrainers(
       @Parameter(description = "Trainee username", required = true)
-          @RequestParam
+          @PathVariable
           @NotBlank
           @Size(max = 310)
           String traineeUsername,
@@ -234,7 +235,7 @@ public class TraineeController {
         parse(userCredentials), traineeUsername, trainerUsernames);
   }
 
-  @DeleteMapping
+  @DeleteMapping("/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Delete trainee profile",
@@ -256,7 +257,7 @@ public class TraineeController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public void deleteProfile(
-      @Parameter(description = "Trainee username", required = true) @NotBlank @RequestParam
+      @Parameter(description = "Trainee username", required = true) @NotBlank @PathVariable
           String username,
       @RequestHeader("Authorization") String userCredentials) {
     crmFacade.deleteTrainee(parse(userCredentials), username);

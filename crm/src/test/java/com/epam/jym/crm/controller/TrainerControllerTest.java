@@ -40,9 +40,7 @@ class TrainerControllerTest {
   void getProfileShouldReturnTrainerProfileByUsernameAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            get("/api/v1/trainers")
-                .param("username", "john.doe")
-                .header("Authorization", "admin:password"))
+            get("/api/v1/trainers/john.doe").header("Authorization", "admin:password"))
         .andExpect(status().isOk());
 
     verify(crmFacade).getTrainerProfile(new CredentialsDto("admin", "password"), "john.doe");
@@ -55,8 +53,7 @@ class TrainerControllerTest {
 
     mockMvc
         .perform(
-            get("/api/v1/trainers")
-                .param("username", "unknown.trainer")
+            get("/api/v1/trainers/unknown.trainer")
                 .header("Authorization", "admin:password"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.detail").value("Trainer not found: unknown.trainer"));
@@ -65,7 +62,7 @@ class TrainerControllerTest {
   @Test
   void getProfileShouldReturnUnauthorizedWhenAuthorizationHeaderIsMissing() throws Exception {
     mockMvc
-        .perform(get("/api/v1/trainers").param("username", "john.doe"))
+        .perform(get("/api/v1/trainers/john.doe"))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.detail").value(containsString("Authorization")));
   }
@@ -74,8 +71,7 @@ class TrainerControllerTest {
   void updateStatusShouldUpdateTrainerStatusAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            patch("/api/v1/trainers/change-status")
-                .param("username", "jane.doe")
+            patch("/api/v1/trainers/jane.doe/change-status")
                 .param("isActive", "true")
                 .header("Authorization", "admin:password"))
         .andExpect(status().isOk());
@@ -87,8 +83,7 @@ class TrainerControllerTest {
   void updateStatusShouldReturnBadRequestWhenIsActiveIsMissing() throws Exception {
     mockMvc
         .perform(
-            patch("/api/v1/trainers/change-status")
-                .param("username", "jane.doe")
+            patch("/api/v1/trainers/jane.doe/change-status")
                 .header("Authorization", "admin:password"))
         .andExpect(status().isBadRequest());
   }
@@ -97,8 +92,7 @@ class TrainerControllerTest {
   void updateProfileShouldUpdateTrainerProfileAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            put("/api/v1/trainers")
-                .param("username", "john.doe")
+            put("/api/v1/trainers/john.doe")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
