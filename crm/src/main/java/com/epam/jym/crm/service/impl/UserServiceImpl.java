@@ -1,5 +1,6 @@
 package com.epam.jym.crm.service.impl;
 
+import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.exception.InvalidRequestException;
@@ -7,6 +8,7 @@ import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.UserRepository;
 import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.PasswordGeneratorUtil;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,8 +70,15 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public void changePassword(String username, String newPassword) {
-    int updatedRows = userRepo.changePassword(username, newPassword);
+  public void changePassword(String username, PasswordUpdateDto passwordUpdateDto) {
+    if (passwordUpdateDto == null) {
+      throw new InvalidRequestException("passwordUpdateDto must not be null");
+    }
+    if (Objects.equals(passwordUpdateDto.oldPassword(), passwordUpdateDto.newPassword())) {
+      throw new InvalidRequestException("Old and new passwords must not be the same");
+    }
+
+    int updatedRows = userRepo.changePassword(username, passwordUpdateDto.newPassword());
     if (updatedRows == 0) {
       throw new ResourceNotFoundException("User not found: " + username);
     }

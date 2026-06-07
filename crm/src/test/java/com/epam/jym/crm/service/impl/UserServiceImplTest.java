@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.exception.InvalidRequestException;
@@ -115,21 +116,35 @@ class UserServiceImplTest {
 
   @Test
   void changePasswordShouldDelegateToRepository() {
+    PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("oldPassword", "newPassword");
     when(userRepository.changePassword("john.doe", "newPassword")).thenReturn(1);
 
-    authenticationService.changePassword("john.doe", "newPassword");
+    authenticationService.changePassword("john.doe", passwordUpdateDto);
 
     verify(userRepository).changePassword("john.doe", "newPassword");
   }
 
   @Test
   void changePasswordShouldThrowExceptionWhenUserDoesNotExist() {
+    PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("oldPassword", "newPassword");
     when(userRepository.changePassword("missing", "newPassword")).thenReturn(0);
 
     Assertions.assertThatThrownBy(
-            () -> authenticationService.changePassword("missing", "newPassword"))
+            () -> authenticationService.changePassword("missing", passwordUpdateDto))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("User not found: missing");
+  }
+
+  @Test
+  void changePasswordShouldThrowExceptionWhenOldAndNewPasswordsAreSame() {
+    PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("samePassword", "samePassword");
+
+    Assertions.assertThatThrownBy(
+            () -> authenticationService.changePassword("john.doe", passwordUpdateDto))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Old and new passwords must not be the same");
+
+    verify(userRepository, never()).changePassword("john.doe", "samePassword");
   }
 
   @Test

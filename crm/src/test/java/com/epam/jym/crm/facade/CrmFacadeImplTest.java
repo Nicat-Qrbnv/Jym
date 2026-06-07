@@ -22,6 +22,7 @@ import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
+import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
 import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.dto.user.UserProfileDto;
@@ -78,9 +79,11 @@ class CrmFacadeImplTest {
 
   @Test
   void changeLoginShouldDelegatePasswordChangeByCredentialUsername() {
-    crmFacade.changeLogin(CREDENTIALS, "new-password");
+    PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("old-password", "new-password");
 
-    verify(userService).changePassword("john.doe", "new-password");
+    crmFacade.changeLogin(CREDENTIALS, passwordUpdateDto);
+
+    verify(userService).changePassword("john.doe", passwordUpdateDto);
   }
 
   @Test

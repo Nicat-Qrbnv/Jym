@@ -19,6 +19,7 @@ import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
+import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
@@ -68,9 +69,9 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public void changeLogin(CredentialsDto credentials, String newPassword) {
+  public void changeLogin(CredentialsDto credentials, PasswordUpdateDto passwordUpdateDto) {
     log.debug("Facade request: change login username={}", credentials.username());
-    userService.changePassword(credentials.username(), newPassword);
+    userService.changePassword(credentials.username(), passwordUpdateDto);
     log.info("Facade completed: changed login username={}", credentials.username());
   }
 

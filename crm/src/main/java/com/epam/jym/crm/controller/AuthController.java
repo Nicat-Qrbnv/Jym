@@ -2,20 +2,21 @@ package com.epam.jym.crm.controller;
 
 import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
 
+import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -53,13 +54,13 @@ public class AuthController {
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Change password",
-      description = "Changes the password for the authenticated user.")
+      description = "Changes the password for the authenticated user using old and new passwords.")
   @ApiResponses(
       value = {
         @ApiResponse(responseCode = "200", description = "Password changed", content = @Content),
         @ApiResponse(
             responseCode = "400",
-            description = "New password is invalid",
+            description = "Password update request is invalid",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
         @ApiResponse(
             responseCode = "401",
@@ -68,7 +69,12 @@ public class AuthController {
       })
   public void changeLogin(
       @RequestHeader("Authorization") String userCredentials,
-      @Parameter(description = "New password", required = true) @NotBlank String newPassword) {
-    crmFacade.changeLogin(parse(userCredentials), newPassword);
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "Old and new password",
+              required = true)
+          @Valid
+          @RequestBody
+          PasswordUpdateDto passwordUpdateDto) {
+    crmFacade.changeLogin(parse(userCredentials), passwordUpdateDto);
   }
 }
