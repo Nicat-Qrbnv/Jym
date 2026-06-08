@@ -5,9 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "Password update request")
 public record PasswordUpdateDto(
-    @Schema(description = "Current password", example = "currentPassword123")
-        @NotBlank
+    @Schema(description = "Current password", example = "currentPassword123") @NotBlank
         String oldPassword,
-    @Schema(description = "New password", example = "newPassword123")
-        @NotBlank
+    @Schema(description = "New password", example = "newPassword123") @NotBlank
         String newPassword) {}

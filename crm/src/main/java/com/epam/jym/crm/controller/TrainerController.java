@@ -8,6 +8,7 @@ import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
+import com.epam.jym.crm.validation.annotation.Username;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,8 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -86,7 +85,7 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public TrainerProfileDto getProfile(
-      @Parameter(description = "Trainer username", required = true) @NotBlank @PathVariable
+      @Parameter(description = "Trainer username", required = true) @Username @PathVariable
           String username,
       @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getTrainerProfile(parse(userCredentials), username);
@@ -115,10 +114,7 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public UpdatedTrainerProfileDto updateProfile(
-      @Parameter(description = "Trainer username", required = true)
-          @PathVariable
-          @NotBlank
-          @Size(max = 310)
+      @Parameter(description = "Trainer username", required = true) @PathVariable @Username
           String username,
       @Valid @RequestBody TrainerUpdateDto request,
       @RequestHeader("Authorization") String userCredentials) {
@@ -148,12 +144,10 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public void updateStatus(
-      @Parameter(description = "Trainer username", required = true)
-          @PathVariable
-          @NotBlank
-          @Size(max = 310)
+      @Parameter(description = "Trainer username", required = true) @PathVariable @Username
           String username,
-      @Parameter(description = "Whether the trainer status should be changed", required = true) @RequestParam
+      @Parameter(description = "Whether the trainer status should be changed", required = true)
+          @RequestParam
           boolean isActive,
       @RequestHeader("Authorization") String userCredentials) {
     crmFacade.changeUserStatus(parse(userCredentials), username, isActive);

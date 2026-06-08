@@ -10,5 +10,4 @@ public record UpdatedTraineeProfileDto(
     UserProfileDto user,
     @Schema(example = "1995-04-12") LocalDate dateOfBirth,
     @Schema(example = "221B Baker Street") String address,
-    List<TrainerSummaryDto> trainers
-) {}
+    List<TrainerSummaryDto> trainers) {}

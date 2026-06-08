@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 public record UpdatedTrainerProfileDto(
-    UserProfileDto profile,
-    @Schema(example = "{\"id\":1,\"name\":\"Strength\"}") TrainingTypeDto specialization,
-    List<TraineeSummaryDto> trainees) {}
+    @Schema(description = "Updated trainer user profile") UserProfileDto profile,
+    @Schema(description = "Updated trainer specialization training type")
+        TrainingTypeDto specialization,
+    @Schema(description = "Trainees assigned to the trainer") List<TraineeSummaryDto> trainees) {}

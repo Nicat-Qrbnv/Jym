@@ -32,22 +32,22 @@ public class User {
 
   @NotBlank
   @Size(max = 150)
-  @Column(name = "first_name", nullable = false)
+  @Column(name = "first_name", length = 150, nullable = false)
   private String firstName;
 
   @NotBlank
   @Size(max = 150)
-  @Column(name = "last_name", nullable = false)
+  @Column(name = "last_name", length = 150, nullable = false)
   private String lastName;
 
   @NotBlank
   @Size(max = 310)
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false, length = 310, unique = true)
   private String username;
 
   @NotBlank
   @Size(max = 60)
-  @Column(nullable = false)
+  @Column(length = 60, nullable = false)
   private String password;
 
   @Column(name = "is_active", nullable = false)

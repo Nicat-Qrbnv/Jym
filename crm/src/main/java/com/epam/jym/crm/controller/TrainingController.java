@@ -8,6 +8,7 @@ import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.facade.CrmFacade;
+import com.epam.jym.crm.validation.annotation.Username;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -96,7 +97,7 @@ public class TrainingController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public List<TrainerTrainingDto> getTrainings(
-      @Parameter(description = "Trainer username", required = true) @NotBlank @PathVariable
+      @Parameter(description = "Trainer username", required = true) @Username @PathVariable
           String username,
       @Parameter(description = "Start date in ISO format, inclusive")
           @RequestParam(required = false)
@@ -144,7 +145,7 @@ public class TrainingController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public List<TraineeTrainingDto> getTrainings(
-      @Parameter(description = "Trainee username", required = true) @NotBlank @PathVariable
+      @Parameter(description = "Trainee username", required = true) @Username @PathVariable
           String username,
       @Parameter(description = "Start date in ISO format, inclusive")
           @RequestParam(required = false)
