@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
+import com.epam.jym.crm.dto.training.TrainingTypeDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.exception.GlobalExceptionHandler;
@@ -101,6 +102,10 @@ class TrainerControllerTest {
                         "firstName": "John",
                         "lastName": "Doe",
                         "isActive": true
+                      },
+                      "specialization": {
+                        "id": 1,
+                        "name": "Yoga"
                       }
                     }
                     """)
@@ -111,6 +116,6 @@ class TrainerControllerTest {
         .updateTrainerProfile(
             new CredentialsDto("admin", "password"),
             "john.doe",
-            new TrainerUpdateDto(new UserDto("John", "Doe", true), null));
+            new TrainerUpdateDto(new UserDto("John", "Doe", true), new TrainingTypeDto(1L, "Yoga")));
   }
 }
