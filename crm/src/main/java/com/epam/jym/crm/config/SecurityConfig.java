@@ -2,10 +2,12 @@ package com.epam.jym.crm.config;
 
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
+import com.epam.jym.crm.service.BruteForceProtectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,6 +23,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
   private final UserRepository userRepository;
+  private final BruteForceProtectionService bruteForceProtectionService;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -30,6 +33,8 @@ public class SecurityConfig {
                 requests
                     .requestMatchers(HttpMethod.POST, "/api/v1/trainees", "/api/v1/trainers")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/login")
+                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .httpBasic(Customizer.withDefaults())
@@ -38,11 +43,15 @@ public class SecurityConfig {
 
   @Bean
   public UserDetailsService userDetailsService() {
-    return username ->
-        userRepository
-            .findByUsername(username)
-            .map(this::toUserDetails)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    return username -> {
+      if (bruteForceProtectionService.isBlocked(username)) {
+        throw new LockedException("User is temporarily blocked");
+      }
+      return userRepository
+          .findByUsername(username)
+          .map(this::toUserDetails)
+          .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    };
   }
 
   @Bean
