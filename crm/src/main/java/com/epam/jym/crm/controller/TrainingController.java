@@ -8,6 +8,7 @@ import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.facade.CrmFacade;
+import com.epam.jym.crm.validation.annotation.Username;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -26,6 +27,7 @@ import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -67,7 +69,7 @@ public class TrainingController {
     crmFacade.createTraining(parse(userCredentials), trainingDto);
   }
 
-  @GetMapping("/trainer")
+  @GetMapping("/trainer/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Get trainer trainings",
@@ -95,7 +97,7 @@ public class TrainingController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public List<TrainerTrainingDto> getTrainings(
-      @Parameter(description = "Trainer username", required = true) @NotBlank @RequestParam
+      @Parameter(description = "Trainer username", required = true) @Username @PathVariable
           String username,
       @Parameter(description = "Start date in ISO format, inclusive")
           @RequestParam(required = false)
@@ -113,7 +115,7 @@ public class TrainingController {
     return crmFacade.getTrainerTrainings(parse(userCredentials), username, criteria);
   }
 
-  @GetMapping("/trainee")
+  @GetMapping("/trainee/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Get trainee trainings",
@@ -143,7 +145,7 @@ public class TrainingController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public List<TraineeTrainingDto> getTrainings(
-      @Parameter(description = "Trainee username", required = true) @NotBlank @RequestParam
+      @Parameter(description = "Trainee username", required = true) @Username @PathVariable
           String username,
       @Parameter(description = "Start date in ISO format, inclusive")
           @RequestParam(required = false)

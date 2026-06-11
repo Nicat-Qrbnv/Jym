@@ -16,6 +16,7 @@
   <packaging>pom</packaging>
 
   <properties>
+    <argLine/>
     <java.version>25</java.version>
   </properties>
 

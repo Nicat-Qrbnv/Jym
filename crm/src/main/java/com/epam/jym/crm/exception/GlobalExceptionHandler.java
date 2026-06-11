@@ -5,6 +5,7 @@ import static com.epam.jym.crm.aspect.logging.TransactionLoggingConstants.TRANSA
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -14,11 +15,13 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(ResourceNotFoundException.class)
   public ProblemDetail handleResourceNotFound(ResourceNotFoundException exception) {
+    log.warn("Resource not found: {}", exception.getMessage());
     return problem(HttpStatus.NOT_FOUND, exception.getMessage());
   }
 
@@ -30,11 +33,13 @@ public class GlobalExceptionHandler {
     MissingServletRequestParameterException.class
   })
   public ProblemDetail handleBadRequest(Exception exception) {
+    log.warn("Bad request: {}", exception.getMessage());
     return problem(HttpStatus.BAD_REQUEST, resolveBadRequestMessage(exception));
   }
 
   @ExceptionHandler({InvalidCredentialsException.class, MissingRequestHeaderException.class})
   public ProblemDetail handleUnauthorized(Exception exception) {
+    log.warn("Unauthorized: {}", exception.getMessage());
     return problem(HttpStatus.UNAUTHORIZED, exception.getMessage());
   }
 

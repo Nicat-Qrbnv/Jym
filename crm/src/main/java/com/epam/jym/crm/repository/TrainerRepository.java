@@ -30,6 +30,18 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
   @Query(
       """
+          SELECT specialization.name AS specializationType, COUNT(trainer) AS trainerCount
+          FROM Trainer trainer
+          JOIN trainer.user user
+          JOIN trainer.specialization specialization
+          WHERE user.isActive = true
+          GROUP BY specialization.name
+          ORDER BY specialization.name
+          """)
+  List<SpecializationTrainerCount> countActiveTrainersBySpecialization();
+
+  @Query(
+      """
           SELECT trainer
           FROM Trainer trainer
           JOIN FETCH trainer.user user

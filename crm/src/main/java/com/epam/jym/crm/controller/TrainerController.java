@@ -8,6 +8,7 @@ import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
+import com.epam.jym.crm.validation.annotation.Username;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,13 +17,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,7 +60,7 @@ public class TrainerController {
     return crmFacade.createTrainer(request);
   }
 
-  @GetMapping
+  @GetMapping("/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Get trainer profile",
@@ -85,13 +85,13 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public TrainerProfileDto getProfile(
-      @Parameter(description = "Trainer username", required = true) @NotBlank @RequestParam
+      @Parameter(description = "Trainer username", required = true) @Username @PathVariable
           String username,
       @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.getTrainerProfile(parse(userCredentials), username);
   }
 
-  @PutMapping
+  @PutMapping("/{username}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(summary = "Update trainer profile", description = "Updates trainer profile details.")
   @ApiResponses(
@@ -114,17 +114,14 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public UpdatedTrainerProfileDto updateProfile(
-      @Parameter(description = "Trainer username", required = true)
-          @RequestParam
-          @NotBlank
-          @Size(max = 310)
+      @Parameter(description = "Trainer username", required = true) @PathVariable @Username
           String username,
       @Valid @RequestBody TrainerUpdateDto request,
       @RequestHeader("Authorization") String userCredentials) {
     return crmFacade.updateTrainerProfile(parse(userCredentials), username, request);
   }
 
-  @PatchMapping("/change-status")
+  @PatchMapping("/{username}/change-status")
   @ResponseStatus(HttpStatus.OK)
   @Operation(summary = "Change trainer status", description = "Updates the trainer active status.")
   @ApiResponses(
@@ -147,12 +144,10 @@ public class TrainerController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public void updateStatus(
-      @Parameter(description = "Trainer username", required = true)
-          @RequestParam
-          @NotBlank
-          @Size(max = 310)
+      @Parameter(description = "Trainer username", required = true) @PathVariable @Username
           String username,
-      @Parameter(description = "Whether the trainer status should be changed", required = true) @RequestParam
+      @Parameter(description = "Whether the trainer status should be changed", required = true)
+          @RequestParam
           boolean isActive,
       @RequestHeader("Authorization") String userCredentials) {
     crmFacade.changeUserStatus(parse(userCredentials), username, isActive);

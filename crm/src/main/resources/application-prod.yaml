@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: ${DB_URL}
+
+logging:
+  level:
+    root: INFO
+    com.epam.jym.crm: INFO
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      group:
+        crm:
+          show-details: never
+          show-components: never

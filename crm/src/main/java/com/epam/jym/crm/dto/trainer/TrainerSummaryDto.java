@@ -5,6 +5,5 @@ import com.epam.jym.crm.dto.user.UserProfileDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record TrainerSummaryDto(
-    @Schema(example = "{\"username\":\"jane.smith\",\"firstName\":\"Jane\",\"lastName\":\"Smith\"}")
-        UserProfileDto profile,
-    @Schema(example = "{\"id\":1,\"name\":\"Strength\"}") TrainingTypeDto specialization) {}
+    @Schema(description = "Basic trainer user profile") UserProfileDto profile,
+    @Schema(description = "Trainer specialization training type") TrainingTypeDto specialization) {}

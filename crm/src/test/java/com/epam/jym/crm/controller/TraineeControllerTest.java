@@ -42,9 +42,7 @@ class TraineeControllerTest {
   void deleteProfileShouldDeleteTraineeByUsernameAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            delete("/api/v1/trainees")
-                .param("username", "john.doe")
-                .header("Authorization", "admin:password"))
+            delete("/api/v1/trainees/john.doe").header("Authorization", "admin:password"))
         .andExpect(status().isOk());
 
     verify(crmFacade).deleteTrainee(new CredentialsDto("admin", "password"), "john.doe");
@@ -54,8 +52,7 @@ class TraineeControllerTest {
   void getNotAssignedActiveTrainersShouldReturnOk() throws Exception {
     mockMvc
         .perform(
-            get("/api/v1/trainees/not-assigned-trainers")
-                .param("username", "john.doe")
+            get("/api/v1/trainees/john.doe/not-assigned-trainers")
                 .header("Authorization", "admin:password"))
         .andExpect(status().isOk());
 
@@ -71,8 +68,7 @@ class TraineeControllerTest {
 
     mockMvc
         .perform(
-            get("/api/v1/trainees/not-assigned-trainers")
-                .param("username", "john.doe")
+            get("/api/v1/trainees/john.doe/not-assigned-trainers")
                 .header("Authorization", "admin:wrong"))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.detail").value("Invalid username or password"));
@@ -82,8 +78,7 @@ class TraineeControllerTest {
   void updateProfileShouldUpdateTraineeProfileAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            put("/api/v1/trainees")
-                .param("username", "john.doe")
+            put("/api/v1/trainees/john.doe")
                 .header("Authorization", "admin:password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
@@ -112,8 +107,7 @@ class TraineeControllerTest {
   void updateStatusShouldUpdateTraineeStatusAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            patch("/api/v1/trainees/change-status")
-                .param("username", "john.doe")
+            patch("/api/v1/trainees/john.doe/change-status")
                 .param("isActive", "false")
                 .header("Authorization", "admin:password"))
         .andExpect(status().isOk());
@@ -125,8 +119,7 @@ class TraineeControllerTest {
   void updateStatusShouldReturnBadRequestWhenIsActiveIsMissing() throws Exception {
     mockMvc
         .perform(
-            patch("/api/v1/trainees/change-status")
-                .param("username", "john.doe")
+            patch("/api/v1/trainees/john.doe/change-status")
                 .header("Authorization", "admin:password"))
         .andExpect(status().isBadRequest());
   }
@@ -135,8 +128,7 @@ class TraineeControllerTest {
   void updateTrainersShouldUpdateTraineeTrainerListAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            put("/api/v1/trainees/trainers")
-                .param("traineeUsername", "john.doe")
+            put("/api/v1/trainees/john.doe/trainers")
                 .header("Authorization", "admin:password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
