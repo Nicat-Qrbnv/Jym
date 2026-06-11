@@ -15,3 +15,5 @@ databaseChangeLog:
       file: db/changelog/changes/seed/001-seed-data.sql
   - include:
       file: db/changelog/changes/seed/002-seed-trainee-trainers.sql
+  - include:
+      file: db/changelog/changes/seed/003-hash-seeded-user-passwords.sql

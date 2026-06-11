@@ -7,6 +7,7 @@ import com.epam.jym.crm.repository.UserRepository;
 import com.epam.jym.crm.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -16,6 +17,7 @@ import org.springframework.util.StringUtils;
 public class AuthenticationServiceImpl implements AuthenticationService {
 
   private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   public void authenticate(CredentialsDto credentials) {
@@ -30,7 +32,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             .findByUsername(credentials.username())
             .orElseThrow(() -> failAuthentication(credentials.username()));
 
-    boolean passwordMatches = credentials.password().equals(foundUser.getPassword());
+    boolean passwordMatches =
+        passwordEncoder.matches(credentials.password(), foundUser.getPassword());
 
     if (!passwordMatches || !foundUser.isActive()) {
       throw failAuthentication(credentials.username());

@@ -21,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +30,7 @@ class UserServiceImplTest {
   private static final int PASSWORD_LENGTH = 10;
 
   @Mock private UserRepository userRepository;
+  @Mock private PasswordEncoder passwordEncoder;
 
   @InjectMocks private UserServiceImpl authenticationService;
 
@@ -42,6 +44,7 @@ class UserServiceImplTest {
     UserCreateDto profile = new UserCreateDto("John", "Doe");
 
     when(userRepository.findNumberOfUsersWithSameName("^john\\.doe[0-9]*$")).thenReturn(0L);
+    when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
 
     when(userRepository.save(any(User.class)))
         .thenAnswer(
@@ -57,7 +60,8 @@ class UserServiceImplTest {
     Assertions.assertThat(registeredUser.getFirstName()).isEqualTo("John");
     Assertions.assertThat(registeredUser.getLastName()).isEqualTo("Doe");
     Assertions.assertThat(registeredUser.getUsername()).isEqualTo("john.doe");
-    Assertions.assertThat(registeredUser.getPassword()).hasSize(PASSWORD_LENGTH);
+    Assertions.assertThat(registeredUser.getPassword()).isEqualTo("encodedPassword");
+    Assertions.assertThat(registeredUser.getGeneratedPassword()).hasSize(PASSWORD_LENGTH);
 
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
     verify(userRepository).save(userCaptor.capture());
@@ -65,7 +69,8 @@ class UserServiceImplTest {
     Assertions.assertThat(savedUser.getFirstName()).isEqualTo("John");
     Assertions.assertThat(savedUser.getLastName()).isEqualTo("Doe");
     Assertions.assertThat(savedUser.getUsername()).isEqualTo("john.doe");
-    Assertions.assertThat(savedUser.getPassword()).hasSize(PASSWORD_LENGTH);
+    Assertions.assertThat(savedUser.getPassword()).isEqualTo("encodedPassword");
+    Assertions.assertThat(savedUser.getGeneratedPassword()).hasSize(PASSWORD_LENGTH);
     Assertions.assertThat(savedUser.isActive()).isTrue();
   }
 
@@ -74,12 +79,14 @@ class UserServiceImplTest {
     UserCreateDto profile = new UserCreateDto("John", "Doe");
 
     when(userRepository.findNumberOfUsersWithSameName("^john\\.doe[0-9]*$")).thenReturn(2L);
+    when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
     when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     User registeredUser = authenticationService.register(profile);
 
     Assertions.assertThat(registeredUser.getUsername()).isEqualTo("john.doe2");
-    Assertions.assertThat(registeredUser.getPassword()).hasSize(PASSWORD_LENGTH);
+    Assertions.assertThat(registeredUser.getPassword()).isEqualTo("encodedPassword");
+    Assertions.assertThat(registeredUser.getGeneratedPassword()).hasSize(PASSWORD_LENGTH);
     verify(userRepository).save(any(User.class));
   }
 
@@ -117,17 +124,19 @@ class UserServiceImplTest {
   @Test
   void changePasswordShouldDelegateToRepository() {
     PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("oldPassword", "newPassword");
-    when(userRepository.changePassword("john.doe", "newPassword")).thenReturn(1);
+    when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+    when(userRepository.changePassword("john.doe", "encodedNewPassword")).thenReturn(1);
 
     authenticationService.changePassword("john.doe", passwordUpdateDto);
 
-    verify(userRepository).changePassword("john.doe", "newPassword");
+    verify(userRepository).changePassword("john.doe", "encodedNewPassword");
   }
 
   @Test
   void changePasswordShouldThrowExceptionWhenUserDoesNotExist() {
     PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("oldPassword", "newPassword");
-    when(userRepository.changePassword("missing", "newPassword")).thenReturn(0);
+    when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
+    when(userRepository.changePassword("missing", "encodedNewPassword")).thenReturn(0);
 
     Assertions.assertThatThrownBy(
             () -> authenticationService.changePassword("missing", passwordUpdateDto))

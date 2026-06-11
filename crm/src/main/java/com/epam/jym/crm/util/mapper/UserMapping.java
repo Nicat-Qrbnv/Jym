@@ -27,7 +27,7 @@ public class UserMapping {
 
       @Override
       public CredentialsDto map(User source, MappingContext context) {
-        return new CredentialsDto(source.getUsername(), source.getPassword());
+        return new CredentialsDto(source.getUsername(), source.getGeneratedPassword());
       }
     };
   }

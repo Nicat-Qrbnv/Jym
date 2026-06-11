@@ -14,21 +14,25 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceImplTest {
 
   @Mock private UserRepository userRepository;
+  @Mock private PasswordEncoder passwordEncoder;
 
   @InjectMocks private AuthenticationServiceImpl authenticationService;
 
   @Test
   void authenticateShouldSucceedWhenCredentialsAreValid() {
-    CredentialsDto credentials = new CredentialsDto("john.doe", "password");
     User profile = createUser(true);
     profile.setId(10L);
 
     when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(profile));
+    when(passwordEncoder.matches("password", "encodedPassword")).thenReturn(true);
+
+    CredentialsDto credentials = new CredentialsDto("john.doe", "password");
 
     Assertions.assertThatCode(() -> authenticationService.authenticate(credentials))
         .doesNotThrowAnyException();
@@ -73,6 +77,7 @@ class AuthenticationServiceImplTest {
     User profile = createUser(true);
 
     when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(profile));
+    when(passwordEncoder.matches("passwrod", "encodedPassword")).thenReturn(false);
 
     assertBadCredentials(credentials);
   }
@@ -96,7 +101,7 @@ class AuthenticationServiceImplTest {
   private User createUser(boolean active) {
     User profile = new User();
     profile.setUsername("john.doe");
-    profile.setPassword("password");
+    profile.setPassword("encodedPassword");
     profile.setActive(active);
     return profile;
   }

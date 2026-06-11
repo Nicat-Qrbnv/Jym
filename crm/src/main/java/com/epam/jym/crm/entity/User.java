@@ -50,6 +50,9 @@ public class User {
   @Column(length = 60, nullable = false)
   private String password;
 
+  @Transient
+  private String generatedPassword;
+
   @Column(name = "is_active", nullable = false)
   private boolean isActive;
 
