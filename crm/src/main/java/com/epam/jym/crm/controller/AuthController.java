@@ -1,9 +1,10 @@
 package com.epam.jym.crm.controller;
 
-import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
-
+import com.epam.jym.crm.dto.user.AuthTokenDto;
+import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.facade.CrmFacade;
+import com.epam.jym.crm.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,10 +15,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,25 +30,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final CrmFacade crmFacade;
+  private final JwtService jwtService;
 
-  @GetMapping("/login")
+  @PostMapping("/login")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
       summary = "Log in",
-      description = "Validates user credentials from the Authorization header.")
+      description = "Validates user credentials and returns a JWT token.")
   @ApiResponses(
       value = {
         @ApiResponse(
             responseCode = "200",
             description = "Credentials are valid",
-            content = @Content),
+            content = @Content(schema = @Schema(implementation = AuthTokenDto.class))),
         @ApiResponse(
             responseCode = "401",
             description = "Credentials are missing or invalid",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public void login(@RequestHeader("Authorization") String userCredentials) {
-    crmFacade.login(parse(userCredentials));
+  public AuthTokenDto login(@Valid @RequestBody CredentialsDto credentials) {
+    crmFacade.login(credentials);
+    return new AuthTokenDto(
+        jwtService.generateToken(credentials.username()), jwtService.expirationSeconds());
   }
 
   @PutMapping("/change-password")
@@ -68,13 +72,13 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public void changeLogin(
-      @RequestHeader("Authorization") String userCredentials,
+      Authentication authentication,
       @io.swagger.v3.oas.annotations.parameters.RequestBody(
               description = "Old and new password",
               required = true)
           @Valid
           @RequestBody
           PasswordUpdateDto passwordUpdateDto) {
-    crmFacade.changeLogin(parse(userCredentials), passwordUpdateDto);
+    crmFacade.changeLogin(new CredentialsDto(authentication.getName(), ""), passwordUpdateDto);
   }
 }

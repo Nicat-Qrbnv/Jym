@@ -1,13 +1,11 @@
 package com.epam.jym.crm.controller;
 
-import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
-
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.dto.trainee.UpdatedTraineeProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerSummaryDto;
-import com.epam.jym.crm.dto.user.CredentialsDto;
+import com.epam.jym.crm.dto.user.CreatedCredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import com.epam.jym.crm.validation.annotation.Username;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +31,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -57,13 +54,13 @@ public class TraineeController {
         @ApiResponse(
             responseCode = "200",
             description = "Trainee registered",
-            content = @Content(schema = @Schema(implementation = CredentialsDto.class))),
+            content = @Content(schema = @Schema(implementation = CreatedCredentialsDto.class))),
         @ApiResponse(
             responseCode = "400",
             description = "Request body is invalid",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public CredentialsDto register(@Valid @RequestBody TraineeCreateDto request) {
+  public CreatedCredentialsDto register(@Valid @RequestBody TraineeCreateDto request) {
     return crmFacade.createTrainee(request);
   }
 
@@ -93,9 +90,8 @@ public class TraineeController {
       })
   public TraineeProfileDto getProfile(
       @Parameter(description = "Trainee username", required = true) @Username @PathVariable
-          String username,
-      @RequestHeader("Authorization") String userCredentials) {
-    return crmFacade.getTraineeProfile(parse(userCredentials), username);
+          String username) {
+    return crmFacade.getTraineeProfile(username);
   }
 
   @GetMapping("/{username}/not-assigned-trainers")
@@ -127,9 +123,8 @@ public class TraineeController {
       })
   public List<TrainerSummaryDto> getNotAssignedActiveTrainers(
       @Parameter(description = "Trainee username", required = true) @Username @PathVariable
-          String username,
-      @RequestHeader("Authorization") String userCredentials) {
-    return crmFacade.getNotAssignedActiveTrainers(parse(userCredentials), username);
+          String username) {
+    return crmFacade.getNotAssignedActiveTrainers(username);
   }
 
   @PutMapping("/{username}")
@@ -157,9 +152,8 @@ public class TraineeController {
   public UpdatedTraineeProfileDto updateProfile(
       @Parameter(description = "Trainee username", required = true) @PathVariable @Username
           String username,
-      @Valid @RequestBody TraineeUpdateDto request,
-      @RequestHeader("Authorization") String userCredentials) {
-    return crmFacade.updateTraineeProfile(parse(userCredentials), username, request);
+      @Valid @RequestBody TraineeUpdateDto request) {
+    return crmFacade.updateTraineeProfile(username, request);
   }
 
   @PatchMapping("/{username}/change-status")
@@ -189,9 +183,8 @@ public class TraineeController {
           String username,
       @Parameter(description = "Whether the trainee status should be changed", required = true)
           @RequestParam
-          boolean isActive,
-      @RequestHeader("Authorization") String userCredentials) {
-    crmFacade.changeUserStatus(parse(userCredentials), username, isActive);
+          boolean isActive) {
+    crmFacade.changeUserStatus(username, isActive);
   }
 
   @PutMapping("/{traineeUsername}/trainers")
@@ -224,10 +217,8 @@ public class TraineeController {
   public List<TrainerSummaryDto> updateTrainers(
       @Parameter(description = "Trainee username", required = true) @PathVariable @Username
           String traineeUsername,
-      @RequestBody @NotNull List<@NotBlank @Size(max = 310) String> trainerUsernames,
-      @RequestHeader("Authorization") String userCredentials) {
-    return crmFacade.updateTraineeTrainers(
-        parse(userCredentials), traineeUsername, trainerUsernames);
+      @RequestBody @NotNull List<@NotBlank @Size(max = 310) String> trainerUsernames) {
+    return crmFacade.updateTraineeTrainers(traineeUsername, trainerUsernames);
   }
 
   @DeleteMapping("/{username}")
@@ -253,8 +244,7 @@ public class TraineeController {
       })
   public void deleteProfile(
       @Parameter(description = "Trainee username", required = true) @Username @PathVariable
-          String username,
-      @RequestHeader("Authorization") String userCredentials) {
-    crmFacade.deleteTrainee(parse(userCredentials), username);
+          String username) {
+    crmFacade.deleteTrainee(username);
   }
 }

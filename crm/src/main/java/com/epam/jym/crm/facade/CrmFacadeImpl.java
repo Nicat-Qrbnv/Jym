@@ -1,7 +1,5 @@
 package com.epam.jym.crm.facade;
 
-import com.epam.jym.crm.aspect.auth.Authenticated;
-import com.epam.jym.crm.aspect.auth.SkipAuthentication;
 import com.epam.jym.crm.aspect.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
@@ -18,12 +16,15 @@ import com.epam.jym.crm.dto.training.TrainerTrainingDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
+import com.epam.jym.crm.dto.user.CreatedCredentialsDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
+import com.epam.jym.crm.service.AuthenticationService;
+import com.epam.jym.crm.service.JwtService;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
@@ -39,32 +40,33 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 @Slf4j
-@Authenticated
 @LogOperation("CrmFacade")
 public class CrmFacadeImpl implements CrmFacade {
 
   private final TraineeService traineeService;
   private final TrainerService trainerService;
+  private final AuthenticationService authenticationService;
+  private final JwtService jwtService;
   private final TrainingService trainingService;
   private final TrainingTypeService trainingTypeService;
   private final UserService userService;
   private final CrmMapper crmMapper;
 
   @Override
-  @SkipAuthentication
-  public CredentialsDto createTrainee(TraineeCreateDto traineeDto) {
+  public CreatedCredentialsDto createTrainee(TraineeCreateDto traineeDto) {
     log.debug("Facade request: create trainee");
     Trainee trainee = traineeService.createTrainee(traineeDto);
     log.info(
         "Facade completed: created trainee with id={} username={}",
         trainee.getId(),
         trainee.getUsername());
-    return crmMapper.map(trainee.getUser(), CredentialsDto.class);
+    return toCreatedCredentials(crmMapper.map(trainee.getUser(), CredentialsDto.class));
   }
 
   @Override
   public void login(CredentialsDto credentials) {
     log.debug("Facade request: login username={}", credentials.username());
+    authenticationService.authenticate(credentials);
     log.info("Facade completed: login username={}", credentials.username());
   }
 
@@ -77,7 +79,7 @@ public class CrmFacadeImpl implements CrmFacade {
 
   @Override
   public UpdatedTraineeProfileDto updateTraineeProfile(
-      CredentialsDto credentials, String username, TraineeUpdateDto traineeDto) {
+      String username, TraineeUpdateDto traineeDto) {
     log.debug("Facade request: update trainee profile with username={}", username);
     Trainee trainee = traineeService.updateTraineeProfile(username, traineeDto);
     log.info(
@@ -88,21 +90,21 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public void changeUserStatus(CredentialsDto credentials, String username, boolean isActive) {
+  public void changeUserStatus(String username, boolean isActive) {
     log.debug("Facade request: update user status with username={}", username);
     userService.changeUserStatus(username, isActive);
     log.info("Facade completed: updated user status with username={}", username);
   }
 
   @Override
-  public void deleteTrainee(CredentialsDto credentials, String username) {
+  public void deleteTrainee(String username) {
     log.debug("Facade request: delete trainee with username={}", username);
     traineeService.deleteTrainee(username);
     log.info("Facade completed: deleted trainee with username={}", username);
   }
 
   @Override
-  public TraineeProfileDto getTraineeProfile(CredentialsDto credentials, String username) {
+  public TraineeProfileDto getTraineeProfile(String username) {
     log.debug("Facade request: get trainee profile by username={}", username);
     Trainee trainee = traineeService.getTraineeByUsername(username);
     log.debug("Facade completed: selected trainee profile by username={}", username);
@@ -111,7 +113,7 @@ public class CrmFacadeImpl implements CrmFacade {
 
   @Override
   public List<TrainerSummaryDto> updateTraineeTrainers(
-      CredentialsDto credentials, String traineeUsername, List<String> trainerUsernames) {
+      String traineeUsername, List<String> trainerUsernames) {
     log.debug("Facade request: update trainee trainers with trainee username={}", traineeUsername);
     Set<Trainer> trainers = traineeService.updateTraineeTrainers(traineeUsername, trainerUsernames);
     log.info(
@@ -122,20 +124,19 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  @SkipAuthentication
-  public CredentialsDto createTrainer(TrainerCreateDto trainerDto) {
+  public CreatedCredentialsDto createTrainer(TrainerCreateDto trainerDto) {
     log.debug("Facade request: create trainer");
     Trainer trainer = trainerService.createTrainer(trainerDto);
     log.info(
         "Facade completed: created trainer with id={} username={}",
         trainer.getId(),
         trainer.getUsername());
-    return crmMapper.map(trainer.getUser(), CredentialsDto.class);
+    return toCreatedCredentials(crmMapper.map(trainer.getUser(), CredentialsDto.class));
   }
 
   @Override
   public UpdatedTrainerProfileDto updateTrainerProfile(
-      CredentialsDto credentials, String username, TrainerUpdateDto trainerDto) {
+      String username, TrainerUpdateDto trainerDto) {
     log.debug("Facade request: update trainer profile with username={}", username);
     Trainer trainer = trainerService.updateTrainerProfile(username, trainerDto);
     log.info(
@@ -146,7 +147,7 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public TrainerProfileDto getTrainerProfile(CredentialsDto credentials, String username) {
+  public TrainerProfileDto getTrainerProfile(String username) {
     log.debug("Facade request: get trainer profile by username={}", username);
     Trainer trainer = trainerService.getTrainerByUsername(username);
     log.debug("Facade completed: selected trainer profile by username={}", username);
@@ -154,8 +155,7 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public List<TrainerSummaryDto> getNotAssignedActiveTrainers(
-      CredentialsDto credentials, String traineeUsername) {
+  public List<TrainerSummaryDto> getNotAssignedActiveTrainers(String traineeUsername) {
     log.debug(
         "Facade request: get not assigned active trainers for trainee username={}",
         traineeUsername);
@@ -169,7 +169,7 @@ public class CrmFacadeImpl implements CrmFacade {
 
   @Override
   public List<TraineeTrainingDto> getTraineeTrainings(
-      CredentialsDto credentials, String traineeUsername, TraineeTrainingsCriteriaDto criteria) {
+      String traineeUsername, TraineeTrainingsCriteriaDto criteria) {
     log.debug("Facade request: select trainings for trainee username={}", traineeUsername);
     List<Training> trainings = trainingService.getTraineeTrainings(traineeUsername, criteria);
     log.debug(
@@ -181,7 +181,7 @@ public class CrmFacadeImpl implements CrmFacade {
 
   @Override
   public List<TrainerTrainingDto> getTrainerTrainings(
-      CredentialsDto credentials, String trainerUsername, TrainerTrainingsCriteriaDto criteria) {
+      String trainerUsername, TrainerTrainingsCriteriaDto criteria) {
     log.debug("Facade request: select trainings for trainer username={}", trainerUsername);
     List<Training> trainings = trainingService.getTrainerTrainings(trainerUsername, criteria);
     log.debug(
@@ -192,7 +192,6 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  @SkipAuthentication
   public List<TrainingTypeDto> getTrainingTypes() {
     log.debug("Facade request: select all training types");
     List<TrainingType> trainingTypes = trainingTypeService.getAllTypes();
@@ -201,12 +200,19 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public void createTraining(CredentialsDto credentials, TrainingCreateDto trainingDto) {
+  public void createTraining(TrainingCreateDto trainingDto) {
     log.debug("Facade request: create training");
     Training training = trainingService.createTraining(trainingDto);
     log.info(
         "Facade completed: created training with id={} trainee username={}",
         training.getId(),
         training.getTrainee().getUsername());
+  }
+
+  private CreatedCredentialsDto toCreatedCredentials(CredentialsDto credentials) {
+    return new CreatedCredentialsDto(
+        credentials,
+        new com.epam.jym.crm.dto.user.AuthTokenDto(
+            jwtService.generateToken(credentials.username()), jwtService.expirationSeconds()));
   }
 }

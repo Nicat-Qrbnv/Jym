@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
-import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.exception.GlobalExceptionHandler;
 import com.epam.jym.crm.facade.CrmFacade;
 import java.time.LocalDate;
@@ -37,13 +36,11 @@ class TrainingControllerTest {
             get("/api/v1/trainings/trainer/jane.doe")
                 .param("periodFrom", "2026-05-01")
                 .param("periodTo", "2026-05-31")
-                .param("traineeName", "John Doe")
-                .header("Authorization", "admin:password"))
+                .param("traineeName", "John Doe"))
         .andExpect(status().isOk());
 
     verify(crmFacade)
         .getTrainerTrainings(
-            new CredentialsDto("admin", "password"),
             "jane.doe",
             new TrainerTrainingsCriteriaDto(
                 LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 31), "John Doe"));
@@ -57,13 +54,11 @@ class TrainingControllerTest {
                 .param("periodFrom", "2026-05-01")
                 .param("periodTo", "2026-05-31")
                 .param("trainerName", "Jane Doe")
-                .param("trainingType", "Fitness")
-                .header("Authorization", "admin:password"))
+                .param("trainingType", "Fitness"))
         .andExpect(status().isOk());
 
     verify(crmFacade)
         .getTraineeTrainings(
-            new CredentialsDto("admin", "password"),
             "john.doe",
             new TraineeTrainingsCriteriaDto(
                 LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 31), "Jane Doe", "Fitness"));

@@ -21,6 +21,7 @@ import com.epam.jym.crm.dto.training.TrainerTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainingCreateDto;
 import com.epam.jym.crm.dto.training.TrainingDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
+import com.epam.jym.crm.dto.user.CreatedCredentialsDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.dto.user.UserCreateDto;
@@ -31,6 +32,8 @@ import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
+import com.epam.jym.crm.service.AuthenticationService;
+import com.epam.jym.crm.service.JwtService;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
@@ -56,13 +59,15 @@ class CrmFacadeImplTest {
   @Mock private TrainerService trainerService;
   @Mock private TrainingService trainingService;
   @Mock private TrainingTypeService trainingTypeService;
+  @Mock private AuthenticationService authenticationService;
+  @Mock private JwtService jwtService;
   @Mock private UserService userService;
   @Mock private CrmMapper crmMapper;
 
   @InjectMocks private CrmFacadeImpl crmFacade;
 
   @Test
-  void createTraineeShouldReturnCredentialsFromCreatedUser() {
+  void createTraineeShouldReturnPreparedCredentialsFromCreatedUser() {
     TraineeCreateDto createDto =
         new TraineeCreateDto(new UserCreateDto("John", "Doe"), LocalDate.of(1990, 1, 1), null);
     User user = createUser("john.doe", "generated-password", "John");
@@ -70,10 +75,14 @@ class CrmFacadeImplTest {
 
     when(traineeService.createTrainee(createDto)).thenReturn(trainee);
     when(crmMapper.map(user, CredentialsDto.class)).thenReturn(CREDENTIALS);
+    when(jwtService.generateToken("john.doe")).thenReturn("token");
+    when(jwtService.expirationSeconds()).thenReturn(3600L);
 
-    CredentialsDto result = crmFacade.createTrainee(createDto);
+    CreatedCredentialsDto result = crmFacade.createTrainee(createDto);
 
-    assertThat(result).isSameAs(CREDENTIALS);
+    assertThat(result.credentials()).isSameAs(CREDENTIALS);
+    assertThat(result.tokenDetails().token()).isEqualTo("token");
+    assertThat(result.tokenDetails().expiresIn()).isEqualTo(3600L);
     verify(crmMapper).map(user, CredentialsDto.class);
   }
 
@@ -87,9 +96,10 @@ class CrmFacadeImplTest {
   }
 
   @Test
-  void loginShouldNotDelegateToServices() {
+  void loginShouldDelegateToAuthenticationServiceOnly() {
     crmFacade.login(CREDENTIALS);
 
+    verify(authenticationService).authenticate(CREDENTIALS);
     verifyNoInteractions(
         traineeService,
         trainerService,
@@ -113,21 +123,21 @@ class CrmFacadeImplTest {
     when(crmMapper.map(trainee, UpdatedTraineeProfileDto.class)).thenReturn(profileDto);
 
     UpdatedTraineeProfileDto result =
-        crmFacade.updateTraineeProfile(CREDENTIALS, "john.doe", updateDto);
+        crmFacade.updateTraineeProfile("john.doe", updateDto);
 
     assertThat(result).isSameAs(profileDto);
   }
 
   @Test
   void changeUserStatusShouldDelegateByUsername() {
-    crmFacade.changeUserStatus(CREDENTIALS, "john.doe", false);
+    crmFacade.changeUserStatus("john.doe", false);
 
     verify(userService).changeUserStatus("john.doe", false);
   }
 
   @Test
   void deleteTraineeShouldDelegateByUsername() {
-    crmFacade.deleteTrainee(CREDENTIALS, "john.doe");
+    crmFacade.deleteTrainee("john.doe");
 
     verify(traineeService).deleteTrainee("john.doe");
   }
@@ -141,7 +151,7 @@ class CrmFacadeImplTest {
     when(traineeService.getTraineeByUsername("john.doe")).thenReturn(trainee);
     when(crmMapper.map(trainee, TraineeProfileDto.class)).thenReturn(profileDto);
 
-    TraineeProfileDto result = crmFacade.getTraineeProfile(CREDENTIALS, "john.doe");
+    TraineeProfileDto result = crmFacade.getTraineeProfile("john.doe");
 
     assertThat(result).isSameAs(profileDto);
   }
@@ -160,13 +170,13 @@ class CrmFacadeImplTest {
         .thenReturn(Stream.of(firstDto, secondDto));
 
     List<TrainerSummaryDto> result =
-        crmFacade.updateTraineeTrainers(CREDENTIALS, "john.doe", trainerUsernames);
+        crmFacade.updateTraineeTrainers("john.doe", trainerUsernames);
 
     assertThat(result).containsExactly(firstDto, secondDto);
   }
 
   @Test
-  void createTrainerShouldReturnCredentialsFromCreatedUser() {
+  void createTrainerShouldReturnPreparedCredentialsFromCreatedUser() {
     TrainingTypeDto specialization = new TrainingTypeDto(1L, "Fitness");
     TrainerCreateDto createDto =
         new TrainerCreateDto(new UserCreateDto("Jane", "Doe"), specialization);
@@ -175,10 +185,14 @@ class CrmFacadeImplTest {
 
     when(trainerService.createTrainer(createDto)).thenReturn(trainer);
     when(crmMapper.map(user, CredentialsDto.class)).thenReturn(CREDENTIALS);
+    when(jwtService.generateToken("john.doe")).thenReturn("token");
+    when(jwtService.expirationSeconds()).thenReturn(3600L);
 
-    CredentialsDto result = crmFacade.createTrainer(createDto);
+    CreatedCredentialsDto result = crmFacade.createTrainer(createDto);
 
-    assertThat(result).isSameAs(CREDENTIALS);
+    assertThat(result.credentials()).isSameAs(CREDENTIALS);
+    assertThat(result.tokenDetails().token()).isEqualTo("token");
+    assertThat(result.tokenDetails().expiresIn()).isEqualTo(3600L);
     verify(crmMapper).map(user, CredentialsDto.class);
   }
 
@@ -196,7 +210,7 @@ class CrmFacadeImplTest {
     when(crmMapper.map(trainer, UpdatedTrainerProfileDto.class)).thenReturn(profileDto);
 
     UpdatedTrainerProfileDto result =
-        crmFacade.updateTrainerProfile(CREDENTIALS, "jane.doe", updateDto);
+        crmFacade.updateTrainerProfile("jane.doe", updateDto);
 
     assertThat(result).isSameAs(profileDto);
   }
@@ -211,7 +225,7 @@ class CrmFacadeImplTest {
     when(trainerService.getTrainerByUsername("jane.doe")).thenReturn(trainer);
     when(crmMapper.map(trainer, TrainerProfileDto.class)).thenReturn(profileDto);
 
-    TrainerProfileDto result = crmFacade.getTrainerProfile(CREDENTIALS, "jane.doe");
+    TrainerProfileDto result = crmFacade.getTrainerProfile("jane.doe");
 
     assertThat(result).isSameAs(profileDto);
   }
@@ -229,7 +243,7 @@ class CrmFacadeImplTest {
         .thenReturn(Stream.of(firstDto, secondDto));
 
     List<TrainerSummaryDto> result =
-        crmFacade.getNotAssignedActiveTrainers(CREDENTIALS, "john.doe");
+        crmFacade.getNotAssignedActiveTrainers("john.doe");
 
     assertThat(result).containsExactly(firstDto, secondDto);
   }
@@ -250,7 +264,7 @@ class CrmFacadeImplTest {
         .thenReturn(Stream.of(traineeTrainingDto));
 
     List<TraineeTrainingDto> result =
-        crmFacade.getTraineeTrainings(CREDENTIALS, "john.doe", criteria);
+        crmFacade.getTraineeTrainings("john.doe", criteria);
 
     assertThat(result).containsExactly(traineeTrainingDto);
     verify(crmMapper).mapCollection(List.of(training), TraineeTrainingDto.class);
@@ -271,7 +285,7 @@ class CrmFacadeImplTest {
         .thenReturn(Stream.of(trainerTrainingDto));
 
     List<TrainerTrainingDto> result =
-        crmFacade.getTrainerTrainings(CREDENTIALS, "jane.doe", criteria);
+        crmFacade.getTrainerTrainings("jane.doe", criteria);
 
     assertThat(result).containsExactly(trainerTrainingDto);
     verify(crmMapper).mapCollection(List.of(training), TrainerTrainingDto.class);
@@ -304,7 +318,7 @@ class CrmFacadeImplTest {
 
     when(trainingService.createTraining(createDto)).thenReturn(training);
 
-    crmFacade.createTraining(CREDENTIALS, createDto);
+    crmFacade.createTraining(createDto);
 
     verify(trainingService).createTraining(createDto);
   }
