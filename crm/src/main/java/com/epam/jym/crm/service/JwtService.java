@@ -6,7 +6,9 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class JwtService {
 
   private final JwtProperties jwtProperties;
+  private final Map<String, Instant> revokedTokens = new ConcurrentHashMap<>();
 
   public String generateToken(String username) {
     Instant now = Instant.now();
@@ -34,9 +37,15 @@ public class JwtService {
   }
 
   public boolean isValid(String token, UserDetails userDetails) {
+    removeExpiredRevokedTokens();
     String username = extractUsername(token);
     return username.equals(userDetails.getUsername())
-        && claims(token).getExpiration().after(new Date());
+        && claims(token).getExpiration().after(new Date())
+        && !revokedTokens.containsKey(token);
+  }
+
+  public void revokeToken(String token) {
+    revokedTokens.put(token, Instant.now().plus(jwtProperties.expiration()));
   }
 
   public long expirationSeconds() {
@@ -50,5 +59,10 @@ public class JwtService {
   private SecretKey signingKey() {
     byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.secret());
     return Keys.hmacShaKeyFor(keyBytes);
+  }
+
+  private void removeExpiredRevokedTokens() {
+    Instant now = Instant.now();
+    revokedTokens.entrySet().removeIf(entry -> now.isAfter(entry.getValue()));
   }
 }

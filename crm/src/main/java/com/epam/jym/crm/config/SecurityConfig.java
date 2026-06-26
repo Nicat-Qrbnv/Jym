@@ -33,7 +33,9 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(
-      HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) {
+      HttpSecurity http,
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      JwtLogoutHandler jwtLogoutHandler) {
     return http.csrf(AbstractHttpConfigurer::disable)
         .cors(Customizer.withDefaults())
         .authorizeHttpRequests(
@@ -55,6 +57,7 @@ public class SecurityConfig {
             logout ->
                 logout
                     .logoutUrl("/api/v1/auth/logout")
+                    .addLogoutHandler(jwtLogoutHandler)
                     .clearAuthentication(true)
                     .invalidateHttpSession(true)
                     .deleteCookies("JSESSIONID")
