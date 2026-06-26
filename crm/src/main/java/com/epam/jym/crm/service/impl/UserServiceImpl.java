@@ -82,6 +82,14 @@ public class UserServiceImpl implements UserService {
       throw new InvalidRequestException("Old and new passwords must not be the same");
     }
 
+    User user =
+        userRepo
+            .findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+    if (!passwordEncoder.matches(passwordUpdateDto.oldPassword(), user.getPassword())) {
+      throw new InvalidRequestException("Old password is incorrect");
+    }
+
     int updatedRows =
         userRepo.changePassword(username, passwordEncoder.encode(passwordUpdateDto.newPassword()));
     if (updatedRows == 0) {

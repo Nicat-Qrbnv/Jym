@@ -13,6 +13,7 @@ import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.exception.InvalidRequestException;
 import com.epam.jym.crm.exception.ResourceNotFoundException;
 import com.epam.jym.crm.repository.UserRepository;
+import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -124,6 +125,10 @@ class UserServiceImplTest {
   @Test
   void changePasswordShouldDelegateToRepository() {
     PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("oldPassword", "newPassword");
+    User user = new User();
+    user.setPassword("storedEncodedPassword");
+    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("oldPassword", "storedEncodedPassword")).thenReturn(true);
     when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
     when(userRepository.changePassword("john.doe", "encodedNewPassword")).thenReturn(1);
 
@@ -135,13 +140,28 @@ class UserServiceImplTest {
   @Test
   void changePasswordShouldThrowExceptionWhenUserDoesNotExist() {
     PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("oldPassword", "newPassword");
-    when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
-    when(userRepository.changePassword("missing", "encodedNewPassword")).thenReturn(0);
+    when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(
             () -> authenticationService.changePassword("missing", passwordUpdateDto))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("User not found: missing");
+  }
+
+  @Test
+  void changePasswordShouldThrowExceptionWhenOldPasswordIsIncorrect() {
+    PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("wrongPassword", "newPassword");
+    User user = new User();
+    user.setPassword("storedEncodedPassword");
+    when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("wrongPassword", "storedEncodedPassword")).thenReturn(false);
+
+    Assertions.assertThatThrownBy(
+            () -> authenticationService.changePassword("john.doe", passwordUpdateDto))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Old password is incorrect");
+
+    verify(userRepository, never()).changePassword(any(), any());
   }
 
   @Test
