@@ -4,6 +4,13 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>crm</artifactId>
 
+  <parent>
+    <artifactId>jym</artifactId>
+    <groupId>com.epam.jym</groupId>
+    <relativePath>../pom.xml</relativePath>
+    <version>0.0.1-SNAPSHOT</version> <!-- lookup parent from repository -->
+  </parent>
+
   <dependencies>
     <dependency>
       <artifactId>spring-boot-starter</artifactId>
@@ -63,32 +70,22 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>3.0.3</version>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
-      <version>0.12.6</version>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-impl</artifactId>
-      <version>0.12.6</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-jackson</artifactId>
-      <version>0.12.6</version>
       <scope>runtime</scope>
     </dependency>
   </dependencies>
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <artifactId>jym</artifactId>
-    <groupId>com.epam.jym</groupId>
-    <relativePath>../pom.xml</relativePath>
-    <version>0.0.1-SNAPSHOT</version> <!-- lookup parent from repository -->
-  </parent>
 </project>

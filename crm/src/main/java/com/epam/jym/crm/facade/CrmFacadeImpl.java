@@ -1,6 +1,6 @@
 package com.epam.jym.crm.facade;
 
-import com.epam.jym.crm.aspect.logging.LogOperation;
+import com.epam.jym.crm.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;

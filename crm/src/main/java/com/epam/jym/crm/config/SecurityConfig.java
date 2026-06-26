@@ -30,15 +30,17 @@ public class SecurityConfig {
 
   private final UserRepository userRepository;
   private final BruteForceProtectionService bruteForceProtectionService;
-  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) {
     return http.csrf(AbstractHttpConfigurer::disable)
         .cors(Customizer.withDefaults())
         .authorizeHttpRequests(
             requests ->
                 requests
+                    .requestMatchers(HttpMethod.GET, "/actuator/**")
+                    .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/trainees", "/api/v1/trainers")
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/login")

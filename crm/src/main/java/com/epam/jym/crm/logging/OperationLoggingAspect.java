@@ -1,4 +1,4 @@
-package com.epam.jym.crm.aspect.logging;
+package com.epam.jym.crm.logging;
 
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -22,11 +22,11 @@ import org.springframework.util.StringUtils;
 public class OperationLoggingAspect {
 
   /** Matches methods declared on classes annotated with {@link LogOperation}. */
-  @Pointcut("@within(com.epam.jym.crm.aspect.logging.LogOperation)")
+  @Pointcut("@within(com.epam.jym.crm.logging.LogOperation)")
   public void logOperationClass() {}
 
   /** Matches methods directly annotated with {@link LogOperation}. */
-  @Pointcut("@annotation(com.epam.jym.crm.aspect.logging.LogOperation)")
+  @Pointcut("@annotation(com.epam.jym.crm.logging.LogOperation)")
   public void logOperationMethod() {}
 
   /**
