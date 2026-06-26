@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @Configuration
 public class OpenApiConfig {
 
-  private static final String AUTHORIZATION_SCHEME = "basicAuth";
+  private static final String AUTHORIZATION_SCHEME = "bearerAuth";
 
   @Bean
   public OpenAPI openApi() {
@@ -28,8 +28,9 @@ public class OpenApiConfig {
                     AUTHORIZATION_SCHEME,
                     new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
-                        .scheme("basic")
-                        .description("HTTP Basic authentication")));
+                        .scheme("bearer")
+                        .bearerFormat("JWT")
+                        .description("JWT Bearer authentication")));
   }
 
   @Bean

@@ -3,15 +3,18 @@ package com.epam.jym.crm.config;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.repository.UserRepository;
 import com.epam.jym.crm.service.BruteForceProtectionService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,6 +35,19 @@ public class SecurityConfig {
   private final BruteForceProtectionService bruteForceProtectionService;
 
   @Bean
+  @Order(1)
+  public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
+    return http.securityMatcher("/swagger", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html")
+        .csrf(AbstractHttpConfigurer::disable)
+        .cors(Customizer.withDefaults())
+        .authorizeHttpRequests(requests -> requests.anyRequest().authenticated())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .httpBasic(Customizer.withDefaults())
+        .build();
+  }
+
+  @Bean
+  @Order(2)
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -50,9 +66,20 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .sessionManagement(
-            session ->
-                session.sessionCreationPolicy(
-                    org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(
+            exceptions ->
+                exceptions
+                    .authenticationEntryPoint(
+                        (_, response, authenticationException) ->
+                            response.sendError(
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                authenticationException.getMessage()))
+                    .accessDeniedHandler(
+                        (_, response, accessDeniedException) ->
+                            response.sendError(
+                                HttpServletResponse.SC_FORBIDDEN,
+                                accessDeniedException.getMessage())))
         .logout(
             logout ->
                 logout

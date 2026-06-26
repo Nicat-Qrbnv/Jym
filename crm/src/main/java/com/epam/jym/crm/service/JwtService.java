@@ -2,6 +2,7 @@ package com.epam.jym.crm.service;
 
 import com.epam.jym.crm.config.JwtProperties;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -38,10 +39,14 @@ public class JwtService {
 
   public boolean isValid(String token, UserDetails userDetails) {
     removeExpiredRevokedTokens();
-    String username = extractUsername(token);
-    return username.equals(userDetails.getUsername())
-        && claims(token).getExpiration().after(new Date())
-        && !revokedTokens.containsKey(token);
+    try {
+      String username = extractUsername(token);
+      return username.equals(userDetails.getUsername())
+          && claims(token).getExpiration().after(new Date())
+          && !revokedTokens.containsKey(token);
+    } catch (ExpiredJwtException ignored) {
+      return false;
+    }
   }
 
   public void revokeToken(String token) {
