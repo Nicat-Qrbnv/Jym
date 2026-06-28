@@ -1,6 +1,5 @@
 package com.epam.jym.crm.controller;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.training.TrainingTypeDto;
-import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.exception.GlobalExceptionHandler;
 import com.epam.jym.crm.exception.ResourceNotFoundException;
@@ -40,32 +38,21 @@ class TrainerControllerTest {
   @Test
   void getProfileShouldReturnTrainerProfileByUsernameAndReturnOk() throws Exception {
     mockMvc
-        .perform(
-            get("/api/v1/trainers/john.doe").header("Authorization", "admin:password"))
+        .perform(get("/api/v1/trainers/john.doe"))
         .andExpect(status().isOk());
 
-    verify(crmFacade).getTrainerProfile(new CredentialsDto("admin", "password"), "john.doe");
+    verify(crmFacade).getTrainerProfile("john.doe");
   }
 
   @Test
   void getProfileShouldReturnNotFoundWhenFacadeThrowsResourceNotFound() throws Exception {
-    when(crmFacade.getTrainerProfile(new CredentialsDto("admin", "password"), "unknown.trainer"))
+    when(crmFacade.getTrainerProfile("unknown.trainer"))
         .thenThrow(new ResourceNotFoundException("Trainer not found: unknown.trainer"));
 
     mockMvc
-        .perform(
-            get("/api/v1/trainers/unknown.trainer")
-                .header("Authorization", "admin:password"))
+        .perform(get("/api/v1/trainers/unknown.trainer"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.detail").value("Trainer not found: unknown.trainer"));
-  }
-
-  @Test
-  void getProfileShouldReturnUnauthorizedWhenAuthorizationHeaderIsMissing() throws Exception {
-    mockMvc
-        .perform(get("/api/v1/trainers/john.doe"))
-        .andExpect(status().isUnauthorized())
-        .andExpect(jsonPath("$.detail").value(containsString("Authorization")));
   }
 
   @Test
@@ -73,19 +60,16 @@ class TrainerControllerTest {
     mockMvc
         .perform(
             patch("/api/v1/trainers/jane.doe/change-status")
-                .param("isActive", "true")
-                .header("Authorization", "admin:password"))
+                .param("isActive", "true"))
         .andExpect(status().isOk());
 
-    verify(crmFacade).changeUserStatus(new CredentialsDto("admin", "password"), "jane.doe", true);
+    verify(crmFacade).changeUserStatus("jane.doe", true);
   }
 
   @Test
   void updateStatusShouldReturnBadRequestWhenIsActiveIsMissing() throws Exception {
     mockMvc
-        .perform(
-            patch("/api/v1/trainers/jane.doe/change-status")
-                .header("Authorization", "admin:password"))
+        .perform(patch("/api/v1/trainers/jane.doe/change-status"))
         .andExpect(status().isBadRequest());
   }
 
@@ -109,12 +93,11 @@ class TrainerControllerTest {
                       }
                     }
                     """)
-                .header("Authorization", "admin:password"))
+                )
         .andExpect(status().isOk());
 
     verify(crmFacade)
         .updateTrainerProfile(
-            new CredentialsDto("admin", "password"),
             "john.doe",
             new TrainerUpdateDto(new UserDto("John", "Doe", true), new TrainingTypeDto(1L, "Yoga")));
   }

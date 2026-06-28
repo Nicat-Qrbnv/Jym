@@ -1,4 +1,4 @@
-package com.epam.jym.crm.aspect.logging;
+package com.epam.jym.crm.logging;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;

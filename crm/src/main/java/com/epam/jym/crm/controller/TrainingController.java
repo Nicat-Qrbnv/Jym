@@ -1,7 +1,5 @@
 package com.epam.jym.crm.controller;
 
-import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
-
 import com.epam.jym.crm.dto.training.TraineeTrainingDto;
 import com.epam.jym.crm.dto.training.TraineeTrainingsCriteriaDto;
 import com.epam.jym.crm.dto.training.TrainerTrainingDto;
@@ -18,7 +16,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +27,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -63,10 +59,8 @@ public class TrainingController {
             description = "Referenced trainee, trainer, or training type was not found",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public void createTraining(
-      @Valid @RequestBody TrainingCreateDto trainingDto,
-      @RequestHeader("Authorization") String userCredentials) {
-    crmFacade.createTraining(parse(userCredentials), trainingDto);
+  public void createTraining(@Valid @RequestBody TrainingCreateDto trainingDto) {
+    crmFacade.createTraining(trainingDto);
   }
 
   @GetMapping("/trainer/{username}")
@@ -108,11 +102,10 @@ public class TrainingController {
           @DateTimeFormat(iso = ISO.DATE)
           LocalDate periodTo,
       @Parameter(description = "Trainee name filter") @RequestParam(required = false)
-          String traineeName,
-      @RequestHeader("Authorization") String userCredentials) {
+          String traineeName) {
     TrainerTrainingsCriteriaDto criteria =
         new TrainerTrainingsCriteriaDto(periodFrom, periodTo, traineeName);
-    return crmFacade.getTrainerTrainings(parse(userCredentials), username, criteria);
+    return crmFacade.getTrainerTrainings(username, criteria);
   }
 
   @GetMapping("/trainee/{username}")
@@ -158,10 +151,9 @@ public class TrainingController {
       @Parameter(description = "Trainer name filter") @RequestParam(required = false)
           String trainerName,
       @Parameter(description = "Training type name filter") @RequestParam(required = false)
-          String trainingType,
-      @RequestHeader("Authorization") String userCredentials) {
+          String trainingType) {
     TraineeTrainingsCriteriaDto criteria =
         new TraineeTrainingsCriteriaDto(periodFrom, periodTo, trainerName, trainingType);
-    return crmFacade.getTraineeTrainings(parse(userCredentials), username, criteria);
+    return crmFacade.getTraineeTrainings(username, criteria);
   }
 }

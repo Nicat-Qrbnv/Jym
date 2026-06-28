@@ -1,12 +1,10 @@
 package com.epam.jym.crm.controller;
 
-import static com.epam.jym.crm.util.CredentialsHeaderParser.parse;
-
 import com.epam.jym.crm.dto.trainer.TrainerCreateDto;
 import com.epam.jym.crm.dto.trainer.TrainerProfileDto;
 import com.epam.jym.crm.dto.trainer.TrainerUpdateDto;
 import com.epam.jym.crm.dto.trainer.UpdatedTrainerProfileDto;
-import com.epam.jym.crm.dto.user.CredentialsDto;
+import com.epam.jym.crm.dto.user.CreatedCredentialsDto;
 import com.epam.jym.crm.facade.CrmFacade;
 import com.epam.jym.crm.validation.annotation.Username;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +24,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -50,13 +47,13 @@ public class TrainerController {
         @ApiResponse(
             responseCode = "200",
             description = "Trainer registered",
-            content = @Content(schema = @Schema(implementation = CredentialsDto.class))),
+            content = @Content(schema = @Schema(implementation = CreatedCredentialsDto.class))),
         @ApiResponse(
             responseCode = "400",
             description = "Request body is invalid",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
-  public CredentialsDto register(@Valid @RequestBody TrainerCreateDto request) {
+  public CreatedCredentialsDto register(@Valid @RequestBody TrainerCreateDto request) {
     return crmFacade.createTrainer(request);
   }
 
@@ -86,9 +83,8 @@ public class TrainerController {
       })
   public TrainerProfileDto getProfile(
       @Parameter(description = "Trainer username", required = true) @Username @PathVariable
-          String username,
-      @RequestHeader("Authorization") String userCredentials) {
-    return crmFacade.getTrainerProfile(parse(userCredentials), username);
+          String username) {
+    return crmFacade.getTrainerProfile(username);
   }
 
   @PutMapping("/{username}")
@@ -116,9 +112,8 @@ public class TrainerController {
   public UpdatedTrainerProfileDto updateProfile(
       @Parameter(description = "Trainer username", required = true) @PathVariable @Username
           String username,
-      @Valid @RequestBody TrainerUpdateDto request,
-      @RequestHeader("Authorization") String userCredentials) {
-    return crmFacade.updateTrainerProfile(parse(userCredentials), username, request);
+      @Valid @RequestBody TrainerUpdateDto request) {
+    return crmFacade.updateTrainerProfile(username, request);
   }
 
   @PatchMapping("/{username}/change-status")
@@ -148,8 +143,7 @@ public class TrainerController {
           String username,
       @Parameter(description = "Whether the trainer status should be changed", required = true)
           @RequestParam
-          boolean isActive,
-      @RequestHeader("Authorization") String userCredentials) {
-    crmFacade.changeUserStatus(parse(userCredentials), username, isActive);
+          boolean isActive) {
+    crmFacade.changeUserStatus(username, isActive);
   }
 }

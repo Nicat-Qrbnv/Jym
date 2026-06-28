@@ -13,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class UserServiceImpl implements UserService {
 
   private final ReentrantLock lock = new ReentrantLock();
   private final UserRepository userRepo;
+  private final PasswordEncoder passwordEncoder;
 
   @Value(value = "${security.password.length}")
   private int passwordLength;
@@ -46,7 +48,9 @@ public class UserServiceImpl implements UserService {
       user.setFirstName(userDto.firstName());
       user.setLastName(userDto.lastName());
       user.setUsername(generateUsername(userDto.firstName(), userDto.lastName()));
-      user.setPassword(generatePassword());
+      String generatedPassword = generatePassword();
+      user.setPassword(passwordEncoder.encode(generatedPassword));
+      user.setGeneratedPassword(generatedPassword);
       user.setActive(true);
       user = userRepo.save(user);
     } finally {
@@ -78,7 +82,16 @@ public class UserServiceImpl implements UserService {
       throw new InvalidRequestException("Old and new passwords must not be the same");
     }
 
-    int updatedRows = userRepo.changePassword(username, passwordUpdateDto.newPassword());
+    User user =
+        userRepo
+            .findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+    if (!passwordEncoder.matches(passwordUpdateDto.oldPassword(), user.getPassword())) {
+      throw new InvalidRequestException("Old password is incorrect");
+    }
+
+    int updatedRows =
+        userRepo.changePassword(username, passwordEncoder.encode(passwordUpdateDto.newPassword()));
     if (updatedRows == 0) {
       throw new ResourceNotFoundException("User not found: " + username);
     }

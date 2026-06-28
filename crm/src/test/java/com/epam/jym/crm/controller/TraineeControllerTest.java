@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
-import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.UserDto;
 import com.epam.jym.crm.exception.GlobalExceptionHandler;
 import com.epam.jym.crm.exception.InvalidCredentialsException;
@@ -41,35 +40,29 @@ class TraineeControllerTest {
   @Test
   void deleteProfileShouldDeleteTraineeByUsernameAndReturnOk() throws Exception {
     mockMvc
-        .perform(
-            delete("/api/v1/trainees/john.doe").header("Authorization", "admin:password"))
+        .perform(delete("/api/v1/trainees/john.doe"))
         .andExpect(status().isOk());
 
-    verify(crmFacade).deleteTrainee(new CredentialsDto("admin", "password"), "john.doe");
+    verify(crmFacade).deleteTrainee("john.doe");
   }
 
   @Test
   void getNotAssignedActiveTrainersShouldReturnOk() throws Exception {
     mockMvc
-        .perform(
-            get("/api/v1/trainees/john.doe/not-assigned-trainers")
-                .header("Authorization", "admin:password"))
+        .perform(get("/api/v1/trainees/john.doe/not-assigned-trainers"))
         .andExpect(status().isOk());
 
-    verify(crmFacade)
-        .getNotAssignedActiveTrainers(new CredentialsDto("admin", "password"), "john.doe");
+    verify(crmFacade).getNotAssignedActiveTrainers("john.doe");
   }
 
   @Test
   void getNotAssignedActiveTrainersShouldReturnUnauthorizedWhenCredentialsAreInvalid()
       throws Exception {
-    when(crmFacade.getNotAssignedActiveTrainers(new CredentialsDto("admin", "wrong"), "john.doe"))
+    when(crmFacade.getNotAssignedActiveTrainers("john.doe"))
         .thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
     mockMvc
-        .perform(
-            get("/api/v1/trainees/john.doe/not-assigned-trainers")
-                .header("Authorization", "admin:wrong"))
+        .perform(get("/api/v1/trainees/john.doe/not-assigned-trainers"))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.detail").value("Invalid username or password"));
   }
@@ -79,7 +72,6 @@ class TraineeControllerTest {
     mockMvc
         .perform(
             put("/api/v1/trainees/john.doe")
-                .header("Authorization", "admin:password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -97,7 +89,6 @@ class TraineeControllerTest {
 
     verify(crmFacade)
         .updateTraineeProfile(
-            new CredentialsDto("admin", "password"),
             "john.doe",
             new TraineeUpdateDto(
                 new UserDto("John", "Doe", true), LocalDate.of(2000, 1, 1), "Main Street"));
@@ -108,19 +99,16 @@ class TraineeControllerTest {
     mockMvc
         .perform(
             patch("/api/v1/trainees/john.doe/change-status")
-                .param("isActive", "false")
-                .header("Authorization", "admin:password"))
+                .param("isActive", "false"))
         .andExpect(status().isOk());
 
-    verify(crmFacade).changeUserStatus(new CredentialsDto("admin", "password"), "john.doe", false);
+    verify(crmFacade).changeUserStatus("john.doe", false);
   }
 
   @Test
   void updateStatusShouldReturnBadRequestWhenIsActiveIsMissing() throws Exception {
     mockMvc
-        .perform(
-            patch("/api/v1/trainees/john.doe/change-status")
-                .header("Authorization", "admin:password"))
+        .perform(patch("/api/v1/trainees/john.doe/change-status"))
         .andExpect(status().isBadRequest());
   }
 
@@ -129,7 +117,6 @@ class TraineeControllerTest {
     mockMvc
         .perform(
             put("/api/v1/trainees/john.doe/trainers")
-                .header("Authorization", "admin:password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -138,9 +125,6 @@ class TraineeControllerTest {
         .andExpect(status().isOk());
 
     verify(crmFacade)
-        .updateTraineeTrainers(
-            new CredentialsDto("admin", "password"),
-            "john.doe",
-            List.of("first.trainer", "second.trainer"));
+        .updateTraineeTrainers("john.doe", List.of("first.trainer", "second.trainer"));
   }
 }
