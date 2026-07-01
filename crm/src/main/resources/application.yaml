@@ -57,3 +57,8 @@ info:
   app:
     name: ${spring.application.name}
     description: CRM service for trainers and trainees
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka:8761/eureka/}

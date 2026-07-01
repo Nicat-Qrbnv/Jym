@@ -8,7 +8,7 @@
     <artifactId>jym</artifactId>
     <groupId>com.epam.jym</groupId>
     <relativePath>../pom.xml</relativePath>
-    <version>0.0.1-SNAPSHOT</version> <!-- lookup parent from repository -->
+    <version>${revision}</version> <!-- lookup parent from repository -->
   </parent>
 
   <dependencies>
@@ -84,6 +84,10 @@
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-jackson</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
     </dependency>
   </dependencies>
   <modelVersion>4.0.0</modelVersion>

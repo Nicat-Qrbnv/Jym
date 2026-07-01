@@ -12,11 +12,12 @@
   </parent>
   <groupId>com.epam.jym</groupId>
   <artifactId>jym</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
 
   <properties>
     <argLine/>
+    <revision>0.0.6</revision>
     <java.version>25</java.version>
   </properties>
 
@@ -136,6 +137,8 @@
 
   <modules>
     <module>crm</module>
+    <module>eureka</module>
+    <module>gateway</module>
   </modules>
 
 </project>
