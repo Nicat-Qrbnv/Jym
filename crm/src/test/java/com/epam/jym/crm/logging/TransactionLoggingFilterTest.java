@@ -20,7 +20,7 @@ class TransactionLoggingFilterTest {
 
   @Test
   void doFilterShouldGenerateTransactionIdWhenHeaderIsMissing() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/trainees");
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/trainees");
     MockHttpServletResponse response = new MockHttpServletResponse();
 
     filter.doFilter(request, response, new MockFilterChain());
@@ -33,7 +33,7 @@ class TransactionLoggingFilterTest {
 
   @Test
   void doFilterShouldReuseIncomingTransactionId() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/trainings");
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/trainings");
     MockHttpServletResponse response = new MockHttpServletResponse();
     request.addHeader(TRANSACTION_ID_HEADER, "incoming-transaction-id");
 
@@ -46,7 +46,7 @@ class TransactionLoggingFilterTest {
 
   @Test
   void doFilterShouldPreserveResponseBodyAfterLogging() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/trainees");
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/trainees");
     MockHttpServletResponse response = new MockHttpServletResponse();
     request.setContentType("application/json");
     request.setContent(

@@ -38,7 +38,7 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void doFilterShouldAuthenticateWhenBearerTokenIsValid() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/trainees");
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/trainees");
     request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer valid.token");
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockFilterChain filterChain = new MockFilterChain();
@@ -59,7 +59,7 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void doFilterShouldNotAuthenticateWhenBearerTokenIsInvalid() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/trainees");
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/trainees");
     request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer invalid.token");
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockFilterChain filterChain = new MockFilterChain();
@@ -73,7 +73,7 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void doFilterShouldSkipWhenAuthorizationHeaderIsMissing() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/trainees");
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/trainees");
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockFilterChain filterChain = new MockFilterChain();
 
@@ -85,7 +85,7 @@ class JwtAuthenticationFilterTest {
 
   @Test
   void doFilterShouldSkipWhenSecurityContextAlreadyHasAuthentication() throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/trainees");
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/trainees");
     request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer valid.token");
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockFilterChain filterChain = new MockFilterChain();

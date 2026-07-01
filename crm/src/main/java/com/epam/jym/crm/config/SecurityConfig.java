@@ -59,9 +59,9 @@ public class SecurityConfig {
                 requests
                     .requestMatchers(HttpMethod.GET, "/actuator/**")
                     .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/v1/trainees", "/api/v1/trainers")
+                    .requestMatchers(HttpMethod.POST, "/v1/trainees", "/v1/trainers")
                     .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/login")
+                    .requestMatchers(HttpMethod.POST, "/v1/auth/login")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -83,7 +83,7 @@ public class SecurityConfig {
         .logout(
             logout ->
                 logout
-                    .logoutUrl("/api/v1/auth/logout")
+                    .logoutUrl("/v1/auth/logout")
                     .addLogoutHandler(jwtLogoutHandler)
                     .clearAuthentication(true)
                     .invalidateHttpSession(true)

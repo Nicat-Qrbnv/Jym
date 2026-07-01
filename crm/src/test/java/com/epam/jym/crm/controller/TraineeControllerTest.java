@@ -40,7 +40,7 @@ class TraineeControllerTest {
   @Test
   void deleteProfileShouldDeleteTraineeByUsernameAndReturnOk() throws Exception {
     mockMvc
-        .perform(delete("/api/v1/trainees/john.doe"))
+        .perform(delete("/v1/trainees/john.doe"))
         .andExpect(status().isOk());
 
     verify(crmFacade).deleteTrainee("john.doe");
@@ -49,7 +49,7 @@ class TraineeControllerTest {
   @Test
   void getNotAssignedActiveTrainersShouldReturnOk() throws Exception {
     mockMvc
-        .perform(get("/api/v1/trainees/john.doe/not-assigned-trainers"))
+        .perform(get("/v1/trainees/john.doe/not-assigned-trainers"))
         .andExpect(status().isOk());
 
     verify(crmFacade).getNotAssignedActiveTrainers("john.doe");
@@ -62,7 +62,7 @@ class TraineeControllerTest {
         .thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
     mockMvc
-        .perform(get("/api/v1/trainees/john.doe/not-assigned-trainers"))
+        .perform(get("/v1/trainees/john.doe/not-assigned-trainers"))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.detail").value("Invalid username or password"));
   }
@@ -71,7 +71,7 @@ class TraineeControllerTest {
   void updateProfileShouldUpdateTraineeProfileAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            put("/api/v1/trainees/john.doe")
+            put("/v1/trainees/john.doe")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -98,7 +98,7 @@ class TraineeControllerTest {
   void updateStatusShouldUpdateTraineeStatusAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            patch("/api/v1/trainees/john.doe/change-status")
+            patch("/v1/trainees/john.doe/change-status")
                 .param("isActive", "false"))
         .andExpect(status().isOk());
 
@@ -108,7 +108,7 @@ class TraineeControllerTest {
   @Test
   void updateStatusShouldReturnBadRequestWhenIsActiveIsMissing() throws Exception {
     mockMvc
-        .perform(patch("/api/v1/trainees/john.doe/change-status"))
+        .perform(patch("/v1/trainees/john.doe/change-status"))
         .andExpect(status().isBadRequest());
   }
 
@@ -116,7 +116,7 @@ class TraineeControllerTest {
   void updateTrainersShouldUpdateTraineeTrainerListAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            put("/api/v1/trainees/john.doe/trainers")
+            put("/v1/trainees/john.doe/trainers")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """

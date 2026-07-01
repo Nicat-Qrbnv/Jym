@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/training-types")
+@RequestMapping("/v1/training-types")
 @RequiredArgsConstructor
 @Tag(name = "Training Types", description = "Training type reference data")
 public class TrainingTypeController {

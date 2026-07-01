@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/trainers")
+@RequestMapping("/v1/trainers")
 @RequiredArgsConstructor
 @Tag(name = "Trainers", description = "Trainer registration and profile management")
 public class TrainerController {

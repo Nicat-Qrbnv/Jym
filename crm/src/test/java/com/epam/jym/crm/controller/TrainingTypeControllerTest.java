@@ -35,7 +35,7 @@ class TrainingTypeControllerTest {
   void getTrainingTypesShouldReturnOk() throws Exception {
     when(crmFacade.getTrainingTypes()).thenReturn(List.of(new TrainingTypeDto(1L, "Fitness")));
 
-    mockMvc.perform(get("/api/v1/training-types")).andExpect(status().isOk());
+    mockMvc.perform(get("/v1/training-types")).andExpect(status().isOk());
 
     verify(crmFacade).getTrainingTypes();
   }
@@ -45,7 +45,7 @@ class TrainingTypeControllerTest {
     when(crmFacade.getTrainingTypes()).thenThrow(new ResourceNotFoundException("Types not found"));
 
     mockMvc
-        .perform(get("/api/v1/training-types"))
+        .perform(get("/v1/training-types"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.detail").value("Types not found"));
   }
