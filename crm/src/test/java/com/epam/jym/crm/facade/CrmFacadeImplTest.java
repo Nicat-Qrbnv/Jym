@@ -90,7 +90,7 @@ class CrmFacadeImplTest {
   void changeLoginShouldDelegatePasswordChangeByCredentialUsername() {
     PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("old-password", "new-password");
 
-    crmFacade.changeLogin(CREDENTIALS, passwordUpdateDto);
+    crmFacade.changeLogin(CREDENTIALS.username(), passwordUpdateDto);
 
     verify(userService).changePassword("john.doe", passwordUpdateDto);
   }

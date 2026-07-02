@@ -13,15 +13,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -54,6 +56,17 @@ public class AuthController {
         jwtService.generateToken(credentials.username()), jwtService.expirationSeconds());
   }
 
+  @PostMapping("/logout")
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(summary = "Log out", description = "Revokes the current JWT token.")
+  public void logout(
+      @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false)
+          String authorizationHeader) {
+    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+      jwtService.revokeToken(authorizationHeader.substring("Bearer ".length()));
+    }
+  }
+
   @PutMapping("/change-password")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
@@ -72,13 +85,16 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
       })
   public void changeLogin(
-      Authentication authentication,
+      @RequestHeader(value = "X-Authenticated-User", required = false) String username,
       @io.swagger.v3.oas.annotations.parameters.RequestBody(
               description = "Old and new password",
               required = true)
           @Valid
           @RequestBody
           PasswordUpdateDto passwordUpdateDto) {
-    crmFacade.changeLogin(new CredentialsDto(authentication.getName(), ""), passwordUpdateDto);
+    if (username == null || username.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing authenticated user");
+    }
+    crmFacade.changeLogin(username, passwordUpdateDto);
   }
 }

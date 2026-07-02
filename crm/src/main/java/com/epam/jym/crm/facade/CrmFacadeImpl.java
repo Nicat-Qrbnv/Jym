@@ -71,10 +71,10 @@ public class CrmFacadeImpl implements CrmFacade {
   }
 
   @Override
-  public void changeLogin(CredentialsDto credentials, PasswordUpdateDto passwordUpdateDto) {
-    log.debug("Facade request: change login username={}", credentials.username());
-    userService.changePassword(credentials.username(), passwordUpdateDto);
-    log.info("Facade completed: changed login username={}", credentials.username());
+  public void changeLogin(String username, PasswordUpdateDto passwordUpdateDto) {
+    log.debug("Facade request: change login username={}",username);
+    userService.changePassword(username, passwordUpdateDto);
+    log.info("Facade completed: changed login username={}", username);
   }
 
   @Override

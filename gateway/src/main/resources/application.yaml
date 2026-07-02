@@ -6,6 +6,8 @@ spring:
     name: gateway
   main:
     web-application-type: reactive
+  profiles:
+    default: local
   cloud:
     gateway:
       server:
@@ -13,6 +15,10 @@ spring:
           discovery:
             locator:
               enabled: false
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:VGhpcy1pcy1hLWxvY2FsLWRldi1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcyE=}
 
 eureka:
   client:

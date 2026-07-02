@@ -10,7 +10,7 @@ RUN mvn -f /app/${MODULE}/pom.xml dependency:go-offline -B
 
 COPY ${MODULE}/src /app/${MODULE}/src
 
-RUN mvn -f /app/${MODULE}/pom.xml clean package -DskipTests
+RUN mvn -f /app/${MODULE}/pom.xml clean package
 
 
 FROM eclipse-temurin:25-jre
