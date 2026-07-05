@@ -15,6 +15,12 @@ public class GatewayConfig {
         .route(
             "crm-service",
             r -> r.path("/api/crm/**").filters(f -> f.stripPrefix(2)).uri("lb://crm"))
+        .route(
+            "trainer-workload",
+            r ->
+                r.path("/api/trainer-workload/**")
+                    .filters(f -> f.stripPrefix(2))
+                    .uri("lb://trainer-workload"))
         .build();
   }
 }

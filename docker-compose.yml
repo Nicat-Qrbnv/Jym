@@ -90,6 +90,25 @@ services:
       eureka:
         condition: service_healthy
 
+  trainer-workload:
+    image: jym-trainer-workload:${APP_VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: trainer-workload
+        APP_PORT: 8030
+    container_name: trainer-workload-app
+    networks:
+      - jym-network
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+    ports:
+      - "8030:8030"
+    depends_on:
+      eureka:
+        condition: service_healthy
+
 volumes:
   crm-postgres-data:
 

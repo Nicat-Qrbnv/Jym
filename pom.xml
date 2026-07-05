@@ -139,6 +139,7 @@
     <module>crm</module>
     <module>eureka</module>
     <module>gateway</module>
+    <module>trainer-workload</module>
   </modules>
 
 </project>
