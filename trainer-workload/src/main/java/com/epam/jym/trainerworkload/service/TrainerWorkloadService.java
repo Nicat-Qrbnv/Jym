@@ -1,8 +1,11 @@
 package com.epam.jym.trainerworkload.service;
 
+import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse;
+import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
+
 public interface TrainerWorkloadService {
 
-  String acceptTrainerWorkload();
+  void acceptTrainerWorkload(TrainerWorkloadUpdateRequest request);
 
-  String getMonthlySummary();
+  TrainerMonthlySummaryResponse getMonthlySummary(String trainerUsername);
 }
