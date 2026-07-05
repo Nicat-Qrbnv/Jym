@@ -1,12 +1,11 @@
 package com.epam.jym.crm.logging;
 
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_HEADER;
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
+import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_HEADER;
+import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
@@ -14,34 +13,31 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-class TransactionLoggingFilterTest {
+class TraceLoggingFilterTest {
 
-  private final TransactionLoggingFilter filter = new TransactionLoggingFilter();
+  private final TraceLoggingFilter filter = new TraceLoggingFilter();
 
   @Test
-  void doFilterShouldGenerateTransactionIdWhenHeaderIsMissing() throws Exception {
+  void doFilterShouldNotInventTraceIdWhenHeaderIsMissing() throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v1/trainees");
     MockHttpServletResponse response = new MockHttpServletResponse();
 
     filter.doFilter(request, response, new MockFilterChain());
 
-    String transactionId = response.getHeader(TRANSACTION_ID_HEADER);
-    Assertions.assertThat(transactionId).isNotBlank();
-    Assertions.assertThatCode(() -> UUID.fromString(transactionId)).doesNotThrowAnyException();
-    Assertions.assertThat(MDC.get(TRANSACTION_ID_MDC_KEY)).isNull();
+    Assertions.assertThat(response.getHeader(TRACE_ID_HEADER)).isNull();
+    Assertions.assertThat(MDC.get(TRACE_ID_MDC_KEY)).isNull();
   }
 
   @Test
-  void doFilterShouldReuseIncomingTransactionId() throws Exception {
+  void doFilterShouldReuseIncomingTraceId() throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/v1/trainings");
     MockHttpServletResponse response = new MockHttpServletResponse();
-    request.addHeader(TRANSACTION_ID_HEADER, "incoming-transaction-id");
+    request.addHeader(TRACE_ID_HEADER, "incoming-trace-id");
 
     filter.doFilter(request, response, new MockFilterChain());
 
-    Assertions.assertThat(response.getHeader(TRANSACTION_ID_HEADER))
-        .isEqualTo("incoming-transaction-id");
-    Assertions.assertThat(MDC.get(TRANSACTION_ID_MDC_KEY)).isNull();
+    Assertions.assertThat(response.getHeader(TRACE_ID_HEADER)).isEqualTo("incoming-trace-id");
+    Assertions.assertThat(MDC.get(TRACE_ID_MDC_KEY)).isNull();
   }
 
   @Test

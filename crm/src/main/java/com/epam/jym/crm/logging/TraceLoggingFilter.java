@@ -1,7 +1,7 @@
 package com.epam.jym.crm.logging;
 
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_HEADER;
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
+import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_HEADER;
+import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -22,17 +21,17 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /**
- * Creates and propagates a transaction identifier for each HTTP request and logs REST request and
- * response details under that identifier.
+ * Propagates a trace identifier for each HTTP request and logs REST request and response details
+ * under that identifier.
  *
- * <p>The filter accepts an incoming {@code X-Transaction-Id} header or generates a new UUID when
- * the header is absent. The value is stored in SLF4J MDC for the request lifetime and is also
- * returned to the client as a response header. Request and response bodies are logged with basic
- * masking for sensitive values.
+ * <p>The filter accepts an incoming {@code X-Trace-Id} header, stores it in SLF4J MDC for the
+ * request lifetime, and returns it to the client as a response header. Request and response bodies
+ * are logged with basic masking for sensitive values. Trace identifier creation happens in the
+ * gateway.
  */
 @Component
 @Slf4j
-public class TransactionLoggingFilter extends OncePerRequestFilter {
+public class TraceLoggingFilter extends OncePerRequestFilter {
 
   private static final String ACTUATOR_ENDPOINT_PREFIX = "/actuator";
   private static final int MAX_BODY_LOG_LENGTH = 2000;
@@ -57,20 +56,22 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
     ContentCachingRequestWrapper cachingRequest =
         new ContentCachingRequestWrapper(request, MAX_BODY_LOG_LENGTH);
     ContentCachingResponseWrapper cachingResponse = new ContentCachingResponseWrapper(response);
-    String transactionId = resolveTransactionId(cachingRequest);
+    String traceId = resolveTraceId(cachingRequest);
     long startedAt = System.currentTimeMillis();
 
-    MDC.put(TRANSACTION_ID_MDC_KEY, transactionId);
-    cachingResponse.setHeader(TRANSACTION_ID_HEADER, transactionId);
+    if (StringUtils.hasText(traceId)) {
+      MDC.put(TRACE_ID_MDC_KEY, traceId);
+      cachingResponse.setHeader(TRACE_ID_HEADER, traceId);
+    }
 
     try {
       log.info(
-          "Transaction started: method={} endpoint={}",
+          "Trace started: method={} endpoint={}",
           cachingRequest.getMethod(),
           resolveEndpoint(cachingRequest));
       filterChain.doFilter(cachingRequest, cachingResponse);
       log.info(
-          "Transaction completed: method={} endpoint={} requestBody={} status={} responseBody={} "
+          "Trace completed: method={} endpoint={} requestBody={} status={} responseBody={} "
               + "durationMs={}",
           cachingRequest.getMethod(),
           resolveEndpoint(cachingRequest),
@@ -80,7 +81,7 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
           System.currentTimeMillis() - startedAt);
     } catch (Exception exception) {
       log.warn(
-          "Transaction failed: method={} endpoint={} requestBody={} status={} responseBody={} "
+          "Trace failed: method={} endpoint={} requestBody={} status={} responseBody={} "
               + "durationMs={} error={} message={}",
           cachingRequest.getMethod(),
           resolveEndpoint(cachingRequest),
@@ -93,16 +94,12 @@ public class TransactionLoggingFilter extends OncePerRequestFilter {
       throw exception;
     } finally {
       cachingResponse.copyBodyToResponse();
-      MDC.remove(TRANSACTION_ID_MDC_KEY);
+      MDC.remove(TRACE_ID_MDC_KEY);
     }
   }
 
-  private String resolveTransactionId(HttpServletRequest request) {
-    String transactionId = request.getHeader(TRANSACTION_ID_HEADER);
-    if (StringUtils.hasText(transactionId)) {
-      return transactionId;
-    }
-    return UUID.randomUUID().toString();
+  private String resolveTraceId(HttpServletRequest request) {
+    return request.getHeader(TRACE_ID_HEADER);
   }
 
   private String resolveEndpoint(HttpServletRequest request) {

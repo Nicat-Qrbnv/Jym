@@ -10,11 +10,11 @@ public class GatewayConfig {
 
   @Bean
   public RouteLocator customRoutes(RouteLocatorBuilder builder) {
-    return builder.routes()
-        .route("crm-service", r -> r
-            .path("/api/crm/**")
-            .filters(f -> f.stripPrefix(2))
-            .uri("lb://crm"))
+    return builder
+        .routes()
+        .route(
+            "crm-service",
+            r -> r.path("/api/crm/**").filters(f -> f.stripPrefix(2)).uri("lb://crm"))
         .build();
   }
 }

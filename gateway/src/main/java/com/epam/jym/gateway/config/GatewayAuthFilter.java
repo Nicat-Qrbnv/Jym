@@ -26,6 +26,7 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 
   private static final String BEARER_PREFIX = "Bearer ";
   private static final String USER_HEADER = "X-Authenticated-User";
+
   @Value("${security.jwt.secret}")
   private String jwtSecret;
 
@@ -60,7 +61,7 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 
   @Override
   public int getOrder() {
-    return Ordered.HIGHEST_PRECEDENCE;
+    return Ordered.HIGHEST_PRECEDENCE + 1;
   }
 
   private boolean isPublicPath(ServerWebExchange exchange) {
