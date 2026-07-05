@@ -1,5 +1,6 @@
 package com.epam.jym.crm.facade;
 
+import com.epam.jym.crm.client.workload.TrainerWorkloadClient;
 import com.epam.jym.crm.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
@@ -51,6 +52,7 @@ public class CrmFacadeImpl implements CrmFacade {
   private final TrainingTypeService trainingTypeService;
   private final UserService userService;
   private final CrmMapper crmMapper;
+  private final TrainerWorkloadClient trainerWorkloadClient;
 
   @Override
   public CreatedCredentialsDto createTrainee(TraineeCreateDto traineeDto) {
@@ -203,6 +205,7 @@ public class CrmFacadeImpl implements CrmFacade {
   public void createTraining(TrainingCreateDto trainingDto) {
     log.debug("Facade request: create training");
     Training training = trainingService.createTraining(trainingDto);
+    trainerWorkloadClient.sendAddWorkloadUpdate(training);
     log.info(
         "Facade completed: created training with id={} trainee username={}",
         training.getId(),

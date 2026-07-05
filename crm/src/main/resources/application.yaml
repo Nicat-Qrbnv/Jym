@@ -25,6 +25,20 @@ app:
   logging:
     error-appender-name: errorLogAppender
 
+services:
+  trainer-workload:
+    base-url: ${TRAINER_WORKLOAD_BASE_URL:http://trainer-workload}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      trainerWorkloadUpdate:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [traceId=%X{traceId:-}] %logger{36} - %msg%n"

@@ -43,6 +43,12 @@ public class GlobalExceptionHandler {
     return problem(HttpStatus.UNAUTHORIZED, exception.getMessage());
   }
 
+  @ExceptionHandler(DownstreamServiceException.class)
+  public ProblemDetail handleDownstreamFailure(DownstreamServiceException exception) {
+    log.warn("Downstream service failure: {}", exception.getMessage());
+    return problem(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+  }
+
   private ProblemDetail problem(HttpStatus status, String detail) {
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
     problemDetail.setType(URI.create("about:blank"));

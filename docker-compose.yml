@@ -20,6 +20,20 @@ services:
       retries: 5
       start_period: 10s
 
+  redis:
+    image: redis:8
+    container_name: trainer-workload-redis
+    networks:
+      - jym-network
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   crm:
     image: jym-crm:${APP_VERSION}
     build:
@@ -103,10 +117,15 @@ services:
       - jym-network
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-VGhpcy1pcy1hLWxvY2FsLWRldi1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcyE=}
     ports:
       - "8030:8030"
     depends_on:
       eureka:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:
