@@ -6,7 +6,7 @@
     <artifactId>jym</artifactId>
     <groupId>com.epam.jym</groupId>
     <relativePath>../pom.xml</relativePath>
-    <version>${revision}</version>
+    <version>0.0.6</version>
   </parent>
   <artifactId>eureka</artifactId>
   <dependencies>

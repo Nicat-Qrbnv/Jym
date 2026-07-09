@@ -4,7 +4,7 @@ import com.epam.jym.crm.dto.user.AuthTokenDto;
 import com.epam.jym.crm.dto.user.CredentialsDto;
 import com.epam.jym.crm.dto.user.PasswordUpdateDto;
 import com.epam.jym.crm.facade.CrmFacade;
-import com.epam.jym.crm.service.JwtService;
+import com.epam.jym.jwthandler.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

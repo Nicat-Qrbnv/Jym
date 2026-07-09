@@ -1,4 +1,4 @@
-package com.epam.jym.crm.config;
+package com.epam.jym.jwthandler.config;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;

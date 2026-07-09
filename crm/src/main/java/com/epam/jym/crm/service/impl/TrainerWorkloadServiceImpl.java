@@ -1,33 +1,32 @@
-package com.epam.jym.crm.client.workload;
+package com.epam.jym.crm.service.impl;
 
-import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_HEADER;
 import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
 
-import com.epam.jym.crm.config.TrainerWorkloadProperties;
+import com.epam.jym.crm.dto.ActionType;
+import com.epam.jym.crm.client.workload.TrainerWorkloadClient;
+import com.epam.jym.crm.dto.TrainerWorkloadUpdateRequest;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.exception.DownstreamServiceException;
+import com.epam.jym.crm.service.TrainerWorkloadService;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Component
 @RequiredArgsConstructor
-public class TrainerWorkloadClientImpl implements TrainerWorkloadClient {
+public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
   private static final String CIRCUIT_BREAKER_NAME = "trainerWorkloadUpdate";
 
-  private final RestClient.Builder loadBalancedRestClientBuilder;
+  private final TrainerWorkloadClient trainerWorkloadClient;
   private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
-  private final TrainerWorkloadProperties trainerWorkloadProperties;
 
   @Override
   public void sendAddWorkloadUpdate(Training training) {
@@ -39,20 +38,7 @@ public class TrainerWorkloadClientImpl implements TrainerWorkloadClient {
         .create(CIRCUIT_BREAKER_NAME)
         .run(
             () -> {
-              RestClient restClient =
-                  loadBalancedRestClientBuilder
-                      .baseUrl(trainerWorkloadProperties.baseUrl())
-                      .build();
-              RestClient.RequestBodySpec bodySpec =
-                  restClient
-                      .post()
-                      .uri("/v1/trainer-workloads")
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .header(HttpHeaders.AUTHORIZATION, authorizationHeader);
-              if (StringUtils.hasText(traceId)) {
-                bodySpec = bodySpec.header(TRACE_ID_HEADER, traceId);
-              }
-              bodySpec.body(request).retrieve().toBodilessEntity();
+              trainerWorkloadClient.acceptTrainerWorkload(authorizationHeader, traceId, request);
               return null;
             },
             throwable -> {

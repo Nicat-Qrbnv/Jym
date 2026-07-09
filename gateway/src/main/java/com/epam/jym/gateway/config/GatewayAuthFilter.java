@@ -1,14 +1,8 @@
 package com.epam.jym.gateway.config;
 
-import io.jsonwebtoken.Claims;
+import com.epam.jym.jwthandler.service.JwtService;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import java.util.Date;
-import javax.crypto.SecretKey;
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -26,9 +20,11 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 
   private static final String BEARER_PREFIX = "Bearer ";
   private static final String USER_HEADER = "X-Authenticated-User";
+  private final JwtService jwtService;
 
-  @Value("${security.jwt.secret}")
-  private String jwtSecret;
+  public GatewayAuthFilter(JwtService jwtService) {
+    this.jwtService = jwtService;
+  }
 
   @Override
   public Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull GatewayFilterChain chain) {
@@ -44,10 +40,9 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
     }
 
     try {
-      Claims claims = claims(token);
-      String username = claims.getSubject();
-      Date expiration = claims.getExpiration();
-      if (!StringUtils.hasText(username) || expiration == null || expiration.before(new Date())) {
+      String username = jwtService.extractUsername(token);
+      boolean isValid = jwtService.isValid(token);
+      if (!StringUtils.hasText(username) || !isValid) {
         return unauthorized(exchange);
       }
 
@@ -81,15 +76,6 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
     }
 
     return authorizationHeader.substring(BEARER_PREFIX.length());
-  }
-
-  private Claims claims(String token) {
-    return Jwts.parser().verifyWith(signingKey()).build().parseSignedClaims(token).getPayload();
-  }
-
-  private SecretKey signingKey() {
-    byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-    return Keys.hmacShaKeyFor(keyBytes);
   }
 
   private Mono<Void> unauthorized(ServerWebExchange exchange) {

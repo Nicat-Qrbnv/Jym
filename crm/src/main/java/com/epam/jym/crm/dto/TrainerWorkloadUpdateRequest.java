@@ -1,4 +1,4 @@
-package com.epam.jym.crm.client.workload;
+package com.epam.jym.crm.dto;
 
 import java.time.LocalDate;
 

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.epam.jym.jwthandler.service.JwtService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -18,7 +19,6 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -67,9 +67,41 @@ class GatewayAuthFilterTest {
   }
 
   private GatewayAuthFilter newFilter() {
-    GatewayAuthFilter filter = new GatewayAuthFilter();
-    ReflectionTestUtils.setField(filter, "jwtSecret", SECRET);
-    return filter;
+    JwtService jwtService = mock(JwtService.class);
+    when(jwtService.extractUsername(any())).thenAnswer(invocation -> {
+      String token = invocation.getArgument(0);
+      return extractUsernameFromToken(token);
+    });
+    when(jwtService.isValid(any())).thenAnswer(invocation -> {
+      String token = invocation.getArgument(0);
+      try {
+        return isTokenValid(token);
+      } catch (Exception e) {
+        return false;
+      }
+    });
+    return new GatewayAuthFilter(jwtService);
+  }
+
+  private String extractUsernameFromToken(String token) {
+    return Jwts.parser()
+        .verifyWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET)))
+        .build()
+        .parseSignedClaims(token)
+        .getPayload()
+        .getSubject();
+  }
+
+  private boolean isTokenValid(String token) {
+    try {
+      Jwts.parser()
+          .verifyWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET)))
+          .build()
+          .parseSignedClaims(token);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   private String createToken() {

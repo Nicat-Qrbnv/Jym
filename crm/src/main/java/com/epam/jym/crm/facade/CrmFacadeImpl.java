@@ -1,6 +1,6 @@
 package com.epam.jym.crm.facade;
 
-import com.epam.jym.crm.client.workload.TrainerWorkloadClient;
+import com.epam.jym.crm.service.TrainerWorkloadService;
 import com.epam.jym.crm.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
@@ -25,13 +25,13 @@ import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.service.AuthenticationService;
-import com.epam.jym.crm.service.JwtService;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
 import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
 import com.epam.jym.crm.util.mapper.core.CrmMapper;
+import com.epam.jym.jwthandler.service.JwtService;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,7 @@ public class CrmFacadeImpl implements CrmFacade {
   private final TrainingTypeService trainingTypeService;
   private final UserService userService;
   private final CrmMapper crmMapper;
-  private final TrainerWorkloadClient trainerWorkloadClient;
+  private final TrainerWorkloadService trainerWorkloadService;
 
   @Override
   public CreatedCredentialsDto createTrainee(TraineeCreateDto traineeDto) {
@@ -205,7 +205,7 @@ public class CrmFacadeImpl implements CrmFacade {
   public void createTraining(TrainingCreateDto trainingDto) {
     log.debug("Facade request: create training");
     Training training = trainingService.createTraining(trainingDto);
-    trainerWorkloadClient.sendAddWorkloadUpdate(training);
+    trainerWorkloadService.sendAddWorkloadUpdate(training);
     log.info(
         "Facade completed: created training with id={} trainee username={}",
         training.getId(),

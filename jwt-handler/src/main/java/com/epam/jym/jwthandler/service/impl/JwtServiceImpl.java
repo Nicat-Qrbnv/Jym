@@ -1,30 +1,33 @@
-package com.epam.jym.crm.service;
+package com.epam.jym.jwthandler.service.impl;
 
-import com.epam.jym.crm.config.JwtProperties;
+import com.epam.jym.jwthandler.config.JwtProperties;
+import com.epam.jym.jwthandler.service.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.crypto.SecretKey;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
 
-@Service
-@RequiredArgsConstructor
-public class JwtService {
-
-  private final JwtProperties jwtProperties;
+public class JwtServiceImpl implements JwtService {
+  private final String secret;
+  private final Duration expiration;
   private final Map<String, Instant> revokedTokens = new ConcurrentHashMap<>();
 
+  public JwtServiceImpl(JwtProperties jwtProperties) {
+    secret = jwtProperties.secret();
+    expiration = jwtProperties.expiration();
+  }
+
+  @Override
   public String generateToken(String username) {
     Instant now = Instant.now();
-    Instant expiresAt = now.plus(jwtProperties.expiration());
+    Instant expiresAt = now.plus(expiration);
     return Jwts.builder()
         .subject(username)
         .issuedAt(Date.from(now))
@@ -33,28 +36,42 @@ public class JwtService {
         .compact();
   }
 
+  @Override
   public String extractUsername(String token) {
     return claims(token).getSubject();
   }
 
-  public boolean isValid(String token, UserDetails userDetails) {
+  @Override
+  public boolean isValid(String token, String username) {
     removeExpiredRevokedTokens();
     try {
-      String username = extractUsername(token);
-      return username.equals(userDetails.getUsername())
-          && claims(token).getExpiration().after(new Date())
+      Claims claims = claims(token);
+      String usernameFromToken = claims.getSubject();
+      return usernameFromToken.equals(username)
+          && !isExpired(claims)
           && !revokedTokens.containsKey(token);
     } catch (ExpiredJwtException ignored) {
       return false;
     }
   }
 
-  public void revokeToken(String token) {
-    revokedTokens.put(token, Instant.now().plus(jwtProperties.expiration()));
+  @Override
+  public boolean isValid(String token) {
+    return isValid(token, extractUsername(token));
   }
 
+  private boolean isExpired(Claims claims) {
+    return claims.getExpiration().before(new Date());
+  }
+
+  @Override
+  public void revokeToken(String token) {
+    revokedTokens.put(token, Instant.now().plus(expiration));
+  }
+
+  @Override
   public long expirationSeconds() {
-    return jwtProperties.expiration().toSeconds();
+    return expiration.toSeconds();
   }
 
   private Claims claims(String token) {
@@ -62,7 +79,7 @@ public class JwtService {
   }
 
   private SecretKey signingKey() {
-    byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.secret());
+    byte[] keyBytes = Decoders.BASE64.decode(secret);
     return Keys.hmacShaKeyFor(keyBytes);
   }
 
