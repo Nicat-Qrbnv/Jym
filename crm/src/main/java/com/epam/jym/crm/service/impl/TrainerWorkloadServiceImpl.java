@@ -2,13 +2,15 @@ package com.epam.jym.crm.service.impl;
 
 import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
 
-import com.epam.jym.crm.dto.ActionType;
 import com.epam.jym.crm.client.workload.TrainerWorkloadClient;
+import com.epam.jym.crm.dto.ActionType;
 import com.epam.jym.crm.dto.TrainerWorkloadUpdateRequest;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.exception.DownstreamServiceException;
 import com.epam.jym.crm.service.TrainerWorkloadService;
+import com.epam.jym.jwthandler.service.JwtService;
+import io.jsonwebtoken.JwtException;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
@@ -24,21 +26,23 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
   private static final String CIRCUIT_BREAKER_NAME = "trainerWorkloadUpdate";
+  private static final String BEARER_PREFIX = "Bearer ";
 
   private final TrainerWorkloadClient trainerWorkloadClient;
   private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
+  private final JwtService jwtService;
 
   @Override
   public void sendAddWorkloadUpdate(Training training) {
     TrainerWorkloadUpdateRequest request = toAddRequest(training);
-    String authorizationHeader = resolveAuthorizationHeader();
+    String token = resolveAuthorizationHeader();
     String traceId = MDC.get(TRACE_ID_MDC_KEY);
 
     circuitBreakerFactory
         .create(CIRCUIT_BREAKER_NAME)
         .run(
             () -> {
-              trainerWorkloadClient.acceptTrainerWorkload(authorizationHeader, traceId, request);
+              trainerWorkloadClient.acceptTrainerWorkload(token, traceId, request);
               return null;
             },
             throwable -> {
@@ -74,6 +78,19 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         servletRequestAttributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
     if (!StringUtils.hasText(authorizationHeader)) {
       throw new DownstreamServiceException("Authorization header is missing");
+    }
+    if (!authorizationHeader.startsWith(BEARER_PREFIX)) {
+      throw new DownstreamServiceException("Authorization header must use Bearer scheme");
+    }
+    String token = authorizationHeader.substring(BEARER_PREFIX.length());
+    boolean isValid;
+    try {
+      isValid = jwtService.isValid(token);
+    } catch (JwtException | IllegalArgumentException exception) {
+      throw new DownstreamServiceException("Invalid authorization header", exception);
+    }
+    if (!isValid) {
+      throw new DownstreamServiceException("Invalid authorization header");
     }
     return authorizationHeader;
   }
