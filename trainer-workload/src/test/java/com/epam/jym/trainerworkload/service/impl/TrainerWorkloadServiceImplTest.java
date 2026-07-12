@@ -2,11 +2,16 @@ package com.epam.jym.trainerworkload.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.epam.jym.trainerworkload.domain.MonthlyWorkloadAggregate;
 import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexEntry;
+import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexState;
 import com.epam.jym.trainerworkload.dto.ActionType;
 import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse;
 import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
@@ -34,6 +39,7 @@ class TrainerWorkloadServiceImplTest {
 
   @Test
   void acceptTrainerWorkloadShouldCreateMonthlyAggregateForAddAction() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request = addRequest(10L, LocalDate.of(2026, 7, 3), 60);
     when(trainingIndexRepository.findByTrainingId(10L)).thenReturn(Optional.empty());
     when(aggregateRepository.findByMonth("jane.doe", 2026, 7)).thenReturn(Optional.empty());
@@ -49,28 +55,52 @@ class TrainerWorkloadServiceImplTest {
     assertThat(savedAggregate.getMonth()).isEqualTo(7);
     assertThat(savedAggregate.getTotalDurationInMinutes()).isEqualTo(60);
     verify(trainingIndexRepository)
-        .save(new TrainingWorkloadIndexEntry(10L, "jane.doe", 2026, 7, 60));
+        .save(TrainingWorkloadIndexEntry.active(10L, "jane.doe", 2026, 7, 60));
   }
 
   @Test
   void acceptTrainerWorkloadShouldIgnoreDuplicateAddAction() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request = addRequest(10L, LocalDate.of(2026, 7, 3), 60);
     when(trainingIndexRepository.findByTrainingId(10L))
-        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(10L, "jane.doe", 2026, 7, 60)));
+        .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(10L, "jane.doe", 2026, 7, 60)));
 
     service.acceptTrainerWorkload(request);
 
     verify(trainingIndexRepository).findByTrainingId(10L);
+    verifyNoInteractions(aggregateRepository);
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldIgnoreStaleAddAfterDelete() {
+    stubTrainingLock();
+    TrainerWorkloadUpdateRequest request = addRequest(10L, LocalDate.of(2026, 7, 3), 60);
+    when(trainingIndexRepository.findByTrainingId(10L))
+        .thenReturn(
+            Optional.of(
+                new TrainingWorkloadIndexEntry(
+                    10L,
+                    "jane.doe",
+                    2026,
+                    7,
+                    60,
+                    TrainingWorkloadIndexState.DELETED)));
+
+    service.acceptTrainerWorkload(request);
+
+    verify(trainingIndexRepository).findByTrainingId(10L);
+    verifyNoInteractions(aggregateRepository);
   }
 
   @Test
   void acceptTrainerWorkloadShouldReverseMonthlyAggregateForDeleteAction() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     MonthlyWorkloadAggregate existingAggregate = aggregate(2026, 7, 90);
     when(trainingIndexRepository.findByTrainingId(11L))
-        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "jane.doe", 2026, 7, 60)));
+        .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
     when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
         .thenReturn(Optional.of(existingAggregate));
 
@@ -80,11 +110,20 @@ class TrainerWorkloadServiceImplTest {
         ArgumentCaptor.forClass(MonthlyWorkloadAggregate.class);
     verify(aggregateRepository).save(aggregateCaptor.capture());
     assertThat(aggregateCaptor.getValue().getTotalDurationInMinutes()).isEqualTo(30);
-    verify(trainingIndexRepository).delete(11L);
+    verify(trainingIndexRepository)
+        .save(
+            new TrainingWorkloadIndexEntry(
+                11L,
+                "jane.doe",
+                2026,
+                7,
+                60,
+                TrainingWorkloadIndexState.DELETED));
   }
 
   @Test
   void acceptTrainerWorkloadShouldRejectDeleteForUnknownTrainingId() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
@@ -96,6 +135,28 @@ class TrainerWorkloadServiceImplTest {
   }
 
   @Test
+  void acceptTrainerWorkloadShouldIgnoreDuplicateDeleteAction() {
+    stubTrainingLock();
+    TrainerWorkloadUpdateRequest request =
+        new TrainerWorkloadUpdateRequest(
+            "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
+    when(trainingIndexRepository.findByTrainingId(11L))
+        .thenReturn(
+            Optional.of(
+                new TrainingWorkloadIndexEntry(
+                    11L,
+                    "jane.doe",
+                    2026,
+                    7,
+                    60,
+                    TrainingWorkloadIndexState.DELETED)));
+
+    service.acceptTrainerWorkload(request);
+
+    verifyNoInteractions(aggregateRepository);
+  }
+
+  @Test
   void acceptTrainerWorkloadShouldRejectNullRequest() {
     assertThatThrownBy(() -> service.acceptTrainerWorkload((TrainerWorkloadUpdateRequest) null))
         .isInstanceOf(InvalidRequestException.class)
@@ -104,6 +165,7 @@ class TrainerWorkloadServiceImplTest {
 
   @Test
   void acceptTrainerWorkloadShouldRejectNullActionType() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, null, 11L);
@@ -115,13 +177,15 @@ class TrainerWorkloadServiceImplTest {
 
   @Test
   void acceptTrainerWorkloadShouldRejectNullBatch() {
-    assertThatThrownBy(() -> service.acceptTrainerWorkload((List<TrainerWorkloadUpdateRequest>) null))
+    assertThatThrownBy(
+            () -> service.acceptTrainerWorkload((List<TrainerWorkloadUpdateRequest>) null))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("requests must not be null");
   }
 
   @Test
   void acceptTrainerWorkloadShouldUpdateExistingMonthlyAggregateForAddAction() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request = addRequest(20L, LocalDate.of(2026, 8, 3), 45);
     MonthlyWorkloadAggregate existingAggregate = aggregate(2026, 8, 75);
     existingAggregate.setTrainerFirstName("Old");
@@ -145,11 +209,12 @@ class TrainerWorkloadServiceImplTest {
 
   @Test
   void acceptTrainerWorkloadShouldRejectDeleteWhenTrainingBelongsToAnotherTrainer() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     when(trainingIndexRepository.findByTrainingId(11L))
-        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "john.doe", 2026, 7, 60)));
+        .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "john.doe", 2026, 7, 60)));
 
     assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
         .isInstanceOf(BusinessRuleViolationException.class)
@@ -158,11 +223,12 @@ class TrainerWorkloadServiceImplTest {
 
   @Test
   void acceptTrainerWorkloadShouldRejectDeleteWhenMonthlyAggregateIsMissing() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     when(trainingIndexRepository.findByTrainingId(11L))
-        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "jane.doe", 2026, 7, 60)));
+        .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
     when(aggregateRepository.findByMonth("jane.doe", 2026, 7)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
@@ -172,11 +238,12 @@ class TrainerWorkloadServiceImplTest {
 
   @Test
   void acceptTrainerWorkloadShouldRejectDeleteThatWouldMakeDurationNegative() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     when(trainingIndexRepository.findByTrainingId(11L))
-        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "jane.doe", 2026, 7, 60)));
+        .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
     when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
         .thenReturn(Optional.of(aggregate(2026, 7, 30)));
 
@@ -187,18 +254,27 @@ class TrainerWorkloadServiceImplTest {
 
   @Test
   void acceptTrainerWorkloadShouldDeleteMonthlyAggregateWhenDurationBecomesZero() {
+    stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     when(trainingIndexRepository.findByTrainingId(11L))
-        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "jane.doe", 2026, 7, 60)));
+        .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
     when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
         .thenReturn(Optional.of(aggregate(2026, 7, 60)));
 
     service.acceptTrainerWorkload(request);
 
     verify(aggregateRepository).delete("jane.doe", 2026, 7);
-    verify(trainingIndexRepository).delete(11L);
+    verify(trainingIndexRepository)
+        .save(
+            new TrainingWorkloadIndexEntry(
+                11L,
+                "jane.doe",
+                2026,
+                7,
+                60,
+                TrainingWorkloadIndexState.DELETED));
   }
 
   @Test
@@ -263,5 +339,16 @@ class TrainerWorkloadServiceImplTest {
     aggregate.setMonth(month);
     aggregate.setTotalDurationInMinutes(duration);
     return aggregate;
+  }
+
+  private void stubTrainingLock() {
+    doAnswer(
+            invocation -> {
+              Runnable action = invocation.getArgument(1);
+              action.run();
+              return null;
+            })
+        .when(trainingIndexRepository)
+        .runWithTrainingLock(anyLong(), any(Runnable.class));
   }
 }
