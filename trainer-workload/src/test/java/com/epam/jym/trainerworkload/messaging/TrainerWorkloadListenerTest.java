@@ -2,8 +2,13 @@ package com.epam.jym.trainerworkload.messaging;
 
 import static com.epam.jym.trainerworkload.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import com.epam.jym.trainerworkload.dto.ActionType;
 import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
@@ -21,6 +26,8 @@ import org.slf4j.MDC;
 @ExtendWith(MockitoExtension.class)
 class TrainerWorkloadListenerTest {
 
+  @Mock private TrainerWorkloadMessagingProperties messagingProperties;
+  @Mock private TrainerWorkloadDeadLetterPublisher deadLetterPublisher;
   @Mock private TrainerWorkloadService trainerWorkloadService;
 
   @InjectMocks private TrainerWorkloadListener listener;
@@ -42,10 +49,53 @@ class TrainerWorkloadListenerTest {
         .when(trainerWorkloadService)
         .acceptTrainerWorkload(request);
 
-    listener.acceptTrainerWorkload(request, "trace-42");
+    listener.acceptTrainerWorkload(request, "trace-42", 1);
 
     verify(trainerWorkloadService).acceptTrainerWorkload(request);
     assertThat(observedTraceId.get()).isEqualTo("trace-42");
+    assertThat(MDC.get(TRACE_ID_MDC_KEY)).isNull();
+    verifyNoInteractions(deadLetterPublisher);
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldRethrowBeforeDlqThreshold() {
+    TrainerWorkloadUpdateRequest request = request();
+    when(messagingProperties.maxDeliveryAttempts()).thenReturn(3);
+    IllegalStateException failure = new IllegalStateException("redis unavailable");
+    doAnswer(
+            _ -> {
+              assertThat(MDC.get(TRACE_ID_MDC_KEY)).isEqualTo("trace-42");
+              throw failure;
+            })
+        .when(trainerWorkloadService)
+        .acceptTrainerWorkload(request);
+
+    assertThatThrownBy(() -> listener.acceptTrainerWorkload(request, "trace-42", 2))
+        .isSameAs(failure);
+
+    verify(deadLetterPublisher, never()).publish(any(), any());
+    assertThat(MDC.get(TRACE_ID_MDC_KEY)).isNull();
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldPublishToDlqAtThreshold() {
+    TrainerWorkloadUpdateRequest request = request();
+    when(messagingProperties.maxDeliveryAttempts()).thenReturn(3);
+    doAnswer(
+            _ -> {
+              assertThat(MDC.get(TRACE_ID_MDC_KEY)).isEqualTo("trace-42");
+              throw new IllegalStateException("redis unavailable");
+            })
+        .when(trainerWorkloadService)
+        .acceptTrainerWorkload(request);
+
+    listener.acceptTrainerWorkload(request, "trace-42", 3);
+
+    verify(deadLetterPublisher)
+        .publish(
+            new TrainerWorkloadDeadLetterMessage(
+                request, "trace-42", 3, "redis unavailable"),
+            "trace-42");
     assertThat(MDC.get(TRACE_ID_MDC_KEY)).isNull();
   }
 
