@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/trainings")
+@RequestMapping("/v1/trainings")
 @RequiredArgsConstructor
 @Tag(name = "Trainings", description = "Training creation and training history queries")
 public class TrainingController {

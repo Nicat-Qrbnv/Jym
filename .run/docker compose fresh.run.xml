@@ -3,12 +3,8 @@
     <deployment type="docker-compose.yml">
       <settings>
         <option name="commandLineOptions" value="--build" />
-        <option name="services">
-          <list>
-            <option value="crm" />
-          </list>
-        </option>
         <option name="sourceFilePath" value="docker-compose.yml" />
+        <option name="upForceRecreate" value="true" />
       </settings>
     </deployment>
     <method v="2" />

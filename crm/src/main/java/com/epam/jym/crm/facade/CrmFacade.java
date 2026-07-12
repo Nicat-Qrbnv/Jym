@@ -24,7 +24,7 @@ public interface CrmFacade {
 
   void login(CredentialsDto credentials);
 
-  void changeLogin(CredentialsDto credentials, PasswordUpdateDto passwordUpdateDto);
+  void changeLogin(String username, PasswordUpdateDto passwordUpdateDto);
 
   CreatedCredentialsDto createTrainee(TraineeCreateDto traineeDto);
 

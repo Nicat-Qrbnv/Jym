@@ -33,7 +33,7 @@ class TrainingControllerTest {
   void getTrainerTrainingsShouldReturnTrainerTrainingsByCriteriaAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            get("/api/v1/trainings/trainer/jane.doe")
+            get("/v1/trainings/trainer/jane.doe")
                 .param("periodFrom", "2026-05-01")
                 .param("periodTo", "2026-05-31")
                 .param("traineeName", "John Doe"))
@@ -50,7 +50,7 @@ class TrainingControllerTest {
   void getTraineeTrainingsShouldReturnTraineeTrainingsByCriteriaAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            get("/api/v1/trainings/trainee/john.doe")
+            get("/v1/trainings/trainee/john.doe")
                 .param("periodFrom", "2026-05-01")
                 .param("periodTo", "2026-05-31")
                 .param("trainerName", "Jane Doe")

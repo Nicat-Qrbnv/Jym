@@ -1,6 +1,6 @@
 package com.epam.jym.crm.exception;
 
-import static com.epam.jym.crm.logging.TransactionLoggingConstants.TRANSACTION_ID_MDC_KEY;
+import static com.epam.jym.crm.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
 
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
@@ -43,12 +43,18 @@ public class GlobalExceptionHandler {
     return problem(HttpStatus.UNAUTHORIZED, exception.getMessage());
   }
 
+  @ExceptionHandler(DownstreamServiceException.class)
+  public ProblemDetail handleDownstreamFailure(DownstreamServiceException exception) {
+    log.warn("Downstream service failure: {}", exception.getMessage());
+    return problem(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+  }
+
   private ProblemDetail problem(HttpStatus status, String detail) {
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
     problemDetail.setType(URI.create("about:blank"));
-    String transactionId = MDC.get(TRANSACTION_ID_MDC_KEY);
-    if (transactionId != null) {
-      problemDetail.setProperty(TRANSACTION_ID_MDC_KEY, transactionId);
+    String traceId = MDC.get(TRACE_ID_MDC_KEY);
+    if (traceId != null) {
+      problemDetail.setProperty(TRACE_ID_MDC_KEY, traceId);
     }
     return problemDetail;
   }

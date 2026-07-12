@@ -38,7 +38,7 @@ class TrainerControllerTest {
   @Test
   void getProfileShouldReturnTrainerProfileByUsernameAndReturnOk() throws Exception {
     mockMvc
-        .perform(get("/api/v1/trainers/john.doe"))
+        .perform(get("/v1/trainers/john.doe"))
         .andExpect(status().isOk());
 
     verify(crmFacade).getTrainerProfile("john.doe");
@@ -50,7 +50,7 @@ class TrainerControllerTest {
         .thenThrow(new ResourceNotFoundException("Trainer not found: unknown.trainer"));
 
     mockMvc
-        .perform(get("/api/v1/trainers/unknown.trainer"))
+        .perform(get("/v1/trainers/unknown.trainer"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.detail").value("Trainer not found: unknown.trainer"));
   }
@@ -59,7 +59,7 @@ class TrainerControllerTest {
   void updateStatusShouldUpdateTrainerStatusAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            patch("/api/v1/trainers/jane.doe/change-status")
+            patch("/v1/trainers/jane.doe/change-status")
                 .param("isActive", "true"))
         .andExpect(status().isOk());
 
@@ -69,7 +69,7 @@ class TrainerControllerTest {
   @Test
   void updateStatusShouldReturnBadRequestWhenIsActiveIsMissing() throws Exception {
     mockMvc
-        .perform(patch("/api/v1/trainers/jane.doe/change-status"))
+        .perform(patch("/v1/trainers/jane.doe/change-status"))
         .andExpect(status().isBadRequest());
   }
 
@@ -77,7 +77,7 @@ class TrainerControllerTest {
   void updateProfileShouldUpdateTrainerProfileAndReturnOk() throws Exception {
     mockMvc
         .perform(
-            put("/api/v1/trainers/john.doe")
+            put("/v1/trainers/john.doe")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """

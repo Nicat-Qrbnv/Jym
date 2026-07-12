@@ -4,6 +4,7 @@ import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
 import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
+import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.exception.InvalidRequestException;
 import com.epam.jym.crm.exception.ResourceNotFoundException;
@@ -68,10 +69,11 @@ public class TraineeServiceImpl implements TraineeService {
 
   @Transactional
   @Override
-  public void deleteTrainee(String username) {
+  public List<Training> deleteTrainee(String username) {
     Trainee trainee = getTraineeByUsername(username);
     traineeRepo.delete(trainee);
     userService.deactivateUser(trainee.getUser().getId());
+    return trainee.getTrainings();
   }
 
   @Override

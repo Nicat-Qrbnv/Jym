@@ -12,9 +12,9 @@ import org.springframework.util.StringUtils;
 /**
  * Logs execution of classes and methods annotated with {@link LogOperation}.
  *
- * <p>The aspect writes start, completion, failure, and duration messages. Transaction identifiers
- * are not handled here directly; they are included automatically when {@link
- * TransactionLoggingFilter} has placed the current transaction id in SLF4J MDC.
+ * <p>The aspect writes start, completion, failure, and duration messages. Trace identifiers are
+ * not handled here directly; they are included automatically when {@link TraceLoggingFilter} has
+ * placed the current trace id in SLF4J MDC.
  */
 @Aspect
 @Component

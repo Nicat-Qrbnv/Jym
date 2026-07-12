@@ -2,6 +2,9 @@
 
 This module manages CRM information of trainers and trainees.
 
+Authentication is enforced by the gateway. CRM reads the authenticated username from the
+`X-Authenticated-User` header for secured operations.
+
 ## Spring profiles
 
 The application supports the following environments through Spring profiles:
@@ -10,6 +13,8 @@ The application supports the following environments through Spring profiles:
 - `dev`: development deployment profile. Requires `DB_USERNAME`, `DB_PASSWORD`, and `DB_URL`.
 - `stg`: staging deployment profile. Requires `DB_USERNAME`, `DB_PASSWORD`, and `DB_URL`.
 - `prod`: production deployment profile. Requires `DB_USERNAME`, `DB_PASSWORD`, and `DB_URL`; Swagger UI and API docs are disabled.
+
+Eureka remains publicly reachable in `local` and `dev`.
 
 Run with a specific profile:
 

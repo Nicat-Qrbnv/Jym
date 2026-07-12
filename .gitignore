@@ -4,3 +4,7 @@
 /target/checkstyle-result.xml
 /Jym.iml
 /.github/git-commit-instructions.md
+/.env
+/eureka/target/
+/trainer-workload/target/
+/target/

@@ -5,6 +5,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.epam.jym.crm.dto.ActionType;
+import com.epam.jym.crm.service.TrainerWorkloadService;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
@@ -33,7 +35,7 @@ import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
 import com.epam.jym.crm.entity.User;
 import com.epam.jym.crm.service.AuthenticationService;
-import com.epam.jym.crm.service.JwtService;
+import com.epam.jym.jwthandler.service.JwtService;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
 import com.epam.jym.crm.service.TrainingService;
@@ -63,6 +65,7 @@ class CrmFacadeImplTest {
   @Mock private JwtService jwtService;
   @Mock private UserService userService;
   @Mock private CrmMapper crmMapper;
+  @Mock private TrainerWorkloadService trainerWorkloadService;
 
   @InjectMocks private CrmFacadeImpl crmFacade;
 
@@ -90,7 +93,7 @@ class CrmFacadeImplTest {
   void changeLoginShouldDelegatePasswordChangeByCredentialUsername() {
     PasswordUpdateDto passwordUpdateDto = new PasswordUpdateDto("old-password", "new-password");
 
-    crmFacade.changeLogin(CREDENTIALS, passwordUpdateDto);
+    crmFacade.changeLogin(CREDENTIALS.username(), passwordUpdateDto);
 
     verify(userService).changePassword("john.doe", passwordUpdateDto);
   }
@@ -321,6 +324,7 @@ class CrmFacadeImplTest {
     crmFacade.createTraining(createDto);
 
     verify(trainingService).createTraining(createDto);
+    verify(trainerWorkloadService).sendWorkloadUpdate(training, ActionType.ADD);
   }
 
   private Training createTraining(User traineeUser, User trainerUser) {
