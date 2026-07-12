@@ -30,6 +30,14 @@
       <artifactId>jwt-handler</artifactId>
       <version>0.0.6</version>
     </dependency>
+    <dependency>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+      <groupId>org.springframework.boot</groupId>
+    </dependency>
+    <dependency>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <groupId>io.micrometer</groupId>
+    </dependency>
   </dependencies>
 
 </project>

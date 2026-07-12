@@ -18,7 +18,7 @@ security:
   password:
     length: ${SECURITY_PASSWORD_LENGTH:10}
   jwt:
-    secret: ${SECURITY_JWT_SECRET:VGhpcy1pcy1hLWxvY2FsLWRldi1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcyE=}
+    secret: ${SECURITY_JWT_SECRET}
     expiration: ${SECURITY_JWT_EXPIRATION:1h}
 
 app:

@@ -5,6 +5,7 @@ import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
 import com.epam.jym.trainerworkload.service.TrainerWorkloadService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +29,12 @@ public class TrainerWorkloadController {
   @ResponseStatus(HttpStatus.OK)
   public void acceptTrainerWorkload(@Valid @RequestBody TrainerWorkloadUpdateRequest request) {
     trainerWorkloadService.acceptTrainerWorkload(request);
+  }
+
+  @PostMapping("/batch")
+  @ResponseStatus(HttpStatus.OK)
+  public void acceptTrainerWorkload(@Valid @RequestBody List<TrainerWorkloadUpdateRequest> requests) {
+    trainerWorkloadService.acceptTrainerWorkload(requests);
   }
 
   @GetMapping("/monthly-summary")

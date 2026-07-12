@@ -11,6 +11,7 @@ import com.epam.jym.trainerworkload.dto.ActionType;
 import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse;
 import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
 import com.epam.jym.trainerworkload.exception.BusinessRuleViolationException;
+import com.epam.jym.trainerworkload.exception.InvalidRequestException;
 import com.epam.jym.trainerworkload.repository.TrainerWorkloadAggregateRepository;
 import com.epam.jym.trainerworkload.repository.TrainingWorkloadIndexRepository;
 import java.time.LocalDate;
@@ -95,6 +96,112 @@ class TrainerWorkloadServiceImplTest {
   }
 
   @Test
+  void acceptTrainerWorkloadShouldRejectNullRequest() {
+    assertThatThrownBy(() -> service.acceptTrainerWorkload((TrainerWorkloadUpdateRequest) null))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("request must not be null");
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldRejectNullActionType() {
+    TrainerWorkloadUpdateRequest request =
+        new TrainerWorkloadUpdateRequest(
+            "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, null, 11L);
+
+    assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("actionType must not be null");
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldRejectNullBatch() {
+    assertThatThrownBy(() -> service.acceptTrainerWorkload((List<TrainerWorkloadUpdateRequest>) null))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("requests must not be null");
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldUpdateExistingMonthlyAggregateForAddAction() {
+    TrainerWorkloadUpdateRequest request = addRequest(20L, LocalDate.of(2026, 8, 3), 45);
+    MonthlyWorkloadAggregate existingAggregate = aggregate(2026, 8, 75);
+    existingAggregate.setTrainerFirstName("Old");
+    existingAggregate.setTrainerLastName("Name");
+    existingAggregate.setTrainerActive(false);
+    when(trainingIndexRepository.findByTrainingId(20L)).thenReturn(Optional.empty());
+    when(aggregateRepository.findByMonth("jane.doe", 2026, 8))
+        .thenReturn(Optional.of(existingAggregate));
+
+    service.acceptTrainerWorkload(request);
+
+    ArgumentCaptor<MonthlyWorkloadAggregate> aggregateCaptor =
+        ArgumentCaptor.forClass(MonthlyWorkloadAggregate.class);
+    verify(aggregateRepository).save(aggregateCaptor.capture());
+    MonthlyWorkloadAggregate savedAggregate = aggregateCaptor.getValue();
+    assertThat(savedAggregate.getTotalDurationInMinutes()).isEqualTo(120);
+    assertThat(savedAggregate.getTrainerFirstName()).isEqualTo("Jane");
+    assertThat(savedAggregate.getTrainerLastName()).isEqualTo("Doe");
+    assertThat(savedAggregate.isTrainerActive()).isTrue();
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldRejectDeleteWhenTrainingBelongsToAnotherTrainer() {
+    TrainerWorkloadUpdateRequest request =
+        new TrainerWorkloadUpdateRequest(
+            "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
+    when(trainingIndexRepository.findByTrainingId(11L))
+        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "john.doe", 2026, 7, 60)));
+
+    assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
+        .isInstanceOf(BusinessRuleViolationException.class)
+        .hasMessageContaining("belongs to another trainer");
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldRejectDeleteWhenMonthlyAggregateIsMissing() {
+    TrainerWorkloadUpdateRequest request =
+        new TrainerWorkloadUpdateRequest(
+            "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
+    when(trainingIndexRepository.findByTrainingId(11L))
+        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "jane.doe", 2026, 7, 60)));
+    when(aggregateRepository.findByMonth("jane.doe", 2026, 7)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
+        .isInstanceOf(BusinessRuleViolationException.class)
+        .hasMessageContaining("Monthly aggregate is missing");
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldRejectDeleteThatWouldMakeDurationNegative() {
+    TrainerWorkloadUpdateRequest request =
+        new TrainerWorkloadUpdateRequest(
+            "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
+    when(trainingIndexRepository.findByTrainingId(11L))
+        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "jane.doe", 2026, 7, 60)));
+    when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
+        .thenReturn(Optional.of(aggregate(2026, 7, 30)));
+
+    assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
+        .isInstanceOf(BusinessRuleViolationException.class)
+        .hasMessageContaining("would become negative");
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldDeleteMonthlyAggregateWhenDurationBecomesZero() {
+    TrainerWorkloadUpdateRequest request =
+        new TrainerWorkloadUpdateRequest(
+            "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
+    when(trainingIndexRepository.findByTrainingId(11L))
+        .thenReturn(Optional.of(new TrainingWorkloadIndexEntry(11L, "jane.doe", 2026, 7, 60)));
+    when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
+        .thenReturn(Optional.of(aggregate(2026, 7, 60)));
+
+    service.acceptTrainerWorkload(request);
+
+    verify(aggregateRepository).delete("jane.doe", 2026, 7);
+    verify(trainingIndexRepository).delete(11L);
+  }
+
+  @Test
   void getMonthlySummaryShouldGroupByYearAndOrderMonths() {
     MonthlyWorkloadAggregate july = aggregate(2026, 7, 120);
     MonthlyWorkloadAggregate june = aggregate(2026, 6, 90);
@@ -111,6 +218,26 @@ class TrainerWorkloadServiceImplTest {
     assertThat(summary.years().get(1).months())
         .extracting(TrainerMonthlySummaryResponse.MonthSummary::month)
         .containsExactly(6, 7);
+  }
+
+  @Test
+  void getMonthlySummaryShouldRejectBlankTrainerUsername() {
+    assertThatThrownBy(() -> service.getMonthlySummary("   "))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("trainerUsername must not be blank");
+  }
+
+  @Test
+  void getMonthlySummaryShouldReturnEmptyResponseWhenNoAggregatesExist() {
+    when(aggregateRepository.findAllByTrainerUsername("jane.doe")).thenReturn(List.of());
+
+    TrainerMonthlySummaryResponse summary = service.getMonthlySummary("jane.doe");
+
+    assertThat(summary.trainerUsername()).isEqualTo("jane.doe");
+    assertThat(summary.trainerFirstName()).isNull();
+    assertThat(summary.trainerLastName()).isNull();
+    assertThat(summary.trainerActive()).isNull();
+    assertThat(summary.years()).isEmpty();
   }
 
   private TrainerWorkloadUpdateRequest addRequest(

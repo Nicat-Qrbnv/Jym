@@ -11,9 +11,10 @@ import com.epam.jym.crm.exception.DownstreamServiceException;
 import com.epam.jym.crm.service.TrainerWorkloadService;
 import com.epam.jym.jwthandler.service.JwtService;
 import io.jsonwebtoken.JwtException;
+import java.util.List;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -22,36 +23,51 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Component
-@RequiredArgsConstructor
 public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
-
-  private static final String CIRCUIT_BREAKER_NAME = "trainerWorkloadUpdate";
   private static final String BEARER_PREFIX = "Bearer ";
 
-  private final TrainerWorkloadClient trainerWorkloadClient;
-  private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
+  private final TrainerWorkloadClient workloadClient;
+  private final CircuitBreaker circuitBreaker;
   private final JwtService jwtService;
 
+  public TrainerWorkloadServiceImpl(
+      TrainerWorkloadClient workloadClient,
+      JwtService jwtService,
+      CircuitBreakerFactory<?, ?> circuitBreakerFactory) {
+    this.workloadClient = workloadClient;
+    this.jwtService = jwtService;
+    this.circuitBreaker = circuitBreakerFactory.create("trainerWorkloadUpdate");
+  }
+
   @Override
-  public void sendAddWorkloadUpdate(Training training) {
-    TrainerWorkloadUpdateRequest request = toAddRequest(training);
+  public void sendWorkloadUpdate(Training training, ActionType actionType) {
+    TrainerWorkloadUpdateRequest request = toUpdateRequest(training, actionType);
     String token = resolveAuthorizationHeader();
     String traceId = MDC.get(TRACE_ID_MDC_KEY);
 
-    circuitBreakerFactory
-        .create(CIRCUIT_BREAKER_NAME)
-        .run(
-            () -> {
-              trainerWorkloadClient.acceptTrainerWorkload(token, traceId, request);
-              return null;
-            },
-            throwable -> {
-              throw new DownstreamServiceException(
-                  "Failed to synchronize trainer workload update", throwable);
-            });
+    circuitBreaker.run(
+        () -> workloadClient.acceptTrainerWorkload(token, traceId, request),
+        throwable -> {
+          throw new DownstreamServiceException(
+              "Failed to synchronize trainer workload update", throwable);
+        });
   }
 
-  private TrainerWorkloadUpdateRequest toAddRequest(Training training) {
+  @Override
+  public void sendWorkloadUpdate(List<Training> trainings, ActionType actionType) {
+    List<TrainerWorkloadUpdateRequest> requests =
+        trainings.stream().map(t -> toUpdateRequest(t, actionType)).toList();
+    String token = resolveAuthorizationHeader();
+    String traceId = MDC.get(TRACE_ID_MDC_KEY);
+    circuitBreaker.run(
+        () -> workloadClient.acceptTrainerWorkload(token, traceId, requests),
+        throwable -> {
+          throw new DownstreamServiceException(
+              "Failed to synchronize trainer workload update", throwable);
+        });
+  }
+
+  private TrainerWorkloadUpdateRequest toUpdateRequest(Training training, ActionType actionType) {
     if (training == null
         || training.getTrainer() == null
         || training.getTrainer().getUser() == null) {
@@ -65,7 +81,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         trainerUser.isActive(),
         training.getScheduledDate(),
         training.getDurationInMinutes(),
-        ActionType.ADD,
+        actionType,
         Objects.requireNonNull(training.getId(), "training id must not be null"));
   }
 

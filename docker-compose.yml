@@ -51,6 +51,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/crm
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET}
     ports:
       - "8020:8020"
     depends_on:
@@ -98,11 +99,18 @@ services:
       - jym-network
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET}
     ports:
       - "8080:8080"
     depends_on:
       eureka:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   trainer-workload:
     image: jym-trainer-workload:${APP_VERSION}
@@ -119,7 +127,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-VGhpcy1pcy1hLWxvY2FsLWRldi1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcyE=}
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET}
     ports:
       - "8030:8030"
     depends_on:
@@ -127,6 +135,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8030/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   crm-postgres-data:

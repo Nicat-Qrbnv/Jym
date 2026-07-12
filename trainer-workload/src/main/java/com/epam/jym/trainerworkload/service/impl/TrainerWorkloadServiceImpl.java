@@ -2,7 +2,6 @@ package com.epam.jym.trainerworkload.service.impl;
 
 import com.epam.jym.trainerworkload.domain.MonthlyWorkloadAggregate;
 import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexEntry;
-import com.epam.jym.trainerworkload.dto.ActionType;
 import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse;
 import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse.MonthSummary;
 import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse.YearSummary;
@@ -34,11 +33,19 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     if (request == null) {
       throw new InvalidRequestException("request must not be null");
     }
-    if (request.actionType() == ActionType.ADD) {
-      processAdd(request);
-      return;
+    switch (request.actionType()) {
+      case ADD -> processAdd(request);
+      case DELETE -> processDelete(request);
+      case null -> throw new InvalidRequestException("actionType must not be null");
     }
-    processDelete(request);
+  }
+
+  @Override
+  public void acceptTrainerWorkload(List<TrainerWorkloadUpdateRequest> requests) {
+    if (requests == null) {
+      throw new InvalidRequestException("requests must not be null");
+    }
+    requests.forEach(this::acceptTrainerWorkload);
   }
 
   @Override
@@ -150,7 +157,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     Map<Integer, List<MonthSummary>> yearToMonths = new TreeMap<>();
     for (MonthlyWorkloadAggregate aggregate : aggregates) {
       yearToMonths
-          .computeIfAbsent(aggregate.getYear(), year -> new ArrayList<>())
+          .computeIfAbsent(aggregate.getYear(), _ -> new ArrayList<>())
           .add(new MonthSummary(aggregate.getMonth(), aggregate.getTotalDurationInMinutes()));
     }
     return yearToMonths.entrySet().stream()

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.epam.jym.crm.dto.ActionType;
 import com.epam.jym.crm.service.TrainerWorkloadService;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
@@ -323,7 +324,7 @@ class CrmFacadeImplTest {
     crmFacade.createTraining(createDto);
 
     verify(trainingService).createTraining(createDto);
-    verify(trainerWorkloadService).sendAddWorkloadUpdate(training);
+    verify(trainerWorkloadService).sendWorkloadUpdate(training, ActionType.ADD);
   }
 
   private Training createTraining(User traineeUser, User trainerUser) {

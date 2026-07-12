@@ -1,5 +1,6 @@
 package com.epam.jym.crm.facade;
 
+import com.epam.jym.crm.dto.ActionType;
 import com.epam.jym.crm.service.TrainerWorkloadService;
 import com.epam.jym.crm.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
@@ -101,7 +102,8 @@ public class CrmFacadeImpl implements CrmFacade {
   @Override
   public void deleteTrainee(String username) {
     log.debug("Facade request: delete trainee with username={}", username);
-    traineeService.deleteTrainee(username);
+    List<Training> trainings = traineeService.deleteTrainee(username);
+    trainerWorkloadService.sendWorkloadUpdate(trainings, ActionType.DELETE);
     log.info("Facade completed: deleted trainee with username={}", username);
   }
 
@@ -205,7 +207,7 @@ public class CrmFacadeImpl implements CrmFacade {
   public void createTraining(TrainingCreateDto trainingDto) {
     log.debug("Facade request: create training");
     Training training = trainingService.createTraining(trainingDto);
-    trainerWorkloadService.sendAddWorkloadUpdate(training);
+    trainerWorkloadService.sendWorkloadUpdate(training, ActionType.ADD);
     log.info(
         "Facade completed: created training with id={} trainee username={}",
         training.getId(),

@@ -25,6 +25,7 @@ class JwtAuthenticationFilterTest {
   void shouldRejectProtectedRequestWithoutBearerToken() throws Exception {
     MockHttpServletRequest request =
         new MockHttpServletRequest("POST", "/v1/trainer-workloads");
+    request.setServletPath("/v1/trainer-workloads");
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockFilterChain chain = new MockFilterChain();
 
@@ -37,6 +38,7 @@ class JwtAuthenticationFilterTest {
   void shouldAllowProtectedRequestWithValidBearerToken() throws Exception {
     MockHttpServletRequest request =
         new MockHttpServletRequest("POST", "/v1/trainer-workloads");
+    request.setServletPath("/v1/trainer-workloads");
     request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer valid-token");
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockFilterChain chain = new MockFilterChain();

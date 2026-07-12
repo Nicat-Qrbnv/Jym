@@ -47,7 +47,7 @@ class JwtServiceTest {
     JwtService jwtService = createJwtService(Duration.ofSeconds(-10));
     String token = jwtService.generateToken(USERNAME);
 
-    assertThat(jwtService.isValid(token, USERNAME)).isFalse();
+    assertThat(jwtService.isValid(token)).isFalse();
   }
 
   @Test

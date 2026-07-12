@@ -13,7 +13,7 @@ spring:
 
 security:
   jwt:
-    secret: ${SECURITY_JWT_SECRET:VGhpcy1pcy1hLWxvY2FsLWRldi1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcyE=}
+    secret: ${SECURITY_JWT_SECRET}
 
 logging:
   pattern:
