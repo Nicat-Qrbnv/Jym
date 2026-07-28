@@ -5,6 +5,7 @@ import static com.epam.jym.trainerworkload.logging.TraceLoggingConstants.TRACE_I
 
 import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
 import com.epam.jym.trainerworkload.service.TrainerWorkloadService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -28,13 +29,13 @@ public class TrainerWorkloadListener {
       destination = "${messaging.trainer-workload.queue}",
       containerFactory = "trainerWorkloadJmsListenerContainerFactory")
   public void acceptTrainerWorkload(
-      TrainerWorkloadUpdateRequest request,
+      @Valid TrainerWorkloadUpdateRequest request,
       @Header(name = TRACE_ID_HEADER, required = false) String traceId,
       @Header(name = "JMSXDeliveryCount", required = false) Integer deliveryCount) {
     withTraceId(traceId, () -> processRequest(request, traceId, deliveryCount));
   }
 
-  private static void withTraceId(String traceId, Runnable action) {
+  private void withTraceId(String traceId, Runnable action) {
     if (StringUtils.hasText(traceId)) {
       MDC.put(TRACE_ID_MDC_KEY, traceId);
     }
@@ -52,8 +53,7 @@ public class TrainerWorkloadListener {
     try {
       trainerWorkloadService.acceptTrainerWorkload(request);
     } catch (RuntimeException exception) {
-      int currentDeliveryCount =
-          deliveryCount == null ? INITIAL_DELIVERY_COUNT : deliveryCount;
+      int currentDeliveryCount = deliveryCount == null ? INITIAL_DELIVERY_COUNT : deliveryCount;
       if (currentDeliveryCount >= messagingProperties.maxDeliveryAttempts()) {
         log.error(
             "Routing trainer workload message to DLQ after {} attempts for trainingId={}",
