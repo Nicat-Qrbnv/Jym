@@ -20,6 +20,18 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
 
   @Query(
       """
+          SELECT t
+          FROM Trainee t
+          LEFT JOIN FETCH t.user u
+          LEFT JOIN FETCH t.trainings tr
+          LEFT JOIN FETCH tr.trainer trainer
+          LEFT JOIN FETCH trainer.user
+          WHERE u.username = :username
+          """)
+  Optional<Trainee> findTraineeWithTrainingsByUsername(String username);
+
+  @Query(
+      """
           SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
           FROM Trainee t
           LEFT JOIN t.user u

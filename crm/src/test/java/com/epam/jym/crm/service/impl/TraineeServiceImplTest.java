@@ -130,7 +130,8 @@ class TraineeServiceImplTest {
     String username = "john.doe";
     Trainee trainee = createTrainee(10L, createUser(1L, username));
 
-    when(traineeRepository.findTraineeByUsername(username)).thenReturn(Optional.of(trainee));
+    when(traineeRepository.findTraineeWithTrainingsByUsername(username))
+        .thenReturn(Optional.of(trainee));
 
     traineeService.deleteTrainee(username);
 
@@ -142,7 +143,8 @@ class TraineeServiceImplTest {
   void deleteTraineeShouldThrowExceptionWhenUsernameDoesNotExist() {
     String username = "missing";
 
-    when(traineeRepository.findTraineeByUsername(username)).thenReturn(Optional.empty());
+    when(traineeRepository.findTraineeWithTrainingsByUsername(username))
+        .thenReturn(Optional.empty());
 
     Assertions.assertThatThrownBy(() -> traineeService.deleteTrainee(username))
         .isInstanceOf(ResourceNotFoundException.class)

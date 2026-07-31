@@ -1,0 +1,13 @@
+spring:
+  activemq:
+    broker-url: vm://localhost?broker.persistent=false
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+security:
+  jwt:
+    secret: testJwtSecretForIntegrationTestsOnlyThirtyTwoCharacters
+    expiration: 1h
+  password:
+    length: 10
