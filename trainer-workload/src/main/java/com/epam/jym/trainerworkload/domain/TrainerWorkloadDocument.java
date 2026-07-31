@@ -3,13 +3,16 @@ package com.epam.jym.trainerworkload.domain;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @Setter
 @Document(collection = "trainer_workloads")
+@CompoundIndex(name = "firstName_lastName_idx", def = "{'firstName': 1, 'lastName': 1}")
 public class TrainerWorkloadDocument {
 
   @Id private String username;
@@ -20,6 +23,7 @@ public class TrainerWorkloadDocument {
 
   @Getter
   @Setter
+  @NoArgsConstructor
   public static class YearSummary {
 
     private int year;
@@ -32,6 +36,7 @@ public class TrainerWorkloadDocument {
 
   @Getter
   @Setter
+  @NoArgsConstructor
   public static class MonthSummary {
 
     private int month;
