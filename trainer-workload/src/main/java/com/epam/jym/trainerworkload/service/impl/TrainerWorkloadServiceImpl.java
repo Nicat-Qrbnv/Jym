@@ -31,6 +31,11 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     if (request == null) {
       throw new InvalidRequestException("request must not be null");
     }
+    log.info(
+        "Transaction started: action={} trainingId={} trainerUsername={}",
+        request.actionType(),
+        request.trainingId(),
+        request.trainerUsername());
     trainingIndexRepository.runWithTrainingLock(
         request.trainingId(),
         () -> {
@@ -40,6 +45,11 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
             case null -> throw new InvalidRequestException("actionType must not be null");
           }
         });
+    log.info(
+        "Transaction completed: action={} trainingId={} trainerUsername={}",
+        request.actionType(),
+        request.trainingId(),
+        request.trainerUsername());
   }
 
   @Override
@@ -62,6 +72,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
   private void processAdd(TrainerWorkloadUpdateRequest request) {
     long trainingId = request.trainingId();
+    log.debug("Operation find: checking index for trainingId={}", trainingId);
     TrainingWorkloadIndexEntry existingEntry =
         trainingIndexRepository.findByTrainingId(trainingId).orElse(null);
     if (existingEntry != null) {
@@ -75,10 +86,22 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     int year = request.trainingDate().getYear();
     int month = request.trainingDate().getMonthValue();
 
-    TrainerWorkloadDocument doc = workloadRepository.findByUsername(request.trainerUsername())
-        .orElseGet(() -> createDocument(request));
+    log.debug("Operation find: searching document for trainerUsername={}", request.trainerUsername());
+    var existing = workloadRepository.findByUsername(request.trainerUsername());
+    TrainerWorkloadDocument doc = existing.orElseGet(() -> createDocument(request));
+    if (existing.isEmpty()) {
+      log.debug(
+          "Operation create: no existing document found, creating for trainerUsername={}",
+          request.trainerUsername());
+    } else {
+      log.debug(
+          "Operation update: found existing document for trainerUsername={}", request.trainerUsername());
+    }
     updateProfile(doc, request);
     addDuration(doc, year, month, request.durationInMinutes());
+    log.debug(
+        "Operation save: persisting document for trainerUsername={} year={} month={} addedDuration={}",
+        request.trainerUsername(), year, month, request.durationInMinutes());
     workloadRepository.save(doc);
 
     trainingIndexRepository.save(
@@ -88,6 +111,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
   private void processDelete(TrainerWorkloadUpdateRequest request) {
     long trainingId = request.trainingId();
+    log.debug("Operation find: checking index for trainingId={}", trainingId);
     TrainingWorkloadIndexEntry indexEntry =
         trainingIndexRepository
             .findByTrainingId(trainingId)
@@ -103,6 +127,8 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
       throw new BusinessRuleViolationException(
           "Cannot reverse workload. Training id belongs to another trainer: " + trainingId);
     }
+    log.debug(
+        "Operation find: searching document for trainerUsername={}", indexEntry.trainerUsername());
     TrainerWorkloadDocument doc =
         workloadRepository
             .findByUsername(indexEntry.trainerUsername())
@@ -115,6 +141,10 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     updateProfile(doc, request);
     subtractDuration(doc, indexEntry.year(), indexEntry.month(), indexEntry.durationInMinutes(),
         trainingId);
+    log.debug(
+        "Operation save: persisting document for trainerUsername={} year={} month={} subtractedDuration={}",
+        indexEntry.trainerUsername(), indexEntry.year(), indexEntry.month(),
+        indexEntry.durationInMinutes());
     workloadRepository.save(doc);
     trainingIndexRepository.save(indexEntry.asDeleted());
   }

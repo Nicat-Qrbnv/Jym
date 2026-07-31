@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import static com.epam.jym.trainerworkload.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
+
 import com.epam.jym.trainerworkload.domain.TrainerWorkloadDocument;
 import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexEntry;
 import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexState;
@@ -22,12 +24,14 @@ import com.epam.jym.trainerworkload.repository.TrainingWorkloadIndexRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.MDC;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerWorkloadServiceImplTest {
@@ -36,6 +40,24 @@ class TrainerWorkloadServiceImplTest {
   @Mock private TrainingWorkloadIndexRepository trainingIndexRepository;
 
   @InjectMocks private TrainerWorkloadServiceImpl service;
+
+  @AfterEach
+  void tearDown() {
+    MDC.clear();
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldLogTransactionWithTraceIdInMdc() {
+    stubTrainingLock();
+    MDC.put(TRACE_ID_MDC_KEY, "trace-99");
+    TrainerWorkloadUpdateRequest request = addRequest(30L, LocalDate.of(2026, 7, 3), 60);
+    when(trainingIndexRepository.findByTrainingId(30L)).thenReturn(Optional.empty());
+    when(workloadRepository.findByUsername("jane.doe")).thenReturn(Optional.empty());
+
+    service.acceptTrainerWorkload(request);
+
+    assertThat(MDC.get(TRACE_ID_MDC_KEY)).isEqualTo("trace-99");
+  }
 
   @Test
   void acceptTrainerWorkloadShouldCreateMonthlyAggregateForAddAction() {
