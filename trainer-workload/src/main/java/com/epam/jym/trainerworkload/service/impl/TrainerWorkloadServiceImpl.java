@@ -33,11 +33,15 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     if (request == null) {
       throw new InvalidRequestException("request must not be null");
     }
-    switch (request.actionType()) {
-      case ADD -> processAdd(request);
-      case DELETE -> processDelete(request);
-      case null -> throw new InvalidRequestException("actionType must not be null");
-    }
+    trainingIndexRepository.runWithTrainingLock(
+        request.trainingId(),
+        () -> {
+          switch (request.actionType()) {
+            case ADD -> processAdd(request);
+            case DELETE -> processDelete(request);
+            case null -> throw new InvalidRequestException("actionType must not be null");
+          }
+        });
   }
 
   @Override
@@ -75,8 +79,14 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
   private void processAdd(TrainerWorkloadUpdateRequest request) {
     long trainingId = request.trainingId();
-    if (trainingIndexRepository.findByTrainingId(trainingId).isPresent()) {
-      log.info("Skipping duplicate ADD workload update for trainingId={}", trainingId);
+    TrainingWorkloadIndexEntry existingEntry =
+        trainingIndexRepository.findByTrainingId(trainingId).orElse(null);
+    if (existingEntry != null) {
+      if (existingEntry.isDeleted()) {
+        log.info("Skipping stale ADD workload update for deleted trainingId={}", trainingId);
+      } else {
+        log.info("Skipping duplicate ADD workload update for trainingId={}", trainingId);
+      }
       return;
     }
     int year = request.trainingDate().getYear();
@@ -90,7 +100,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
         aggregate.getTotalDurationInMinutes() + request.durationInMinutes());
     aggregateRepository.save(aggregate);
     trainingIndexRepository.save(
-        new TrainingWorkloadIndexEntry(
+        TrainingWorkloadIndexEntry.active(
             trainingId, request.trainerUsername(), year, month, request.durationInMinutes()));
   }
 
@@ -103,6 +113,10 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
                 () ->
                     new BusinessRuleViolationException(
                         "Cannot reverse workload. Training id was not processed: " + trainingId));
+    if (indexEntry.isDeleted()) {
+      log.info("Skipping duplicate DELETE workload update for trainingId={}", trainingId);
+      return;
+    }
     if (!indexEntry.trainerUsername().equals(request.trainerUsername())) {
       throw new BusinessRuleViolationException(
           "Cannot reverse workload. Training id belongs to another trainer: " + trainingId);
@@ -130,7 +144,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
       aggregate.setTotalDurationInMinutes(updatedDuration);
       aggregateRepository.save(aggregate);
     }
-    trainingIndexRepository.delete(trainingId);
+    trainingIndexRepository.save(indexEntry.asDeleted());
   }
 
   private MonthlyWorkloadAggregate createEmptyAggregate(

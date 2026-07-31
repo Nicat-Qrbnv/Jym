@@ -6,6 +6,10 @@ spring:
     name: crm
   profiles:
     default: local
+  activemq:
+    broker-url: ${ACTIVEMQ_BROKER_URL:tcp://localhost:61616}
+    user: ${ACTIVEMQ_USER:admin}
+    password: ${ACTIVEMQ_PASSWORD:admin}
   datasource:
     driver-class-name: org.postgresql.Driver
   jpa:
@@ -25,19 +29,9 @@ app:
   logging:
     error-appender-name: errorLogAppender
 
-services:
+messaging:
   trainer-workload:
-    base-url: ${TRAINER_WORKLOAD_BASE_URL:http://trainer-workload}
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      trainerWorkloadUpdate:
-        sliding-window-type: COUNT_BASED
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
+    queue: ${TRAINER_WORKLOAD_SINGLE_QUEUE:trainer-workload.update}
 
 logging:
   pattern:

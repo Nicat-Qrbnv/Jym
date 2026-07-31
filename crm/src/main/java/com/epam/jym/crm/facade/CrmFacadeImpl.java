@@ -1,8 +1,6 @@
 package com.epam.jym.crm.facade;
 
 import com.epam.jym.crm.dto.ActionType;
-import com.epam.jym.crm.service.TrainerWorkloadService;
-import com.epam.jym.crm.logging.LogOperation;
 import com.epam.jym.crm.dto.trainee.TraineeCreateDto;
 import com.epam.jym.crm.dto.trainee.TraineeProfileDto;
 import com.epam.jym.crm.dto.trainee.TraineeUpdateDto;
@@ -25,9 +23,11 @@ import com.epam.jym.crm.entity.Trainee;
 import com.epam.jym.crm.entity.Trainer;
 import com.epam.jym.crm.entity.Training;
 import com.epam.jym.crm.entity.TrainingType;
+import com.epam.jym.crm.logging.LogOperation;
 import com.epam.jym.crm.service.AuthenticationService;
 import com.epam.jym.crm.service.TraineeService;
 import com.epam.jym.crm.service.TrainerService;
+import com.epam.jym.crm.service.TrainerWorkloadService;
 import com.epam.jym.crm.service.TrainingService;
 import com.epam.jym.crm.service.TrainingTypeService;
 import com.epam.jym.crm.service.UserService;
@@ -75,7 +75,7 @@ public class CrmFacadeImpl implements CrmFacade {
 
   @Override
   public void changeLogin(String username, PasswordUpdateDto passwordUpdateDto) {
-    log.debug("Facade request: change login username={}",username);
+    log.debug("Facade request: change login username={}", username);
     userService.changePassword(username, passwordUpdateDto);
     log.info("Facade completed: changed login username={}", username);
   }
@@ -103,7 +103,8 @@ public class CrmFacadeImpl implements CrmFacade {
   public void deleteTrainee(String username) {
     log.debug("Facade request: delete trainee with username={}", username);
     List<Training> trainings = traineeService.deleteTrainee(username);
-    trainerWorkloadService.sendWorkloadUpdate(trainings, ActionType.DELETE);
+    trainings.forEach(
+        training -> trainerWorkloadService.sendWorkloadUpdate(training, ActionType.DELETE));
     log.info("Facade completed: deleted trainee with username={}", username);
   }
 
