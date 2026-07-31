@@ -70,10 +70,14 @@ public class TraineeServiceImpl implements TraineeService {
   @Transactional
   @Override
   public List<Training> deleteTrainee(String username) {
-    Trainee trainee = getTraineeByUsername(username);
+    Trainee trainee =
+        traineeRepo
+            .findTraineeWithTrainingsByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("Trainee not found: " + username));
+    List<Training> trainings = List.copyOf(trainee.getTrainings());
     traineeRepo.delete(trainee);
     userService.deactivateUser(trainee.getUser().getId());
-    return trainee.getTrainings();
+    return trainings;
   }
 
   @Override
