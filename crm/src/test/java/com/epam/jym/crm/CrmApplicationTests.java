@@ -1,10 +1,9 @@
 package com.epam.jym.crm;
 
+import com.epam.jym.crm.integration.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 
-// TODO: Uncomment when implementing integration tests
-// @SpringBootTest
-class CrmApplicationTests {
+class CrmApplicationTests extends AbstractIntegrationTest {
 
   @Test
   void contextLoads() {}

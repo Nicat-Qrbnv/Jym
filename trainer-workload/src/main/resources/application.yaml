@@ -14,14 +14,12 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-    mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/trainer-workload}
-
-messaging:
-  trainer-workload:
-    queue: ${TRAINER_WORKLOAD_SINGLE_QUEUE:trainer-workload.update}
-    dlq: ${TRAINER_WORKLOAD_DLQ:trainer-workload.update.dlq}
-    max-delivery-attempts: ${TRAINER_WORKLOAD_MAX_DELIVERY_ATTEMPTS:3}
+  mongodb:
+    host: localhost
+    port: 27017
+    database: trainer-workload
+    username: admin
+    password: admin
 
 security:
   jwt:
