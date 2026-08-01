@@ -1,10 +1,10 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/test
-    username: test
-    password: test
   activemq:
     broker-url: vm://localhost?broker.persistent=false
+  mongodb:
+    database: trainer-workload-test
+    username: ~
+    password: ~
 eureka:
   client:
     register-with-eureka: false
@@ -12,6 +12,10 @@ eureka:
 security:
   jwt:
     secret: testJwtSecretForIntegrationTestsOnlyThirtyTwoCharacters
-    expiration: 1h
-  password:
-    length: 10
+
+logging:
+  level:
+    com:
+      epam:
+        trainerworkload:
+          level: DEBUG

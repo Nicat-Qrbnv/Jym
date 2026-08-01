@@ -1,30 +1,32 @@
-package com.epam.jym.crm.integration;
+package com.epam.jym.trainerworkload.integration;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.mongodb.MongoDBContainer;
 
+@Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
 @Testcontainers
-@AutoConfigureMockMvc
 public abstract class AbstractIntegrationTest {
 
+  @Container static final MongoDBContainer mongo = new MongoDBContainer("mongo:8").withReplicaSet();
+
   @Container
-  static final PostgreSQLContainer postgres =
-      new PostgreSQLContainer("postgres:17").withReuse(true);
+  static final GenericContainer<?> redis = new GenericContainer<>("redis:7").withExposedPorts(6379);
 
   @DynamicPropertySource
-  static void overrideDataSourceProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", postgres::getJdbcUrl);
-    registry.add("spring.datasource.username", postgres::getUsername);
-    registry.add("spring.datasource.password", postgres::getPassword);
+  static void overrideInfrastructureProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.mongodb.uri", mongo::getReplicaSetUrl);
+    registry.add("spring.data.redis.host", redis::getHost);
+    registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
   }
 }
