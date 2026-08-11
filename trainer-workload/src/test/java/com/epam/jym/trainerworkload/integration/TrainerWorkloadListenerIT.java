@@ -20,7 +20,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jms.core.JmsTemplate;
 
 class TrainerWorkloadListenerIT extends AbstractIntegrationTest {
@@ -37,7 +36,6 @@ class TrainerWorkloadListenerIT extends AbstractIntegrationTest {
   @Autowired private TrainerWorkloadMessagingProperties properties;
   @Autowired private TrainerWorkloadDocumentRepository workloadRepo;
   @Autowired private TrainingWorkloadIndexRepository indexRepo;
-  @Autowired private StringRedisTemplate redisTemplate;
   @Value("${messaging.trainer-workload.max-delivery-attempts}")
   private int maxDeliveryAttempts;
 
@@ -75,7 +73,7 @@ class TrainerWorkloadListenerIT extends AbstractIntegrationTest {
   @BeforeEach
   void cleanUp() {
     workloadRepo.deleteAll();
-    redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+    indexRepo.deleteAll();
   }
 
   @ParameterizedTest(name = "step {0}: {1}")
@@ -129,7 +127,10 @@ class TrainerWorkloadListenerIT extends AbstractIntegrationTest {
   }
 
   @Test
-  @DisplayName("routes to DLQ after " + "${messaging.trainer-workload.max-delivery-attempts}" + " failed delivery attempts")
+  @DisplayName(
+      "routes to DLQ after "
+          + "${messaging.trainer-workload.max-delivery-attempts}"
+          + " failed delivery attempts")
   void listener_onRepeatedFailure_routesToDlq() {
     TrainerWorkloadUpdateRequest invalid = delete(999L, 60, LocalDate.of(2026, 8, 1));
 
