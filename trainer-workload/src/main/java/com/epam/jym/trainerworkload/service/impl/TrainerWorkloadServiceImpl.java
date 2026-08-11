@@ -1,21 +1,19 @@
 package com.epam.jym.trainerworkload.service.impl;
 
-import com.epam.jym.trainerworkload.domain.MonthlyWorkloadAggregate;
+import com.epam.jym.trainerworkload.domain.TrainerWorkloadDocument;
+import com.epam.jym.trainerworkload.domain.TrainerWorkloadDocument.MonthSummary;
+import com.epam.jym.trainerworkload.domain.TrainerWorkloadDocument.YearSummary;
 import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexEntry;
 import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse;
-import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse.MonthSummary;
-import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse.YearSummary;
 import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
 import com.epam.jym.trainerworkload.exception.BusinessRuleViolationException;
 import com.epam.jym.trainerworkload.exception.InvalidRequestException;
-import com.epam.jym.trainerworkload.repository.TrainerWorkloadAggregateRepository;
+import com.epam.jym.trainerworkload.repository.TrainerWorkloadDocumentRepository;
 import com.epam.jym.trainerworkload.repository.TrainingWorkloadIndexRepository;
 import com.epam.jym.trainerworkload.service.TrainerWorkloadService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +23,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
-  private final TrainerWorkloadAggregateRepository aggregateRepository;
+  private final TrainerWorkloadDocumentRepository workloadRepository;
   private final TrainingWorkloadIndexRepository trainingIndexRepository;
 
   @Override
@@ -33,6 +31,11 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     if (request == null) {
       throw new InvalidRequestException("request must not be null");
     }
+    log.info(
+        "Transaction started: action={} trainingId={} trainerUsername={}",
+        request.actionType(),
+        request.trainingId(),
+        request.trainerUsername());
     trainingIndexRepository.runWithTrainingLock(
         request.trainingId(),
         () -> {
@@ -42,6 +45,11 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
             case null -> throw new InvalidRequestException("actionType must not be null");
           }
         });
+    log.info(
+        "Transaction completed: action={} trainingId={} trainerUsername={}",
+        request.actionType(),
+        request.trainingId(),
+        request.trainerUsername());
   }
 
   @Override
@@ -57,28 +65,14 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     if (trainerUsername == null || trainerUsername.isBlank()) {
       throw new InvalidRequestException("trainerUsername must not be blank");
     }
-    List<MonthlyWorkloadAggregate> aggregates =
-        aggregateRepository.findAllByTrainerUsername(trainerUsername).stream()
-            .sorted(
-                Comparator.comparingInt(MonthlyWorkloadAggregate::getYear)
-                    .thenComparingInt(MonthlyWorkloadAggregate::getMonth))
-            .toList();
-
-    if (aggregates.isEmpty()) {
-      return new TrainerMonthlySummaryResponse(trainerUsername, null, null, null, List.of());
-    }
-
-    MonthlyWorkloadAggregate profileSource = aggregates.getFirst();
-    return new TrainerMonthlySummaryResponse(
-        profileSource.getTrainerUsername(),
-        profileSource.getTrainerFirstName(),
-        profileSource.getTrainerLastName(),
-        profileSource.isTrainerActive(),
-        toYearSummaries(aggregates));
+    return workloadRepository.findByUsername(trainerUsername)
+        .map(this::toResponse)
+        .orElse(new TrainerMonthlySummaryResponse(trainerUsername, null, null, null, List.of()));
   }
 
   private void processAdd(TrainerWorkloadUpdateRequest request) {
     long trainingId = request.trainingId();
+    log.debug("Operation find: checking index for trainingId={}", trainingId);
     TrainingWorkloadIndexEntry existingEntry =
         trainingIndexRepository.findByTrainingId(trainingId).orElse(null);
     if (existingEntry != null) {
@@ -91,14 +85,25 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     }
     int year = request.trainingDate().getYear();
     int month = request.trainingDate().getMonthValue();
-    MonthlyWorkloadAggregate aggregate =
-        aggregateRepository
-            .findByMonth(request.trainerUsername(), year, month)
-            .orElseGet(() -> createEmptyAggregate(request, year, month));
-    updateTrainerProfile(aggregate, request);
-    aggregate.setTotalDurationInMinutes(
-        aggregate.getTotalDurationInMinutes() + request.durationInMinutes());
-    aggregateRepository.save(aggregate);
+
+    log.debug("Operation find: searching document for trainerUsername={}", request.trainerUsername());
+    var existing = workloadRepository.findByUsername(request.trainerUsername());
+    TrainerWorkloadDocument doc = existing.orElseGet(() -> createDocument(request));
+    if (existing.isEmpty()) {
+      log.debug(
+          "Operation create: no existing document found, creating for trainerUsername={}",
+          request.trainerUsername());
+    } else {
+      log.debug(
+          "Operation update: found existing document for trainerUsername={}", request.trainerUsername());
+    }
+    updateProfile(doc, request);
+    addDuration(doc, year, month, request.durationInMinutes());
+    log.debug(
+        "Operation save: persisting document for trainerUsername={} year={} month={} addedDuration={}",
+        request.trainerUsername(), year, month, request.durationInMinutes());
+    workloadRepository.save(doc);
+
     trainingIndexRepository.save(
         TrainingWorkloadIndexEntry.active(
             trainingId, request.trainerUsername(), year, month, request.durationInMinutes()));
@@ -106,6 +111,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
   private void processDelete(TrainerWorkloadUpdateRequest request) {
     long trainingId = request.trainingId();
+    log.debug("Operation find: checking index for trainingId={}", trainingId);
     TrainingWorkloadIndexEntry indexEntry =
         trainingIndexRepository
             .findByTrainingId(trainingId)
@@ -121,67 +127,117 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
       throw new BusinessRuleViolationException(
           "Cannot reverse workload. Training id belongs to another trainer: " + trainingId);
     }
-    MonthlyWorkloadAggregate aggregate =
-        aggregateRepository
-            .findByMonth(indexEntry.trainerUsername(), indexEntry.year(), indexEntry.month())
+    log.debug(
+        "Operation find: searching document for trainerUsername={}", indexEntry.trainerUsername());
+    TrainerWorkloadDocument doc =
+        workloadRepository
+            .findByUsername(indexEntry.trainerUsername())
             .orElseThrow(
                 () ->
                     new BusinessRuleViolationException(
-                        "Cannot reverse workload. Monthly aggregate is missing for training id: "
+                        "Cannot reverse workload. Workload document is missing for training id: "
                             + trainingId));
 
-    int updatedDuration = aggregate.getTotalDurationInMinutes() - indexEntry.durationInMinutes();
-    if (updatedDuration < 0) {
+    updateProfile(doc, request);
+    subtractDuration(doc, indexEntry.year(), indexEntry.month(), indexEntry.durationInMinutes(),
+        trainingId);
+    log.debug(
+        "Operation save: persisting document for trainerUsername={} year={} month={} subtractedDuration={}",
+        indexEntry.trainerUsername(), indexEntry.year(), indexEntry.month(),
+        indexEntry.durationInMinutes());
+    workloadRepository.save(doc);
+    trainingIndexRepository.save(indexEntry.asDeleted());
+  }
+
+  private void addDuration(TrainerWorkloadDocument doc, int year, int month, int duration) {
+    YearSummary yearSummary = findOrCreateYear(doc, year);
+    MonthSummary monthSummary = findOrCreateMonth(yearSummary, month);
+    monthSummary.setTotalDurationInMinutes(monthSummary.getTotalDurationInMinutes() + duration);
+  }
+
+  private void subtractDuration(TrainerWorkloadDocument doc, int year, int month, int duration,
+      long trainingId) {
+    YearSummary yearSummary = doc.getYears().stream()
+        .filter(y -> y.getYear() == year)
+        .findFirst()
+        .orElseThrow(() -> new BusinessRuleViolationException(
+            "Cannot reverse workload. Year entry missing for training id: " + trainingId));
+    MonthSummary monthSummary = yearSummary.getMonths().stream()
+        .filter(m -> m.getMonth() == month)
+        .findFirst()
+        .orElseThrow(() -> new BusinessRuleViolationException(
+            "Cannot reverse workload. Month entry missing for training id: " + trainingId));
+
+    int updated = monthSummary.getTotalDurationInMinutes() - duration;
+    if (updated < 0) {
       throw new BusinessRuleViolationException(
           "Cannot reverse workload. Total duration would become negative for training id: "
               + trainingId);
     }
-    if (updatedDuration == 0) {
-      aggregateRepository.delete(
-          indexEntry.trainerUsername(), indexEntry.year(), indexEntry.month());
+    if (updated == 0) {
+      yearSummary.getMonths().remove(monthSummary);
+      if (yearSummary.getMonths().isEmpty()) {
+        doc.getYears().remove(yearSummary);
+      }
     } else {
-      updateTrainerProfile(aggregate, request);
-      aggregate.setTotalDurationInMinutes(updatedDuration);
-      aggregateRepository.save(aggregate);
+      monthSummary.setTotalDurationInMinutes(updated);
     }
-    trainingIndexRepository.save(indexEntry.asDeleted());
   }
 
-  private MonthlyWorkloadAggregate createEmptyAggregate(
-      TrainerWorkloadUpdateRequest request, int year, int month) {
-    MonthlyWorkloadAggregate aggregate = new MonthlyWorkloadAggregate();
-    aggregate.setTrainerUsername(request.trainerUsername());
-    aggregate.setTrainerFirstName(request.trainerFirstName());
-    aggregate.setTrainerLastName(request.trainerLastName());
-    aggregate.setTrainerActive(request.trainerActive());
-    aggregate.setYear(year);
-    aggregate.setMonth(month);
-    aggregate.setTotalDurationInMinutes(0);
-    return aggregate;
+  private YearSummary findOrCreateYear(TrainerWorkloadDocument doc, int year) {
+    return doc.getYears().stream()
+        .filter(y -> y.getYear() == year)
+        .findFirst()
+        .orElseGet(() -> {
+          YearSummary newYear = new YearSummary(year);
+          doc.getYears().add(newYear);
+          return newYear;
+        });
   }
 
-  private void updateTrainerProfile(
-      MonthlyWorkloadAggregate aggregate, TrainerWorkloadUpdateRequest request) {
-    aggregate.setTrainerFirstName(request.trainerFirstName());
-    aggregate.setTrainerLastName(request.trainerLastName());
-    aggregate.setTrainerActive(request.trainerActive());
+  private MonthSummary findOrCreateMonth(YearSummary yearSummary, int month) {
+    return yearSummary.getMonths().stream()
+        .filter(m -> m.getMonth() == month)
+        .findFirst()
+        .orElseGet(() -> {
+          MonthSummary newMonth = new MonthSummary(month, 0);
+          yearSummary.getMonths().add(newMonth);
+          return newMonth;
+        });
   }
 
-  private List<YearSummary> toYearSummaries(List<MonthlyWorkloadAggregate> aggregates) {
-    Map<Integer, List<MonthSummary>> yearToMonths = new TreeMap<>();
-    for (MonthlyWorkloadAggregate aggregate : aggregates) {
-      yearToMonths
-          .computeIfAbsent(aggregate.getYear(), _ -> new ArrayList<>())
-          .add(new MonthSummary(aggregate.getMonth(), aggregate.getTotalDurationInMinutes()));
-    }
-    return yearToMonths.entrySet().stream()
-        .map(
-            entry ->
-                new YearSummary(
-                    entry.getKey(),
-                    entry.getValue().stream()
-                        .sorted(Comparator.comparingInt(MonthSummary::month))
-                        .toList()))
+  private TrainerWorkloadDocument createDocument(TrainerWorkloadUpdateRequest request) {
+    TrainerWorkloadDocument doc = new TrainerWorkloadDocument();
+    doc.setUsername(request.trainerUsername());
+    doc.setFirstName(request.trainerFirstName());
+    doc.setLastName(request.trainerLastName());
+    doc.setStatus(request.trainerActive());
+    doc.setYears(new ArrayList<>());
+    return doc;
+  }
+
+  private void updateProfile(TrainerWorkloadDocument doc, TrainerWorkloadUpdateRequest request) {
+    doc.setFirstName(request.trainerFirstName());
+    doc.setLastName(request.trainerLastName());
+    doc.setStatus(request.trainerActive());
+  }
+
+  private TrainerMonthlySummaryResponse toResponse(TrainerWorkloadDocument doc) {
+    List<TrainerMonthlySummaryResponse.YearSummary> years = doc.getYears().stream()
+        .sorted(Comparator.comparingInt(YearSummary::getYear))
+        .map(y -> new TrainerMonthlySummaryResponse.YearSummary(
+            y.getYear(),
+            y.getMonths().stream()
+                .sorted(Comparator.comparingInt(MonthSummary::getMonth))
+                .map(m -> new TrainerMonthlySummaryResponse.MonthSummary(
+                    m.getMonth(), m.getTotalDurationInMinutes()))
+                .toList()))
         .toList();
+    return new TrainerMonthlySummaryResponse(
+        doc.getUsername(),
+        doc.getFirstName(),
+        doc.getLastName(),
+        doc.getStatus(),
+        years);
   }
 }

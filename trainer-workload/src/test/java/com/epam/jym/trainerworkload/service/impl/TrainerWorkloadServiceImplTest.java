@@ -9,7 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.epam.jym.trainerworkload.domain.MonthlyWorkloadAggregate;
+import static com.epam.jym.trainerworkload.logging.TraceLoggingConstants.TRACE_ID_MDC_KEY;
+
+import com.epam.jym.trainerworkload.domain.TrainerWorkloadDocument;
 import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexEntry;
 import com.epam.jym.trainerworkload.domain.TrainingWorkloadIndexState;
 import com.epam.jym.trainerworkload.dto.ActionType;
@@ -17,43 +19,66 @@ import com.epam.jym.trainerworkload.dto.TrainerMonthlySummaryResponse;
 import com.epam.jym.trainerworkload.dto.TrainerWorkloadUpdateRequest;
 import com.epam.jym.trainerworkload.exception.BusinessRuleViolationException;
 import com.epam.jym.trainerworkload.exception.InvalidRequestException;
-import com.epam.jym.trainerworkload.repository.TrainerWorkloadAggregateRepository;
+import com.epam.jym.trainerworkload.repository.TrainerWorkloadDocumentRepository;
 import com.epam.jym.trainerworkload.repository.TrainingWorkloadIndexRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.MDC;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerWorkloadServiceImplTest {
 
-  @Mock private TrainerWorkloadAggregateRepository aggregateRepository;
+  @Mock private TrainerWorkloadDocumentRepository workloadRepository;
   @Mock private TrainingWorkloadIndexRepository trainingIndexRepository;
 
   @InjectMocks private TrainerWorkloadServiceImpl service;
+
+  @AfterEach
+  void tearDown() {
+    MDC.clear();
+  }
+
+  @Test
+  void acceptTrainerWorkloadShouldLogTransactionWithTraceIdInMdc() {
+    stubTrainingLock();
+    MDC.put(TRACE_ID_MDC_KEY, "trace-99");
+    TrainerWorkloadUpdateRequest request = addRequest(30L, LocalDate.of(2026, 7, 3), 60);
+    when(trainingIndexRepository.findByTrainingId(30L)).thenReturn(Optional.empty());
+    when(workloadRepository.findByUsername("jane.doe")).thenReturn(Optional.empty());
+
+    service.acceptTrainerWorkload(request);
+
+    assertThat(MDC.get(TRACE_ID_MDC_KEY)).isEqualTo("trace-99");
+  }
 
   @Test
   void acceptTrainerWorkloadShouldCreateMonthlyAggregateForAddAction() {
     stubTrainingLock();
     TrainerWorkloadUpdateRequest request = addRequest(10L, LocalDate.of(2026, 7, 3), 60);
     when(trainingIndexRepository.findByTrainingId(10L)).thenReturn(Optional.empty());
-    when(aggregateRepository.findByMonth("jane.doe", 2026, 7)).thenReturn(Optional.empty());
+    when(workloadRepository.findByUsername("jane.doe")).thenReturn(Optional.empty());
 
     service.acceptTrainerWorkload(request);
 
-    ArgumentCaptor<MonthlyWorkloadAggregate> aggregateCaptor =
-        ArgumentCaptor.forClass(MonthlyWorkloadAggregate.class);
-    verify(aggregateRepository).save(aggregateCaptor.capture());
-    MonthlyWorkloadAggregate savedAggregate = aggregateCaptor.getValue();
-    assertThat(savedAggregate.getTrainerUsername()).isEqualTo("jane.doe");
-    assertThat(savedAggregate.getYear()).isEqualTo(2026);
-    assertThat(savedAggregate.getMonth()).isEqualTo(7);
-    assertThat(savedAggregate.getTotalDurationInMinutes()).isEqualTo(60);
+    ArgumentCaptor<TrainerWorkloadDocument> docCaptor =
+        ArgumentCaptor.forClass(TrainerWorkloadDocument.class);
+    verify(workloadRepository).save(docCaptor.capture());
+    TrainerWorkloadDocument saved = docCaptor.getValue();
+    assertThat(saved.getUsername()).isEqualTo("jane.doe");
+    assertThat(saved.getYears()).hasSize(1);
+    assertThat(saved.getYears().getFirst().getYear()).isEqualTo(2026);
+    assertThat(saved.getYears().getFirst().getMonths()).hasSize(1);
+    assertThat(saved.getYears().getFirst().getMonths().getFirst().getMonth()).isEqualTo(7);
+    assertThat(saved.getYears().getFirst().getMonths().getFirst().getTotalDurationInMinutes())
+        .isEqualTo(60);
     verify(trainingIndexRepository)
         .save(TrainingWorkloadIndexEntry.active(10L, "jane.doe", 2026, 7, 60));
   }
@@ -68,7 +93,7 @@ class TrainerWorkloadServiceImplTest {
     service.acceptTrainerWorkload(request);
 
     verify(trainingIndexRepository).findByTrainingId(10L);
-    verifyNoInteractions(aggregateRepository);
+    verifyNoInteractions(workloadRepository);
   }
 
   @Test
@@ -79,17 +104,12 @@ class TrainerWorkloadServiceImplTest {
         .thenReturn(
             Optional.of(
                 new TrainingWorkloadIndexEntry(
-                    10L,
-                    "jane.doe",
-                    2026,
-                    7,
-                    60,
-                    TrainingWorkloadIndexState.DELETED)));
+                    10L, "jane.doe", 2026, 7, 60, TrainingWorkloadIndexState.DELETED)));
 
     service.acceptTrainerWorkload(request);
 
     verify(trainingIndexRepository).findByTrainingId(10L);
-    verifyNoInteractions(aggregateRepository);
+    verifyNoInteractions(workloadRepository);
   }
 
   @Test
@@ -98,27 +118,29 @@ class TrainerWorkloadServiceImplTest {
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
-    MonthlyWorkloadAggregate existingAggregate = aggregate(2026, 7, 90);
     when(trainingIndexRepository.findByTrainingId(11L))
         .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
-    when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
-        .thenReturn(Optional.of(existingAggregate));
+    when(workloadRepository.findByUsername("jane.doe"))
+        .thenReturn(Optional.of(documentWithMonth(7, 90)));
 
     service.acceptTrainerWorkload(request);
 
-    ArgumentCaptor<MonthlyWorkloadAggregate> aggregateCaptor =
-        ArgumentCaptor.forClass(MonthlyWorkloadAggregate.class);
-    verify(aggregateRepository).save(aggregateCaptor.capture());
-    assertThat(aggregateCaptor.getValue().getTotalDurationInMinutes()).isEqualTo(30);
+    ArgumentCaptor<TrainerWorkloadDocument> docCaptor =
+        ArgumentCaptor.forClass(TrainerWorkloadDocument.class);
+    verify(workloadRepository).save(docCaptor.capture());
+    assertThat(
+            docCaptor
+                .getValue()
+                .getYears()
+                .getFirst()
+                .getMonths()
+                .getFirst()
+                .getTotalDurationInMinutes())
+        .isEqualTo(30);
     verify(trainingIndexRepository)
         .save(
             new TrainingWorkloadIndexEntry(
-                11L,
-                "jane.doe",
-                2026,
-                7,
-                60,
-                TrainingWorkloadIndexState.DELETED));
+                11L, "jane.doe", 2026, 7, 60, TrainingWorkloadIndexState.DELETED));
   }
 
   @Test
@@ -144,16 +166,11 @@ class TrainerWorkloadServiceImplTest {
         .thenReturn(
             Optional.of(
                 new TrainingWorkloadIndexEntry(
-                    11L,
-                    "jane.doe",
-                    2026,
-                    7,
-                    60,
-                    TrainingWorkloadIndexState.DELETED)));
+                    11L, "jane.doe", 2026, 7, 60, TrainingWorkloadIndexState.DELETED)));
 
     service.acceptTrainerWorkload(request);
 
-    verifyNoInteractions(aggregateRepository);
+    verifyNoInteractions(workloadRepository);
   }
 
   @Test
@@ -187,24 +204,24 @@ class TrainerWorkloadServiceImplTest {
   void acceptTrainerWorkloadShouldUpdateExistingMonthlyAggregateForAddAction() {
     stubTrainingLock();
     TrainerWorkloadUpdateRequest request = addRequest(20L, LocalDate.of(2026, 8, 3), 45);
-    MonthlyWorkloadAggregate existingAggregate = aggregate(2026, 8, 75);
-    existingAggregate.setTrainerFirstName("Old");
-    existingAggregate.setTrainerLastName("Name");
-    existingAggregate.setTrainerActive(false);
+    TrainerWorkloadDocument existingDoc = documentWithMonth(8, 75);
+    existingDoc.setFirstName("Old");
+    existingDoc.setLastName("Name");
+    existingDoc.setStatus(false);
     when(trainingIndexRepository.findByTrainingId(20L)).thenReturn(Optional.empty());
-    when(aggregateRepository.findByMonth("jane.doe", 2026, 8))
-        .thenReturn(Optional.of(existingAggregate));
+    when(workloadRepository.findByUsername("jane.doe")).thenReturn(Optional.of(existingDoc));
 
     service.acceptTrainerWorkload(request);
 
-    ArgumentCaptor<MonthlyWorkloadAggregate> aggregateCaptor =
-        ArgumentCaptor.forClass(MonthlyWorkloadAggregate.class);
-    verify(aggregateRepository).save(aggregateCaptor.capture());
-    MonthlyWorkloadAggregate savedAggregate = aggregateCaptor.getValue();
-    assertThat(savedAggregate.getTotalDurationInMinutes()).isEqualTo(120);
-    assertThat(savedAggregate.getTrainerFirstName()).isEqualTo("Jane");
-    assertThat(savedAggregate.getTrainerLastName()).isEqualTo("Doe");
-    assertThat(savedAggregate.isTrainerActive()).isTrue();
+    ArgumentCaptor<TrainerWorkloadDocument> docCaptor =
+        ArgumentCaptor.forClass(TrainerWorkloadDocument.class);
+    verify(workloadRepository).save(docCaptor.capture());
+    TrainerWorkloadDocument saved = docCaptor.getValue();
+    assertThat(saved.getYears().getFirst().getMonths().getFirst().getTotalDurationInMinutes())
+        .isEqualTo(120);
+    assertThat(saved.getFirstName()).isEqualTo("Jane");
+    assertThat(saved.getLastName()).isEqualTo("Doe");
+    assertThat(saved.getStatus()).isTrue();
   }
 
   @Test
@@ -222,18 +239,18 @@ class TrainerWorkloadServiceImplTest {
   }
 
   @Test
-  void acceptTrainerWorkloadShouldRejectDeleteWhenMonthlyAggregateIsMissing() {
+  void acceptTrainerWorkloadShouldRejectDeleteWhenWorkloadDocumentIsMissing() {
     stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     when(trainingIndexRepository.findByTrainingId(11L))
         .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
-    when(aggregateRepository.findByMonth("jane.doe", 2026, 7)).thenReturn(Optional.empty());
+    when(workloadRepository.findByUsername("jane.doe")).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
         .isInstanceOf(BusinessRuleViolationException.class)
-        .hasMessageContaining("Monthly aggregate is missing");
+        .hasMessageContaining("Workload document is missing");
   }
 
   @Test
@@ -244,8 +261,8 @@ class TrainerWorkloadServiceImplTest {
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     when(trainingIndexRepository.findByTrainingId(11L))
         .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
-    when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
-        .thenReturn(Optional.of(aggregate(2026, 7, 30)));
+    when(workloadRepository.findByUsername("jane.doe"))
+        .thenReturn(Optional.of(documentWithMonth(7, 30)));
 
     assertThatThrownBy(() -> service.acceptTrainerWorkload(request))
         .isInstanceOf(BusinessRuleViolationException.class)
@@ -253,37 +270,43 @@ class TrainerWorkloadServiceImplTest {
   }
 
   @Test
-  void acceptTrainerWorkloadShouldDeleteMonthlyAggregateWhenDurationBecomesZero() {
+  void acceptTrainerWorkloadShouldRemoveMonthEntryWhenDurationBecomesZero() {
     stubTrainingLock();
     TrainerWorkloadUpdateRequest request =
         new TrainerWorkloadUpdateRequest(
             "jane.doe", "Jane", "Doe", true, LocalDate.of(2026, 7, 4), 60, ActionType.DELETE, 11L);
     when(trainingIndexRepository.findByTrainingId(11L))
         .thenReturn(Optional.of(TrainingWorkloadIndexEntry.active(11L, "jane.doe", 2026, 7, 60)));
-    when(aggregateRepository.findByMonth("jane.doe", 2026, 7))
-        .thenReturn(Optional.of(aggregate(2026, 7, 60)));
+    when(workloadRepository.findByUsername("jane.doe"))
+        .thenReturn(Optional.of(documentWithMonth(7, 60)));
 
     service.acceptTrainerWorkload(request);
 
-    verify(aggregateRepository).delete("jane.doe", 2026, 7);
+    ArgumentCaptor<TrainerWorkloadDocument> docCaptor =
+        ArgumentCaptor.forClass(TrainerWorkloadDocument.class);
+    verify(workloadRepository).save(docCaptor.capture());
+    assertThat(docCaptor.getValue().getYears()).isEmpty();
     verify(trainingIndexRepository)
         .save(
             new TrainingWorkloadIndexEntry(
-                11L,
-                "jane.doe",
-                2026,
-                7,
-                60,
-                TrainingWorkloadIndexState.DELETED));
+                11L, "jane.doe", 2026, 7, 60, TrainingWorkloadIndexState.DELETED));
   }
 
   @Test
   void getMonthlySummaryShouldGroupByYearAndOrderMonths() {
-    MonthlyWorkloadAggregate july = aggregate(2026, 7, 120);
-    MonthlyWorkloadAggregate june = aggregate(2026, 6, 90);
-    MonthlyWorkloadAggregate january = aggregate(2025, 1, 30);
-    when(aggregateRepository.findAllByTrainerUsername("jane.doe"))
-        .thenReturn(List.of(july, june, january));
+    TrainerWorkloadDocument doc = new TrainerWorkloadDocument();
+    doc.setUsername("jane.doe");
+    doc.setFirstName("Jane");
+    doc.setLastName("Doe");
+    doc.setStatus(true);
+    TrainerWorkloadDocument.YearSummary year2025 = new TrainerWorkloadDocument.YearSummary(2025);
+    year2025.getMonths().add(new TrainerWorkloadDocument.MonthSummary(1, 30));
+    TrainerWorkloadDocument.YearSummary year2026 = new TrainerWorkloadDocument.YearSummary(2026);
+    year2026.getMonths().add(new TrainerWorkloadDocument.MonthSummary(7, 120));
+    year2026.getMonths().add(new TrainerWorkloadDocument.MonthSummary(6, 90));
+    doc.getYears().add(year2026);
+    doc.getYears().add(year2025);
+    when(workloadRepository.findByUsername("jane.doe")).thenReturn(Optional.of(doc));
 
     TrainerMonthlySummaryResponse summary = service.getMonthlySummary("jane.doe");
 
@@ -304,8 +327,8 @@ class TrainerWorkloadServiceImplTest {
   }
 
   @Test
-  void getMonthlySummaryShouldReturnEmptyResponseWhenNoAggregatesExist() {
-    when(aggregateRepository.findAllByTrainerUsername("jane.doe")).thenReturn(List.of());
+  void getMonthlySummaryShouldReturnEmptyResponseWhenNoDocumentExists() {
+    when(workloadRepository.findByUsername("jane.doe")).thenReturn(Optional.empty());
 
     TrainerMonthlySummaryResponse summary = service.getMonthlySummary("jane.doe");
 
@@ -319,26 +342,21 @@ class TrainerWorkloadServiceImplTest {
   private TrainerWorkloadUpdateRequest addRequest(
       long trainingId, LocalDate trainingDate, int duration) {
     return new TrainerWorkloadUpdateRequest(
-        "jane.doe",
-        "Jane",
-        "Doe",
-        true,
-        trainingDate,
-        duration,
-        ActionType.ADD,
-        trainingId);
+        "jane.doe", "Jane", "Doe", true, trainingDate, duration, ActionType.ADD, trainingId);
   }
 
-  private MonthlyWorkloadAggregate aggregate(int year, int month, int duration) {
-    MonthlyWorkloadAggregate aggregate = new MonthlyWorkloadAggregate();
-    aggregate.setTrainerUsername("jane.doe");
-    aggregate.setTrainerFirstName("Jane");
-    aggregate.setTrainerLastName("Doe");
-    aggregate.setTrainerActive(true);
-    aggregate.setYear(year);
-    aggregate.setMonth(month);
-    aggregate.setTotalDurationInMinutes(duration);
-    return aggregate;
+  private TrainerWorkloadDocument documentWithMonth(int month, int duration) {
+    TrainerWorkloadDocument doc = new TrainerWorkloadDocument();
+    doc.setUsername("jane.doe");
+    doc.setFirstName("Jane");
+    doc.setLastName("Doe");
+    doc.setStatus(true);
+    TrainerWorkloadDocument.MonthSummary monthSummary =
+        new TrainerWorkloadDocument.MonthSummary(month, duration);
+    TrainerWorkloadDocument.YearSummary yearSummary = new TrainerWorkloadDocument.YearSummary(2026);
+    yearSummary.getMonths().add(monthSummary);
+    doc.getYears().add(yearSummary);
+    return doc;
   }
 
   private void stubTrainingLock() {

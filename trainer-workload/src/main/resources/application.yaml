@@ -10,10 +10,12 @@ spring:
     broker-url: ${ACTIVEMQ_BROKER_URL:tcp://localhost:61616}
     user: ${ACTIVEMQ_USER:admin}
     password: ${ACTIVEMQ_PASSWORD:admin}
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+  mongodb:
+    host: localhost
+    port: 27017
+    database: trainer-workload
+    username: admin
+    password: admin
 
 messaging:
   trainer-workload:
