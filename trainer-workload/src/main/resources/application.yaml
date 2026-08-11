@@ -21,6 +21,12 @@ spring:
     username: admin
     password: admin
 
+messaging:
+  trainer-workload:
+    queue: ${TRAINER_WORKLOAD_SINGLE_QUEUE:trainer-workload.update}
+    dlq: ${TRAINER_WORKLOAD_DLQ:trainer-workload.update.dlq}
+    max-delivery-attempts: ${TRAINER_WORKLOAD_MAX_DELIVERY_ATTEMPTS:3}
+
 security:
   jwt:
     secret: ${SECURITY_JWT_SECRET}
