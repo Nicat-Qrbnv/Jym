@@ -84,7 +84,7 @@ class TrainerWorkloadListenerTest {
     doAnswer(
             _ -> {
               assertThat(MDC.get(TRACE_ID_MDC_KEY)).isEqualTo("trace-42");
-              throw new IllegalStateException("redis unavailable");
+              throw new IllegalStateException("db unavailable");
             })
         .when(trainerWorkloadService)
         .acceptTrainerWorkload(request);
@@ -94,7 +94,7 @@ class TrainerWorkloadListenerTest {
     verify(deadLetterPublisher)
         .publish(
             new TrainerWorkloadDeadLetterMessage(
-                request, "trace-42", 3, "redis unavailable"),
+                request, "trace-42", 3, "db unavailable"),
             "trace-42");
     assertThat(MDC.get(TRACE_ID_MDC_KEY)).isNull();
   }

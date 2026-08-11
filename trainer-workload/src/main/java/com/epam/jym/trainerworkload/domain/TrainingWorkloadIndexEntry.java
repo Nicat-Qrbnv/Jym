@@ -1,7 +1,11 @@
 package com.epam.jym.trainerworkload.domain;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "training_workload_index")
 public record TrainingWorkloadIndexEntry(
-    long trainingId,
+    @Id long trainingId,
     String trainerUsername,
     int year,
     int month,
